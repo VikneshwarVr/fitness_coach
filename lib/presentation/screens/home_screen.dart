@@ -98,7 +98,7 @@ class _AICoachBanner extends StatefulWidget {
 }
 
 class _AICoachBannerState extends State<_AICoachBanner> {
-  bool _visible = true;
+  bool _visible = false;
 
   @override
   Widget build(BuildContext context) {

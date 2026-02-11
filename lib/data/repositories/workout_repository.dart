@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import '../api/api_client.dart';
 import '../models/workout.dart';
+import '../../core/utils/stats_utils.dart';
 
 class WorkoutRepository extends ChangeNotifier {
   List<Workout> _workouts = [];
@@ -130,5 +131,76 @@ class WorkoutRepository extends ChangeNotifier {
 
   int get streak {
     return _workouts.isNotEmpty ? 1 : 0; 
+  }
+
+  Map<String, double> getMuscleGroupStats(bool isWeekly) {
+    return StatsUtils.getMuscleGroupDistribution(_workouts, isWeekly: isWeekly);
+  }
+
+  List<double> getRadarStats(bool isWeekly) {
+    return StatsUtils.getRadarStats(_workouts, isWeekly: isWeekly);
+  }
+
+  List<Map<String, dynamic>> getAggregatedStats(bool isWeekly, String metric) {
+    return StatsUtils.getAggregatedStats(_workouts, isWeekly: isWeekly, metric: metric);
+  }
+
+  Map<String, double> getExercisePRs(String exerciseName) {
+    double heaviestWeight = 0;
+    double best1RM = 0;
+    double bestSetVolume = 0;
+    double bestSessionVolume = 0;
+
+    for (var workout in _workouts) {
+      double currentSessionVolume = 0;
+      bool hasExercise = false;
+
+      for (var session in workout.exercises) {
+        if (session.name.trim().toLowerCase() == exerciseName.trim().toLowerCase()) {
+          hasExercise = true;
+          for (var set in session.sets) {
+            if (set.completed) {
+              if (set.weight.toDouble() > heaviestWeight) heaviestWeight = set.weight.toDouble();
+              
+              double setVolume = (set.weight * set.reps).toDouble();
+              if (setVolume > bestSetVolume) bestSetVolume = setVolume;
+              
+              // Epley formula: weight * (1 + reps / 30.0)
+              double oneRM = set.weight * (1 + set.reps / 30.0);
+              if (oneRM > best1RM) best1RM = oneRM;
+              
+              currentSessionVolume += setVolume;
+            }
+          }
+        }
+      }
+      
+      if (hasExercise && currentSessionVolume > bestSessionVolume) {
+        bestSessionVolume = currentSessionVolume;
+      }
+    }
+
+    return {
+      'heaviestWeight': heaviestWeight,
+      'best1RM': best1RM,
+      'bestSetVolume': bestSetVolume,
+      'bestSessionVolume': bestSessionVolume,
+    };
+  }
+
+  List<ExerciseSet> getPreviousSets(String exerciseName) {
+    // Sort workouts by date descending
+    final sortedWorkouts = List<Workout>.from(_workouts)
+      ..sort((a, b) => b.date.compareTo(a.date));
+
+    for (var workout in sortedWorkouts) {
+      for (var session in workout.exercises) {
+        if (session.name.trim().toLowerCase() == exerciseName.trim().toLowerCase()) {
+          // Found the most recent session for this exercise
+          return session.sets;
+        }
+      }
+    }
+    return [];
   }
 }
