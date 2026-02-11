@@ -1,0 +1,65 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'core/theme.dart';
+import 'core/constants.dart';
+import 'data/repositories/workout_repository.dart';
+import 'data/repositories/routine_repository.dart';
+import 'data/repositories/auth_repository.dart';
+import 'presentation/navigation/router.dart';
+import 'data/providers/workout_provider.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  await dotenv.load(fileName: ".env");
+  
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL'] ?? '',
+    anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+  );
+
+  final authRepository = AuthRepository();
+  runApp(FitnessTrackerApp(authRepository: authRepository));
+}
+
+class FitnessTrackerApp extends StatefulWidget {
+  final AuthRepository authRepository;
+  const FitnessTrackerApp({super.key, required this.authRepository});
+
+  @override
+  State<FitnessTrackerApp> createState() => _FitnessTrackerAppState();
+}
+
+class _FitnessTrackerAppState extends State<FitnessTrackerApp> {
+  late final GoRouter _router;
+
+  @override
+  void initState() {
+    super.initState();
+    _router = createRouter(widget.authRepository);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: widget.authRepository),
+        ChangeNotifierProvider(create: (_) => WorkoutRepository()),
+        ChangeNotifierProvider(create: (_) => RoutineRepository()),
+        ChangeNotifierProxyProvider<WorkoutRepository, WorkoutProvider>(
+          create: (context) => WorkoutProvider(Provider.of<WorkoutRepository>(context, listen: false)),
+          update: (context, repo, previous) => previous ?? WorkoutProvider(repo),
+        ),
+      ],
+      child: MaterialApp.router(
+        title: AppConstants.appName,
+        theme: AppTheme.darkTheme,
+        debugShowCheckedModeBanner: false,
+        routerConfig: _router,
+      ),
+    );
+  }
+}

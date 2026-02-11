@@ -1,0 +1,155 @@
+
+import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
+import '../../core/theme.dart';
+import '../../data/models/routine.dart';
+import '../../data/repositories/routine_repository.dart';
+import '../components/fitness_card.dart';
+import '../components/buttons.dart';
+
+class RoutinesScreen extends StatelessWidget {
+  const RoutinesScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('My Routines', style: Theme.of(context).textTheme.headlineSmall),
+              const SizedBox(height: 4),
+              Text('Choose a workout routine to start training',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(color: AppTheme.mutedForeground)),
+              const SizedBox(height: 24),
+              Consumer<RoutineRepository>(
+                builder: (context, repo, child) {
+                  return Column(
+                    children: repo.routines
+                        .map((routine) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _RoutineCard(routine: routine),
+                            ))
+                        .toList(),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push('/routines/create'),
+        icon: const Icon(LucideIcons.plus),
+        label: const Text('New Routine'),
+        backgroundColor: AppTheme.primary,
+        foregroundColor: Colors.white,
+      ),
+    );
+  }
+}
+
+class _RoutineCard extends StatelessWidget {
+  final Routine routine;
+
+  const _RoutineCard({required this.routine});
+
+  @override
+  Widget build(BuildContext context) {
+    return FitnessCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(routine.name,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${routine.exerciseNames.length} exercises • ${routine.duration} min',
+                      style: const TextStyle(
+                          fontSize: 12, color: AppTheme.mutedForeground),
+                    ),
+                  ],
+                ),
+              ),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.muted,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      routine.level,
+                      style: const TextStyle(
+                          fontSize: 10, color: AppTheme.mutedForeground),
+                    ),
+                  ),
+                  if (routine.isCustom) ...[
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(LucideIcons.trash2, size: 18, color: Colors.red),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Delete Routine?'),
+                            content: Text('Are you sure you want to delete "${routine.name}"?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  context.read<RoutineRepository>().deleteRoutine(routine.id);
+                                  Navigator.pop(context);
+                                },
+                                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            routine.description,
+            style: const TextStyle(fontSize: 12, color: AppTheme.mutedForeground),
+          ),
+          const SizedBox(height: 16),
+          PrimaryButton(
+            label: 'Start Routine',
+            icon: LucideIcons.play,
+            onPressed: () {
+               context.push('/workout', extra: routine);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
