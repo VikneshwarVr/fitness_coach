@@ -110,17 +110,20 @@ GoRouter createRouter(AuthRepository authRepo) {
             },
           ),
           GoRoute(
-            path: 'finish',
-            builder: (context, state) => const FinishWorkoutScreen(),
-          ),
-          GoRoute(
-            path: 'details/:id',
+            path: 'finish/:id',
             builder: (context, state) {
-              final id = state.pathParameters['id']!;
-              return WorkoutDetailsScreen(workoutId: id);
+              final id = state.pathParameters['id'];
+              return FinishWorkoutScreen(workoutId: id == 'new' ? null : id);
             },
           ),
         ],
+      ),
+      GoRoute(
+        path: '/workout-details/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return WorkoutDetailsScreen(workoutId: id);
+        },
       ),
     ],
   );

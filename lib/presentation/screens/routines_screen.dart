@@ -9,48 +9,67 @@ import '../../data/repositories/routine_repository.dart';
 import '../components/fitness_card.dart';
 import '../components/buttons.dart';
 
-class RoutinesScreen extends StatelessWidget {
+class RoutinesScreen extends StatefulWidget {
   const RoutinesScreen({super.key});
+
+  @override
+  State<RoutinesScreen> createState() => _RoutinesScreenState();
+}
+
+class _RoutinesScreenState extends State<RoutinesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<RoutineRepository>().loadRoutines();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('My Routines', style: TextStyle(fontWeight: FontWeight.bold)),
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.plus, color: AppTheme.primary),
+            onPressed: () => context.push('/routines/create'),
+            tooltip: 'New Routine',
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('My Routines', style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 4),
-              Text('Choose a workout routine to start training',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: AppTheme.mutedForeground)),
-              const SizedBox(height: 24),
-              Consumer<RoutineRepository>(
-                builder: (context, repo, child) {
-                  return Column(
-                    children: repo.routines
-                        .map((routine) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _RoutineCard(routine: routine),
-                            ))
-                        .toList(),
-                  );
-                },
-              ),
-            ],
+        child: RefreshIndicator(
+          onRefresh: () => context.read<RoutineRepository>().loadRoutines(),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Choose a workout routine to start training',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(color: AppTheme.mutedForeground)),
+                const SizedBox(height: 24),
+                Consumer<RoutineRepository>(
+                  builder: (context, repo, child) {
+                    return Column(
+                      children: repo.routines
+                          .map((routine) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _RoutineCard(routine: routine),
+                              ))
+                          .toList(),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/routines/create'),
-        icon: const Icon(LucideIcons.plus),
-        label: const Text('New Routine'),
-        backgroundColor: AppTheme.primary,
-        foregroundColor: Colors.white,
       ),
     );
   }

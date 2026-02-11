@@ -151,18 +151,20 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
               children: [
                 Expanded(
                   child: FitnessCard(
+                    padding: const EdgeInsets.all(8),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text('Level', style: TextStyle(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         DropdownButtonFormField<String>(
-                          initialValue: _selectedLevel,
+                          value: _selectedLevel,
+                          isExpanded: true,
                           decoration: const InputDecoration(
                             filled: true,
                             fillColor: AppTheme.input,
                             border: OutlineInputBorder(borderSide: BorderSide.none),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                           ),
                           items: ['Beginner', 'Intermediate', 'Advanced']
                               .map((level) => DropdownMenuItem(value: level, child: Text(level)))
@@ -177,9 +179,10 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 Expanded(
                   child: FitnessCard(
+                    padding: const EdgeInsets.all(8),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

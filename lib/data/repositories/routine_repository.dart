@@ -1,11 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../api/api_client.dart';
 import '../models/routine.dart';
 
 class RoutineRepository extends ChangeNotifier {
-  final _supabase = Supabase.instance.client;
-
   final List<Routine> _defaultRoutines = [
+    // ... (same as before)
     Routine.create(
       name: 'Full Body Power',
       description: 'Compound movements for maximum strength.',
@@ -48,80 +48,65 @@ class RoutineRepository extends ChangeNotifier {
   List<Routine> get routines => [..._defaultRoutines, ..._customRoutines];
   
   Future<void> loadRoutines() async {
-    final user = _supabase.auth.currentUser;
-    
-    // We fetch routines that are NOT custom (defaults in DB if any) OR belong to current user
     try {
-      final response = await _supabase
-          .from('routines')
-          .select('*, routine_exercises(exercise_name)')
-          .or('is_custom.eq.false,user_id.eq.${user?.id ?? "null"}');
+      final response = await ApiClient.get('/routines');
       
-      final List<dynamic> data = response as List<dynamic>;
-      _customRoutines = data.where((json) => json['is_custom'] == true).map((json) {
-        final exercises = (json['routine_exercises'] as List)
-            .map((e) => e['exercise_name'] as String)
-            .toList();
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        _customRoutines = data.where((json) => json['is_custom'] == true).map((json) {
+          final exercises = (json['routine_exercises'] as List)
+              .map((e) => e['exercise_name'] as String)
+              .toList();
+          
+          return Routine(
+            id: json['id'],
+            name: json['name'],
+            description: json['description'] ?? '',
+            exerciseNames: exercises,
+            level: json['level'] ?? 'Intermediate',
+            duration: json['duration'] ?? 45,
+            isCustom: true,
+          );
+        }).toList();
         
-        return Routine(
-          id: json['id'],
-          name: json['name'],
-          description: json['description'] ?? '',
-          exerciseNames: exercises,
-          level: json['level'] ?? 'Intermediate',
-          duration: json['duration'] ?? 45,
-          isCustom: true,
-        );
-      }).toList();
-      
-      notifyListeners();
+        notifyListeners();
+      }
     } catch (e) {
-      debugPrint('Error loading routines from Supabase: $e');
+      debugPrint('Error loading routines: $e');
     }
   }
 
   Future<void> addRoutine(Routine routine) async {
-    final user = _supabase.auth.currentUser;
-    if (user == null) return;
-
     try {
-      // 1. Insert Routine
-      final routineResponse = await _supabase.from('routines').insert({
-        'id': routine.id,
-        'user_id': user.id,
+      final routineData = {
         'name': routine.name,
         'description': routine.description,
         'level': routine.level,
         'duration': routine.duration,
-        'is_custom': true,
-      }).select().single();
+        'exerciseNames': routine.exerciseNames,
+      };
 
-      // 2. Insert Exercises
-      final List<Map<String, dynamic>> exercisesData = [];
-      for (int i = 0; i < routine.exerciseNames.length; i++) {
-        exercisesData.add({
-          'routine_id': routineResponse['id'],
-          'exercise_name': routine.exerciseNames[i],
-          'order_index': i,
-        });
+      final response = await ApiClient.post('/routines', routineData);
+
+      if (response.statusCode == 201) {
+        await loadRoutines();
       }
-      
-      await _supabase.from('routine_exercises').insert(exercisesData);
-      
-      _customRoutines.add(routine);
-      notifyListeners();
     } catch (e) {
-      debugPrint('Error adding routine to Supabase: $e');
+      debugPrint('Error adding routine: $e');
     }
   }
 
   Future<void> deleteRoutine(String id) async {
     try {
-      await _supabase.from('routines').delete().eq('id', id);
-      _customRoutines.removeWhere((r) => r.id == id);
-      notifyListeners();
+      final response = await ApiClient.delete('/routines/$id');
+      if (response.statusCode == 204) {
+        _customRoutines.removeWhere((r) => r.id == id);
+        notifyListeners();
+      }
     } catch (e) {
-      debugPrint('Error deleting routine from Supabase: $e');
+      debugPrint('Error deleting routine: $e');
     }
   }
 }
+
+

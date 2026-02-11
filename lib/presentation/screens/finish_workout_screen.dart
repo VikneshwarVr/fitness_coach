@@ -8,7 +8,8 @@ import '../components/buttons.dart';
 import '../components/fitness_card.dart';
 
 class FinishWorkoutScreen extends StatefulWidget {
-  const FinishWorkoutScreen({super.key});
+  final String? workoutId;
+  const FinishWorkoutScreen({super.key, this.workoutId});
 
   @override
   State<FinishWorkoutScreen> createState() => _FinishWorkoutScreenState();
@@ -18,6 +19,8 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   bool _isLoading = false;
+
+  bool get isEditing => widget.workoutId != null;
 
   @override
   void initState() {
@@ -47,7 +50,7 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
                 context.pop();
               },
             ),
-            title: const Text('Workout Summary', style: TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(isEditing ? 'Edit Workout' : 'Workout Summary', style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
@@ -55,8 +58,8 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Header Stats
-                const Text('Great job!', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                const Text('Here is a summary of your session.', style: TextStyle(color: AppTheme.mutedForeground)),
+                Text(isEditing ? 'Update your workout' : 'Great job!', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                Text(isEditing ? 'Make changes to your saved session.' : 'Here is a summary of your session.', style: const TextStyle(color: AppTheme.mutedForeground)),
                 const SizedBox(height: 24),
 
                 Row(
@@ -129,12 +132,16 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
                 _isLoading 
                 ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
                 : PrimaryButton(
-                  label: 'Save Workout',
-                  icon: LucideIcons.save,
+                  label: isEditing ? 'Update Workout' : 'Save Workout',
+                  icon: isEditing ? LucideIcons.check : LucideIcons.save,
                   onPressed: () async {
                     setState(() => _isLoading = true);
                     try {
-                      await provider.finishWorkout(name: _titleController.text);
+                      if (isEditing) {
+                        await provider.saveUpdate(id: widget.workoutId!, name: _titleController.text);
+                      } else {
+                        await provider.addWorkout(name: _titleController.text);
+                      }
                       if (context.mounted) context.go('/');
                     } catch (e) {
                       if (context.mounted) {

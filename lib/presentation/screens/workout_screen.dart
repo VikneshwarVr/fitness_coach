@@ -59,7 +59,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               TextButton(
                 onPressed: () {
                   context.read<WorkoutProvider>().pauseTimer();
-                  context.push('/workout/finish');
+                  context.push('/workout/finish/new');
                 },
                 child: const Text('Finish', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
               ),

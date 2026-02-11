@@ -1,108 +1,120 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../api/api_client.dart';
 import '../models/workout.dart';
 
 class WorkoutRepository extends ChangeNotifier {
-  final _supabase = Supabase.instance.client;
   List<Workout> _workouts = [];
 
   List<Workout> get workouts => _workouts;
 
   Future<void> loadWorkouts() async {
-    final user = _supabase.auth.currentUser;
-    if (user == null) return;
-
     try {
-      final response = await _supabase
-          .from('workouts')
-          .select('*, workout_exercises(*, workout_sets(*))')
-          .eq('user_id', user.id)
-          .order('date', ascending: false);
+      final response = await ApiClient.get('/workouts');
       
-      final List<dynamic> data = response as List<dynamic>;
-      _workouts = data.map((workoutJson) {
-        final exercises = (workoutJson['workout_exercises'] as List).map((excJson) {
-          final sets = (excJson['workout_sets'] as List).map((setJson) {
-            return ExerciseSet(
-              id: setJson['id'],
-              weight: setJson['weight'],
-              reps: setJson['reps'],
-              completed: setJson['completed'],
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        _workouts = data.map((workoutJson) {
+          final exercises = (workoutJson['workout_exercises'] as List).map((excJson) {
+            final sets = (excJson['workout_sets'] as List).map((setJson) {
+              return ExerciseSet(
+                id: setJson['id'],
+                weight: setJson['weight'],
+                reps: setJson['reps'],
+                completed: setJson['completed'],
+              );
+            }).toList();
+            
+            return ExerciseSession(
+              id: excJson['id'],
+              exerciseId: excJson['id'],
+              name: excJson['exercise_name'],
+              sets: sets,
             );
           }).toList();
-          
-          return ExerciseSession(
-            id: excJson['id'],
-            exerciseId: excJson['id'], // We don't have a separate exercise meta ID yet
-            name: excJson['exercise_name'],
-            sets: sets,
+
+          return Workout(
+            id: workoutJson['id'],
+            name: workoutJson['name'],
+            date: DateTime.parse(workoutJson['date']),
+            duration: workoutJson['duration'],
+            totalVolume: workoutJson['total_volume'],
+            exercises: exercises,
           );
         }).toList();
-
-        return Workout(
-          id: workoutJson['id'],
-          name: workoutJson['name'],
-          date: DateTime.parse(workoutJson['date']),
-          duration: workoutJson['duration'],
-          totalVolume: workoutJson['total_volume'],
-          exercises: exercises,
-        );
-      }).toList();
-      
-      notifyListeners();
+        
+        notifyListeners();
+      } else {
+        debugPrint('Error loading workouts: ${response.statusCode}');
+      }
     } catch (e) {
-      debugPrint('Error loading workouts from Supabase: $e');
+      debugPrint('Error loading workouts: $e');
     }
   }
 
   Future<void> addWorkout(Workout workout) async {
-    final user = _supabase.auth.currentUser;
-    if (user == null) {
-      return;
-    }
-
     try {
-      // 1. Insert Workout
-      final workoutData = await _supabase.from('workouts').insert({
-        'id': workout.id,
-        'user_id': user.id,
-        'name': workout.name,
-        'date': workout.date.toIso8601String(),
-        'duration': workout.duration,
-        'total_volume': workout.totalVolume,
-      }).select().single();
+      final workoutData = _prepareWorkoutData(workout);
+      final response = await ApiClient.post('/workouts', workoutData);
 
-      // 2. Insert Exercises & Sets
-      for (int i = 0; i < workout.exercises.length; i++) {
-        final exercise = workout.exercises[i];
-        final exerciseData = await _supabase.from('workout_exercises').insert({
-          'id': exercise.id,
-          'workout_id': workoutData['id'],
-          'exercise_name': exercise.name,
-          'order_index': i,
-        }).select().single();
-
-        final setsData = exercise.sets.asMap().entries.map((entry) {
-          final index = entry.key;
-          final set = entry.value;
-          return {
-            'workout_exercise_id': exerciseData['id'],
-            'weight': set.weight,
-            'reps': set.reps,
-            'completed': set.completed,
-            'order_index': index,
-          };
-        }).toList();
-
-        await _supabase.from('workout_sets').insert(setsData);
+      if (response.statusCode == 201) {
+        await loadWorkouts();
+      } else {
+        debugPrint('Error adding workout: ${response.statusCode}');
       }
-
-      _workouts.insert(0, workout);
-      notifyListeners();
     } catch (e) {
-      debugPrint('Error adding workout to Supabase: $e');
+      debugPrint('Error adding workout: $e');
       rethrow;
     }
+  }
+
+  Future<void> updateWorkout(Workout workout) async {
+    try {
+      final workoutData = _prepareWorkoutData(workout);
+      final response = await ApiClient.put('/workouts/${workout.id}', workoutData);
+
+      if (response.statusCode == 200) {
+        await loadWorkouts();
+      } else {
+        debugPrint('Error updating workout: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error updating workout: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteWorkout(String id) async {
+    try {
+      final response = await ApiClient.delete('/workouts/$id');
+
+      if (response.statusCode == 204) {
+        _workouts.removeWhere((w) => w.id == id);
+        notifyListeners();
+      } else {
+        debugPrint('Error deleting workout: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error deleting workout: $e');
+      rethrow;
+    }
+  }
+
+  Map<String, dynamic> _prepareWorkoutData(Workout workout) {
+    return {
+      'name': workout.name,
+      'date': workout.date.toIso8601String(),
+      'duration': workout.duration,
+      'total_volume': workout.totalVolume,
+      'exercises': workout.exercises.map((exc) => {
+        'name': exc.name,
+        'sets': exc.sets.map((s) => {
+          'weight': s.weight,
+          'reps': s.reps,
+          'completed': s.completed,
+        }).toList(),
+      }).toList(),
+    };
   }
 
   // Stats helpers

@@ -92,9 +92,9 @@ class WorkoutProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Renamed to saveWorkout as it now takes final details
-  Future<void> finishWorkout({String? name, String? description}) async {
-    debugPrint('WorkoutProvider: finishWorkout called with name: $name');
+  // Renamed to addWorkout as it now takes final details
+  Future<void> addWorkout({String? name, String? description}) async {
+    debugPrint('WorkoutProvider: addWorkout called with name: $name');
     stopTimer();
     
     if (name != null) {
@@ -110,6 +110,39 @@ class WorkoutProvider extends ChangeNotifier {
       await _workoutRepository.addWorkout(workout);
     }
     
+    _resetToInitial();
+    notifyListeners();
+  }
+
+  Future<void> saveUpdate({required String id, required String name}) async {
+    debugPrint('WorkoutProvider: saveUpdate called for id: $id');
+    
+    final workout = Workout(
+      id: id,
+      name: name,
+      date: DateTime.now(), // Or keep original date? Let's keep original date if we had it
+      duration: (_secondsElapsed / 60).ceil(),
+      totalVolume: _cachedTotalVolume,
+      exercises: _exercises,
+    );
+    
+    await _workoutRepository.updateWorkout(workout);
+    _resetToInitial();
+    notifyListeners();
+  }
+
+  void loadWorkoutForEditing(Workout workout) {
+    _isWorkoutActive = true;
+    _isPlaying = false; // Don't start timer automatically
+    _workoutName = workout.name;
+    _secondsElapsed = workout.duration * 60;
+    _exercises.clear();
+    _exercises.addAll(workout.exercises);
+    _recalculateStats();
+    notifyListeners();
+  }
+
+  void _resetToInitial() {
     // Reset state
     _exercises.clear();
     _secondsElapsed = 0;
@@ -118,7 +151,6 @@ class WorkoutProvider extends ChangeNotifier {
     _workoutName = 'Evening Workout';
     _cachedTotalVolume = 0;
     _cachedTotalSets = 0;
-    notifyListeners();
   }
 
   void cancelWorkout() {

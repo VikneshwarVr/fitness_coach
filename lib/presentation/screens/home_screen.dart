@@ -5,61 +5,84 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme.dart';
 import '../components/fitness_card.dart';
 import '../components/buttons.dart';
+import '../../data/repositories/routine_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/providers/workout_provider.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Load data when home screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<WorkoutRepository>().loadWorkouts();
+      context.read<RoutineRepository>().loadRoutines();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const _AICoachBanner(),
-              const SizedBox(height: 24),
-              const _Header(),
-              const SizedBox(height: 24),
-              const _QuickStats(),
-              const SizedBox(height: 24),
-              PrimaryButton(
-                label: 'Start New Workout',
-                icon: LucideIcons.plus,
-                onPressed: () {
-                   context.read<WorkoutProvider>().startWorkout(); // Start fresh or resume
-                   context.go('/workout');
-                },
-              ),
-              const SizedBox(height: 12),
-              // Quick Actions
-              Row(
-                children: [
-                   Expanded(
-                    child: SecondaryButton(
-                      label: 'My Routines',
-                      icon: LucideIcons.folderOpen,
-                      onPressed: () => context.go('/routines'),
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await context.read<WorkoutRepository>().loadWorkouts();
+            await context.read<RoutineRepository>().loadRoutines();
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const _AICoachBanner(),
+                const SizedBox(height: 24),
+                const _Header(),
+                const SizedBox(height: 24),
+                const _QuickStats(),
+                const SizedBox(height: 24),
+                PrimaryButton(
+                  label: 'Start New Workout',
+                  icon: LucideIcons.plus,
+                  onPressed: () {
+                     context.read<WorkoutProvider>().startWorkout(); // Start fresh or resume
+                     context.go('/workout');
+                  },
+                ),
+                const SizedBox(height: 12),
+                // Quick Actions
+                Row(
+                  children: [
+                     Expanded(
+                      child: SecondaryButton(
+                        label: 'My Routines',
+                        icon: LucideIcons.folderOpen,
+                        onPressed: () => context.go('/routines'),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: SecondaryButton(
-                      label: 'Exercises',
-                      icon: LucideIcons.library,
-                      // onPressed: () => context.go('/exercises'), // TODO: Implement route
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: SecondaryButton(
+                        label: 'Exercises',
+                        icon: LucideIcons.library,
+                        // onPressed: () => context.go('/exercises'), // TODO: Implement route
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              const _RecentWorkoutsSection(),
-              const SizedBox(height: 24),
-              const _QuickTips(),
-            ],
+                  ],
+                ),
+                const SizedBox(height: 24),
+                const _RecentWorkoutsSection(),
+                const SizedBox(height: 24),
+                const _QuickTips(),
+              ],
+            ),
           ),
         ),
       ),
@@ -293,7 +316,7 @@ class _RecentWorkoutsSection extends StatelessWidget {
               children: workouts.map((workout) => Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: FitnessCard(
-                  onTap: () => context.go('/workout/details/${workout.id}'),
+                  onTap: () => context.push('/workout-details/${workout.id}'),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [

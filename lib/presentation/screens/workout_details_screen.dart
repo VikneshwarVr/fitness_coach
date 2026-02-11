@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/theme.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/models/workout.dart';
+import '../../data/providers/workout_provider.dart';
 import '../components/fitness_card.dart';
 
 class WorkoutDetailsScreen extends StatelessWidget {
@@ -17,6 +19,56 @@ class WorkoutDetailsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Workout Details', style: TextStyle(fontWeight: FontWeight.bold)),
+        actions: [
+          Consumer<WorkoutRepository>(
+            builder: (context, repo, child) {
+              final workout = repo.workouts.where((w) => w.id == workoutId).firstOrNull;
+              if (workout == null) return const SizedBox();
+              
+              return Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(LucideIcons.edit2, size: 20),
+                    onPressed: () {
+                      context.read<WorkoutProvider>().loadWorkoutForEditing(workout);
+                      context.push('/workout/finish/${workout.id}');
+                    },
+                    tooltip: 'Edit Workout',
+                  ),
+                  IconButton(
+                    icon: const Icon(LucideIcons.trash2, size: 20, color: Colors.red),
+                    onPressed: () async {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Delete Workout?'),
+                          content: const Text('Are you sure you want to delete this workout history? This action cannot be undone.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              style: TextButton.styleFrom(foregroundColor: Colors.red),
+                              child: const Text('Delete'),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirmed == true && context.mounted) {
+                        await context.read<WorkoutRepository>().deleteWorkout(workoutId);
+                        if (context.mounted) context.pop();
+                      }
+                    },
+                    tooltip: 'Delete Workout',
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
       ),
       body: Consumer<WorkoutRepository>(
         builder: (context, repo, child) {
