@@ -17,6 +17,16 @@ class WorkoutProvider extends ChangeNotifier {
   String _workoutName = 'Evening Workout';
   final List<ExerciseSession> _exercises = [];
   
+  // Previous session data for current exercises
+  final Map<String, List<ExerciseSet>> _previousSets = {};
+
+  // Stream for PR events
+  final _prStreamController = StreamController<PREvent>.broadcast();
+  Stream<PREvent> get prEvents => _prStreamController.stream;
+
+  // Session PR tracking (to avoid duplicate notifications for the same exercise in one session)
+  final Map<String, Map<String, double>> _sessionBests = {};
+  
   // Cached stats (recalculated only when sets are completed/uncompleted)
   int _cachedTotalVolume = 0;
   int _cachedTotalSets = 0;
@@ -27,6 +37,7 @@ class WorkoutProvider extends ChangeNotifier {
   bool get isWorkoutActive => _isWorkoutActive;
   String get workoutName => _workoutName;
   List<ExerciseSession> get exercises => List.unmodifiable(_exercises);
+  Map<String, List<ExerciseSet>> get previousSets => Map.unmodifiable(_previousSets);
 
   int get totalVolume => _cachedTotalVolume;
   int get totalSets => _cachedTotalSets;
@@ -65,26 +76,29 @@ class WorkoutProvider extends ChangeNotifier {
 
     if (routine != null) {
       for (final exerciseName in routine.exerciseNames) {
-        _exercises.add(ExerciseSession(
-          id: _uuid.v4(),
-          exerciseId: exerciseName,
-          name: exerciseName,
-          sets: [
-            ExerciseSet(id: _uuid.v4(), weight: 0, reps: 0, completed: false),
-          ],
-        ));
-      }
-    } else {
-      // Default empty workout
-      if (_exercises.isEmpty) {
-        _exercises.add(ExerciseSession(
-          id: _uuid.v4(),
-          exerciseId: 'Squat',
-          name: 'Squat',
-          sets: [
-             ExerciseSet(id: _uuid.v4(), weight: 0, reps: 0, completed: false),
-          ],
-        ));
+        // Load previous sets for this exercise
+        _previousSets[exerciseName] = _workoutRepository.getPreviousSets(exerciseName);
+
+        // Pre-fill first set from previous session if available
+        final prevSets = _previousSets[exerciseName] ?? [];
+        final initialWeight = prevSets.isNotEmpty ? prevSets[0].weight : 0;
+        final initialReps = prevSets.isNotEmpty ? prevSets[0].reps : 0;
+
+        _exercises.add(
+          ExerciseSession(
+            id: _uuid.v4(),
+            exerciseId: exerciseName,
+            name: exerciseName,
+            sets: [
+              ExerciseSet(
+                id: _uuid.v4(),
+                weight: initialWeight,
+                reps: initialReps,
+                completed: false,
+              ),
+            ],
+          ),
+        );
       }
     }
     
@@ -151,6 +165,7 @@ class WorkoutProvider extends ChangeNotifier {
     _workoutName = 'Evening Workout';
     _cachedTotalVolume = 0;
     _cachedTotalSets = 0;
+    _sessionBests.clear();
   }
 
   void cancelWorkout() {
@@ -199,12 +214,24 @@ class WorkoutProvider extends ChangeNotifier {
 
   // Exercise Management
   void addExercise(String name) {
+    _previousSets[name] = _workoutRepository.getPreviousSets(name);
+    
+    // Pre-fill first set if previous data exists
+    final prevSets = _previousSets[name] ?? [];
+    final initialWeight = prevSets.isNotEmpty ? prevSets[0].weight : 0;
+    final initialReps = prevSets.isNotEmpty ? prevSets[0].reps : 0;
+
     _exercises.add(ExerciseSession(
       id: _uuid.v4(),
       exerciseId: name,
       name: name,
       sets: [
-        ExerciseSet(id: _uuid.v4(), weight: 0, reps: 0, completed: false),
+        ExerciseSet(
+          id: _uuid.v4(), 
+          weight: initialWeight, 
+          reps: initialReps, 
+          completed: false
+        ),
       ],
     ));
     notifyListeners();
@@ -212,8 +239,25 @@ class WorkoutProvider extends ChangeNotifier {
 
   void addSet(int exerciseIndex) {
     if (exerciseIndex >= 0 && exerciseIndex < _exercises.length) {
-      _exercises[exerciseIndex].sets.add(
-        ExerciseSet(id: _uuid.v4(), weight: 0, reps: 0, completed: false),
+      final exercise = _exercises[exerciseIndex];
+      final prevSets = _previousSets[exercise.name] ?? [];
+      final nextSetIndex = exercise.sets.length;
+      
+      int weight = 0;
+      int reps = 0;
+
+      if (nextSetIndex < prevSets.length) {
+        // Use matching set from previous session
+        weight = prevSets[nextSetIndex].weight;
+        reps = prevSets[nextSetIndex].reps;
+      } else if (exercise.sets.isNotEmpty) {
+        // Fallback to the last set of the current session
+        weight = exercise.sets.last.weight;
+        reps = exercise.sets.last.reps;
+      }
+
+      exercise.sets.add(
+        ExerciseSet(id: _uuid.v4(), weight: weight, reps: reps, completed: false),
       );
       notifyListeners();
     }
@@ -248,15 +292,65 @@ class WorkoutProvider extends ChangeNotifier {
            completed: !oldSet.completed,
          );
          sets[setIndex] = newSet;
-         _recalculateStats(); // Recalculate volume and sets when completion changes
+         _recalculateStats();
+
+         if (newSet.completed) {
+           _checkForPRs(_exercises[exerciseIndex].name, newSet);
+         }
+         
          notifyListeners();
        }
      }
   }
 
+  void _checkForPRs(String exerciseName, ExerciseSet set) {
+    // 1. Get Historical Bests
+    final historicalPRs = _workoutRepository.getExercisePRs(exerciseName);
+    
+    // 2. Initialize Session Bests for this exercise if not exists
+    _sessionBests.putIfAbsent(exerciseName, () => {
+      'heaviestWeight': historicalPRs['heaviestWeight'] ?? 0.0,
+      'best1RM': historicalPRs['best1RM'] ?? 0.0,
+      'bestSetVolume': historicalPRs['bestSetVolume'] ?? 0.0,
+    });
+
+    final currentBests = _sessionBests[exerciseName]!;
+    
+    // 3. Calculate current set stats
+    final weight = set.weight.toDouble();
+    final oneRM = weight * (1 + set.reps / 30.0);
+    final volume = (weight * set.reps).toDouble();
+
+    // 4. Compare and notify
+    if (weight > currentBests['heaviestWeight']!) {
+      currentBests['heaviestWeight'] = weight;
+      _prStreamController.add(PREvent(exerciseName, 'Heaviest Weight', weight, 'kg'));
+    }
+    
+    if (oneRM > currentBests['best1RM']!) {
+      currentBests['best1RM'] = oneRM;
+      _prStreamController.add(PREvent(exerciseName, 'Best 1RM', oneRM, 'kg'));
+    }
+
+    if (volume > currentBests['bestSetVolume']!) {
+      currentBests['bestSetVolume'] = volume;
+      _prStreamController.add(PREvent(exerciseName, 'Best Set Volume', volume, 'kg'));
+    }
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
+    _prStreamController.close();
     super.dispose();
   }
+}
+
+class PREvent {
+  final String exerciseName;
+  final String type;
+  final double value;
+  final String unit;
+
+  PREvent(this.exerciseName, this.type, this.value, this.unit);
 }
