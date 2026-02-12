@@ -14,7 +14,10 @@ class WorkoutProvider extends ChangeNotifier {
   int _secondsElapsed = 0;
   bool _isPlaying = false;
   bool _isWorkoutActive = false;
+  bool _isEditingRoutine = false; // New flag
   String _workoutName = 'Evening Workout';
+  String? _editingWorkoutId; // ID of the workout being edited (if any)
+  DateTime? _editingWorkoutDate; // Original date of the workout being edited
   final List<ExerciseSession> _exercises = [];
   
   // Previous session data for current exercises
@@ -27,17 +30,45 @@ class WorkoutProvider extends ChangeNotifier {
   // Session PR tracking (to avoid duplicate notifications for the same exercise in one session)
   final Map<String, Map<String, double>> _sessionBests = {};
   
+  // Track which exercises have achieved PRs and count total PRs
+  final Set<String> _exercisesWithPRs = {}; // For badge display
+  int _totalPRCount = 0; // Total count of all PRs (can be multiple per exercise)
+  
+  // Track which PR types have already been achieved for each exercise in this session
+  final Map<String, Set<String>> _achievedPRTypes = {}; // key: exerciseName, value: Set of PR types ('weight', '1rm', 'volume')
+  
   // Cached stats (recalculated only when sets are completed/uncompleted)
   int _cachedTotalVolume = 0;
   int _cachedTotalSets = 0;
+
+  // Rest Timer State
+  final Map<String, int> _exerciseRestTimes = {}; // key: exerciseId (name), value: seconds
+  Timer? _restTimer;
+  int _currentRestSeconds = 0;
+  int _totalRestSeconds = 0;
+  bool _isRestTimerRunning = false;
 
   // Getters
   int get secondsElapsed => _secondsElapsed;
   bool get isPlaying => _isPlaying;
   bool get isWorkoutActive => _isWorkoutActive;
+  bool get isEditingRoutine => _isEditingRoutine;
   String get workoutName => _workoutName;
+  String? get editingWorkoutId => _editingWorkoutId;
+  DateTime? get editingWorkoutDate => _editingWorkoutDate;
   List<ExerciseSession> get exercises => List.unmodifiable(_exercises);
   Map<String, List<ExerciseSet>> get previousSets => Map.unmodifiable(_previousSets);
+  int get totalPRsAchieved => _totalPRCount;
+  
+  // Rest Timer Getters
+  bool get isRestTimerRunning => _isRestTimerRunning;
+  int get currentRestSeconds => _currentRestSeconds;
+  int get totalRestSeconds => _totalRestSeconds;
+  double get restTimerProgress => _totalRestSeconds > 0 ? _currentRestSeconds / _totalRestSeconds : 0.0;
+  
+  int getRestTime(String exerciseId) => _exerciseRestTimes[exerciseId] ?? 0;
+  
+  bool getExerciseHasPR(String exerciseName) => _exercisesWithPRs.contains(exerciseName);
 
   int get totalVolume => _cachedTotalVolume;
   int get totalSets => _cachedTotalSets;
@@ -71,32 +102,49 @@ class WorkoutProvider extends ChangeNotifier {
 
     _resetState();
     _isWorkoutActive = true;
-    _isPlaying = true;
+    _isPlaying = true; // Use timer for actual workouts
+    _isEditingRoutine = false;
     _workoutName = routine?.name ?? 'Log Workout';
 
     if (routine != null) {
-      for (final exerciseName in routine.exerciseNames) {
+      for (final routineExercise in routine.exercises) {
+        final exerciseName = routineExercise.name;
+        
         // Load previous sets for this exercise from backend
         _previousSets[exerciseName] = await _workoutRepository.getPreviousSets(exerciseName);
 
-        // Pre-fill first set from previous session if available
-        final prevSets = _previousSets[exerciseName] ?? [];
-        final initialWeight = prevSets.isNotEmpty ? prevSets[0].weight : 0;
-        final initialReps = prevSets.isNotEmpty ? prevSets[0].reps : 0;
+        // Map RoutineExercise -> ExerciseSession
+        // If the routine has sets defined (editing mode saved them), use them.
+        // Otherwise use previous history or default.
+        
+        List<ExerciseSet> sessSets = [];
+        if (routineExercise.sets.isNotEmpty) {
+           sessSets = routineExercise.sets.map((s) => ExerciseSet(
+             id: _uuid.v4(), // New session ID
+             weight: s.weight,
+             reps: s.reps,
+             completed: false,
+           )).toList();
+        } else {
+           // Fallback logic (history or default)
+           final prevSets = _previousSets[exerciseName] ?? [];
+           final initialWeight = prevSets.isNotEmpty ? prevSets[0].weight : 0;
+           final initialReps = prevSets.isNotEmpty ? prevSets[0].reps : 0;
+           
+           sessSets.add(ExerciseSet(
+             id: _uuid.v4(),
+             weight: initialWeight,
+             reps: initialReps,
+             completed: false,
+           ));
+        }
 
         _exercises.add(
           ExerciseSession(
             id: _uuid.v4(),
-            exerciseId: exerciseName,
+            exerciseId: exerciseName, // Using name as ID for now
             name: exerciseName,
-            sets: [
-              ExerciseSet(
-                id: _uuid.v4(),
-                weight: initialWeight,
-                reps: initialReps,
-                completed: false,
-              ),
-            ],
+            sets: sessSets,
           ),
         );
       }
@@ -104,6 +152,55 @@ class WorkoutProvider extends ChangeNotifier {
     
     _startTimer();
     notifyListeners();
+  }
+
+  // Called when entering "Editor Mode" from Create Routine screen
+  void loadRoutineForEditing(Routine routine) {
+    _resetState();
+    _isWorkoutActive = true;
+    _isPlaying = false; // NO TIMER
+    _isEditingRoutine = true; 
+    _workoutName = routine.name.isEmpty ? 'New Routine' : routine.name;
+
+    for (final routineExercise in routine.exercises) {
+       // Just load what is in the routine, literally.
+       final sessSets = routineExercise.sets.map((s) => ExerciseSet(
+         id: _uuid.v4(),
+         weight: s.weight,
+         reps: s.reps,
+         completed: false, // Completion checkmarks don't mean "done" in editor, maybe just "valid"? or ignored?
+                           // Actually in editor we might not show checkboxes? Or check = "include"?
+                           // For now let's keep them false.
+       )).toList();
+
+       // If no sets, add one empty one so it shows up?
+       if (sessSets.isEmpty) {
+         sessSets.add(ExerciseSet(id: _uuid.v4(), weight: 0, reps: 0, completed: false));
+       }
+
+       _exercises.add(ExerciseSession(
+         id: _uuid.v4(),
+         exerciseId: routineExercise.name,
+         name: routineExercise.name,
+         sets: sessSets,
+       ));
+    }
+    notifyListeners();
+  }
+
+  // Extract data back to Routine format
+  List<RoutineExercise> getRoutineExercises() {
+    return _exercises.map((ex) {
+      return RoutineExercise(
+        id: const Uuid().v4(), // or keep original? doesnt matter much for new save
+        name: ex.name,
+        sets: ex.sets.map((s) => RoutineSet(
+          id: const Uuid().v4(),
+          weight: s.weight,
+          reps: s.reps,
+        )).toList(),
+      );
+    }).toList();
   }
 
   // Renamed to addWorkout as it now takes final details
@@ -134,7 +231,7 @@ class WorkoutProvider extends ChangeNotifier {
     final workout = Workout(
       id: id,
       name: name,
-      date: DateTime.now(), // Or keep original date? Let's keep original date if we had it
+      date: _editingWorkoutDate ?? DateTime.now(), // Preserve original date or use now
       duration: (_secondsElapsed / 60).ceil(),
       totalVolume: _cachedTotalVolume,
       exercises: _exercises,
@@ -148,10 +245,33 @@ class WorkoutProvider extends ChangeNotifier {
   void loadWorkoutForEditing(Workout workout) {
     _isWorkoutActive = true;
     _isPlaying = false; // Don't start timer automatically
+    _isEditingRoutine = false; // This is workout editing, not routine editing
     _workoutName = workout.name;
+    _editingWorkoutId = workout.id;
+    _editingWorkoutDate = workout.date;
     _secondsElapsed = workout.duration * 60;
     _exercises.clear();
-    _exercises.addAll(workout.exercises);
+    // Deep copy exercises to avoid mutating the original workout in the repo
+    for (final ex in workout.exercises) {
+      final newSets = ex.sets.map((s) => ExerciseSet(
+        id: s.id, // Keep ID to track updates? Or new ID? 
+                  // If we want to update existing sets, keep ID. 
+                  // If we treat it as new sets replacing old, new ID?
+                  // Generally for "editing" we want to keep IDs if possible to match? 
+                  // Actually ExerciseSet ID doesn't matter much unless we sync with backend.
+                  // But let's keep it safe.
+        weight: s.weight,
+        reps: s.reps,
+        completed: s.completed,
+      )).toList();
+
+      _exercises.add(ExerciseSession(
+        id: ex.id,
+        exerciseId: ex.exerciseId,
+        name: ex.name,
+        sets: newSets,
+      ));
+    }
     _recalculateStats();
     notifyListeners();
   }
@@ -162,22 +282,18 @@ class WorkoutProvider extends ChangeNotifier {
     _secondsElapsed = 0;
     _isPlaying = false;
     _isWorkoutActive = false;
+    _isEditingRoutine = false;
     _workoutName = 'Evening Workout';
+    _editingWorkoutId = null;
+    _editingWorkoutDate = null;
     _cachedTotalVolume = 0;
     _cachedTotalSets = 0;
     _sessionBests.clear();
   }
 
   void cancelWorkout() {
-    // Cancel without saving
+    _resetToInitial(); // simple implementation
     stopTimer();
-    _exercises.clear();
-    _secondsElapsed = 0;
-    _isPlaying = false;
-    _isWorkoutActive = false;
-    _workoutName = 'Evening Workout';
-    _cachedTotalVolume = 0;
-    _cachedTotalSets = 0;
     notifyListeners();
   }
 
@@ -195,15 +311,21 @@ class WorkoutProvider extends ChangeNotifier {
     _secondsElapsed = 0;
     _exercises.clear();
     _workoutName = 'Log Workout';
+    _isEditingRoutine = false;
+    _editingWorkoutId = null;
+    _editingWorkoutDate = null;
   }
 
   void toggleTimer() {
+    if (_isEditingRoutine) return; // Cannot toggle timer in routine edit mode
     _isPlaying = !_isPlaying;
     notifyListeners();
   }
 
   void _startTimer() {
     _timer?.cancel();
+    if (_isEditingRoutine) return; // Do not start timer if editing routine
+
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_isPlaying && _isWorkoutActive) {
         _secondsElapsed++;
@@ -214,9 +336,14 @@ class WorkoutProvider extends ChangeNotifier {
 
   // Exercise Management
   Future<void> addExercise(String name) async {
-    _previousSets[name] = await _workoutRepository.getPreviousSets(name);
+    // If editing routine, we don't necessarily need previous history, but maybe nice to have default?
+    // Let's keep it consistent.
+    if (!_isEditingRoutine) {
+        _previousSets[name] = await _workoutRepository.getPreviousSets(name);
+    }
     
-    // Pre-fill first set if previous data exists
+    // Pre-fill first set if previous data exists (only if NOT editing routine? 
+    // actually user might want to see their usual weights even when designing a routine)
     final prevSets = _previousSets[name] ?? [];
     final initialWeight = prevSets.isNotEmpty ? prevSets[0].weight : 0;
     final initialReps = prevSets.isNotEmpty ? prevSets[0].reps : 0;
@@ -280,6 +407,51 @@ class WorkoutProvider extends ChangeNotifier {
     }
   }
   
+  // Rest Timer Logic
+  void setRestTime(String exerciseId, int seconds) {
+    _exerciseRestTimes[exerciseId] = seconds;
+    notifyListeners();
+  }
+
+  void _startRestTimer(int seconds) {
+    _restTimer?.cancel();
+    _totalRestSeconds = seconds;
+    _currentRestSeconds = seconds;
+    _isRestTimerRunning = true;
+    notifyListeners();
+
+    _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_currentRestSeconds > 0) {
+        _currentRestSeconds--;
+        notifyListeners();
+      } else {
+        stopRestTimer();
+      }
+    });
+  }
+
+  void stopRestTimer() {
+    _restTimer?.cancel();
+    _restTimer = null;
+    _isRestTimerRunning = false;
+    _currentRestSeconds = 0;
+    _totalRestSeconds = 0;
+    notifyListeners();
+  }
+
+  void adjustRestTimer(int seconds) {
+    if (!_isRestTimerRunning) return;
+    _currentRestSeconds += seconds;
+    if (_currentRestSeconds < 0) _currentRestSeconds = 0;
+    // Optionally update total if we want the progress bar to adapt? 
+    // Usually adding time extends the duration, so total might stay same or increase?
+    // Let's just keep total same for progress context, or update it if current > total.
+    if (_currentRestSeconds > _totalRestSeconds) {
+       _totalRestSeconds = _currentRestSeconds;
+    }
+    notifyListeners();
+  }
+
   Future<void> toggleSetCompletion(int exerciseIndex, int setIndex) async {
      if (exerciseIndex >= 0 && exerciseIndex < _exercises.length) {
        final sets = _exercises[exerciseIndex].sets;
@@ -296,6 +468,12 @@ class WorkoutProvider extends ChangeNotifier {
 
          if (newSet.completed) {
            await _checkForPRs(_exercises[exerciseIndex].name, newSet);
+           
+           // Trigger Rest Timer if configured
+           final restTime = _exerciseRestTimes[_exercises[exerciseIndex].name] ?? 0;
+           if (restTime > 0) {
+             _startRestTimer(restTime);
+           }
          }
          
          notifyListeners();
@@ -321,26 +499,68 @@ class WorkoutProvider extends ChangeNotifier {
     final oneRM = weight * (1 + set.reps / 30.0);
     final volume = (weight * set.reps).toDouble();
 
-    // 4. Compare and notify
-    if (weight > currentBests['heaviestWeight']!) {
+    // 4. Compare and notify (only if there's a previous non-zero value)
+    // Add delays between notifications so they don't overlap
+    int delayMs = 0;
+    
+    // Track types achieved in this session to prevent duplicates
+    _achievedPRTypes.putIfAbsent(exerciseName, () => {});
+    final sessionAchieved = _achievedPRTypes[exerciseName]!;
+    
+    final historicalWeight = historicalPRs['heaviestWeight'] ?? 0.0;
+    if (weight > currentBests['heaviestWeight']! && historicalWeight > 0) {
       currentBests['heaviestWeight'] = weight;
-      _prStreamController.add(PREvent(exerciseName, 'Heaviest Weight', weight, 'kg'));
+      _exercisesWithPRs.add(exerciseName); // Mark exercise as having PR for badge
+      
+      // Notify for Every improvement (even within same session)
+      Future.delayed(Duration(milliseconds: delayMs), () {
+        _prStreamController.add(PREvent(exerciseName, 'Heaviest Weight', weight, 'kg'));
+      });
+      delayMs += 3500;
+
+      // But only count ONCE per session for the final summary
+      if (!sessionAchieved.contains('weight')) {
+        sessionAchieved.add('weight');
+        _totalPRCount++;
+      }
     }
     
-    if (oneRM > currentBests['best1RM']!) {
+    final historical1RM = historicalPRs['best1RM'] ?? 0.0;
+    if (oneRM > currentBests['best1RM']! && historical1RM > 0) {
       currentBests['best1RM'] = oneRM;
-      _prStreamController.add(PREvent(exerciseName, 'Best 1RM', oneRM, 'kg'));
+      _exercisesWithPRs.add(exerciseName);
+      
+      Future.delayed(Duration(milliseconds: delayMs), () {
+        _prStreamController.add(PREvent(exerciseName, 'Best 1RM', oneRM, 'kg'));
+      });
+      delayMs += 3500;
+
+      if (!sessionAchieved.contains('1rm')) {
+        sessionAchieved.add('1rm');
+        _totalPRCount++;
+      }
     }
 
-    if (volume > currentBests['bestSetVolume']!) {
+    final historicalVolume = historicalPRs['bestSetVolume'] ?? 0.0;
+    if (volume > currentBests['bestSetVolume']! && historicalVolume > 0) {
       currentBests['bestSetVolume'] = volume;
-      _prStreamController.add(PREvent(exerciseName, 'Best Set Volume', volume, 'kg'));
+      _exercisesWithPRs.add(exerciseName);
+      
+      Future.delayed(Duration(milliseconds: delayMs), () {
+        _prStreamController.add(PREvent(exerciseName, 'Best Set Volume', volume, 'kg'));
+      });
+
+      if (!sessionAchieved.contains('volume')) {
+        sessionAchieved.add('volume');
+        _totalPRCount++;
+      }
     }
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _restTimer?.cancel();
     _prStreamController.close();
     super.dispose();
   }

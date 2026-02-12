@@ -57,6 +57,10 @@ exports.getAllRoutines = async (req, res) => {
  *                 type: string
  *               duration:
  *                 type: number
+ *               exercises:
+ *                 type: array
+ *                 items:
+ *                   type: object
  *               exerciseNames:
  *                 type: array
  *                 items:
@@ -66,7 +70,7 @@ exports.getAllRoutines = async (req, res) => {
  *         description: Routine created
  */
 exports.createRoutine = async (req, res) => {
-    const { name, description, level, duration, exerciseNames } = req.body;
+    const { name, description, level, duration, exerciseNames, exercises } = req.body;
 
     const supabase = getClient(req.userToken);
     try {
@@ -87,18 +91,43 @@ exports.createRoutine = async (req, res) => {
         if (routineError) throw routineError;
 
         // 2. Insert Exercises
-        if (exerciseNames && exerciseNames.length > 0) {
-            const exercisesData = exerciseNames.map((name, index) => ({
-                routine_id: routine.id,
-                exercise_name: name,
-                order_index: index
-            }));
+        // Prioritize 'exercises' (full object), fallback to 'exerciseNames'
+        const exercisesList = exercises || (exerciseNames ? exerciseNames.map(n => ({ name: n, sets: [] })) : []);
 
-            const { error: exercisesError } = await supabase
-                .from('routine_exercises')
-                .insert(exercisesData);
+        if (exercisesList && exercisesList.length > 0) {
+            for (let i = 0; i < exercisesList.length; i++) {
+                const ex = exercisesList[i];
+                const { data: exData, error: exercisesError } = await supabase
+                    .from('routine_exercises')
+                    .insert({
+                        routine_id: routine.id,
+                        exercise_name: ex.name,
+                        order_index: i
+                    })
+                    .select()
+                    .single();
 
-            if (exercisesError) throw exercisesError;
+                if (exercisesError) throw exercisesError;
+
+                // 3. Try Insert Sets
+                if (ex.sets && ex.sets.length > 0) {
+                    try {
+                        const setsData = ex.sets.map((s, idx) => ({
+                            routine_exercise_id: exData.id,
+                            weight: s.weight,
+                            reps: s.reps,
+                            order_index: idx
+                        }));
+
+                        await supabase
+                            .from('routine_exercise_sets')
+                            .insert(setsData);
+                    } catch (setsError) {
+                        console.warn('Failed to save routine sets (schema might be missing):', setsError.message);
+                        // Continue - don't fail the whole request
+                    }
+                }
+            }
         }
 
         res.status(201).json(routine);
@@ -136,6 +165,10 @@ exports.createRoutine = async (req, res) => {
  *                 type: string
  *               duration:
  *                 type: number
+ *               exercises:
+ *                 type: array
+ *                 items:
+ *                   type: object
  *               exerciseNames:
  *                 type: array
  *                 items:
@@ -146,7 +179,7 @@ exports.createRoutine = async (req, res) => {
  */
 exports.updateRoutine = async (req, res) => {
     const { id } = req.params;
-    const { name, description, level, duration, exerciseNames } = req.body;
+    const { name, description, level, duration, exerciseNames, exercises } = req.body;
 
     const supabase = getClient(req.userToken);
     try {
@@ -173,18 +206,41 @@ exports.updateRoutine = async (req, res) => {
 
         if (deleteError) throw deleteError;
 
-        if (exerciseNames && exerciseNames.length > 0) {
-            const exercisesData = exerciseNames.map((name, index) => ({
-                routine_id: id,
-                exercise_name: name,
-                order_index: index,
-            }));
+        const exercisesList = exercises || (exerciseNames ? exerciseNames.map(n => ({ name: n, sets: [] })) : []);
 
-            const { error: exercisesError } = await supabase
-                .from('routine_exercises')
-                .insert(exercisesData);
+        if (exercisesList && exercisesList.length > 0) {
+            for (let i = 0; i < exercisesList.length; i++) {
+                const ex = exercisesList[i];
+                const { data: exData, error: exercisesError } = await supabase
+                    .from('routine_exercises')
+                    .insert({
+                        routine_id: id,
+                        exercise_name: ex.name,
+                        order_index: i,
+                    })
+                    .select()
+                    .single();
 
-            if (exercisesError) throw exercisesError;
+                if (exercisesError) throw exercisesError;
+
+                // 3. Try Insert Sets
+                if (ex.sets && ex.sets.length > 0) {
+                    try {
+                        const setsData = ex.sets.map((s, idx) => ({
+                            routine_exercise_id: exData.id,
+                            weight: s.weight,
+                            reps: s.reps,
+                            order_index: idx
+                        }));
+
+                        await supabase
+                            .from('routine_exercise_sets')
+                            .insert(setsData);
+                    } catch (setsError) {
+                        console.warn('Failed to save routine sets (schema might be missing):', setsError.message);
+                    }
+                }
+            }
         }
 
         res.json(routine);

@@ -1,20 +1,80 @@
 
 import 'package:uuid/uuid.dart';
 
+import 'package:uuid/uuid.dart';
+
+class RoutineSet {
+  final String id;
+  final int weight;
+  final int reps;
+
+  RoutineSet({
+    required this.id,
+    this.weight = 0,
+    this.reps = 0,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'weight': weight,
+        'reps': reps,
+      };
+
+  factory RoutineSet.fromJson(Map<String, dynamic> json) {
+    return RoutineSet(
+      id: json['id'] ?? const Uuid().v4(),
+      weight: json['weight'] ?? 0,
+      reps: json['reps'] ?? 0,
+    );
+  }
+}
+
+class RoutineExercise {
+  final String id;
+  final String name;
+  final List<RoutineSet> sets;
+
+  RoutineExercise({
+    required this.id,
+    required this.name,
+    required this.sets,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'sets': sets.map((s) => s.toJson()).toList(),
+      };
+
+  factory RoutineExercise.fromJson(Map<String, dynamic> json) {
+    return RoutineExercise(
+      id: json['id'] ?? const Uuid().v4(),
+      name: json['name'] ?? '',
+      sets: (json['sets'] as List<dynamic>?)
+              ?.map((s) => RoutineSet.fromJson(s))
+              .toList() ??
+          [],
+    );
+  }
+}
+
 class Routine {
   final String id;
   final String name;
   final String description;
-  final List<String> exerciseNames;
+  final List<RoutineExercise> exercises;
   final String level; // Beginner, Intermediate, Advanced
   final int duration; // Estimated duration in minutes
   final bool isCustom; // User-created vs default
+
+  // Backward compatibility getter
+  List<String> get exerciseNames => exercises.map((e) => e.name).toList();
 
   Routine({
     required this.id,
     required this.name,
     required this.description,
-    required this.exerciseNames,
+    required this.exercises,
     required this.level,
     required this.duration,
     this.isCustom = false,
@@ -23,16 +83,35 @@ class Routine {
   factory Routine.create({
     required String name,
     required String description,
-    required List<String> exerciseNames,
+    required List<String> exerciseNames, // Keep for easy creation
+    List<RoutineExercise>? detailedExercises, // Optional detailed sets
     String level = 'Intermediate',
     int duration = 45,
     bool isCustom = false,
   }) {
+    // If detailed exercises are provided, use them. Otherwise create from names.
+    List<RoutineExercise> finalExercises;
+    if (detailedExercises != null) {
+      finalExercises = detailedExercises;
+    } else {
+      finalExercises = exerciseNames.map((name) {
+        return RoutineExercise(
+          id: const Uuid().v4(),
+          name: name,
+          sets: [
+            RoutineSet(id: const Uuid().v4(), weight: 0, reps: 0),
+            RoutineSet(id: const Uuid().v4(), weight: 0, reps: 0),
+            RoutineSet(id: const Uuid().v4(), weight: 0, reps: 0),
+          ],
+        );
+      }).toList();
+    }
+
     return Routine(
       id: const Uuid().v4(),
       name: name,
       description: description,
-      exerciseNames: exerciseNames,
+      exercises: finalExercises,
       level: level,
       duration: duration,
       isCustom: isCustom,
@@ -40,21 +119,38 @@ class Routine {
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'description': description,
-    'exerciseNames': exerciseNames,
-    'level': level,
-    'duration': duration,
-    'isCustom': isCustom,
-  };
+        'id': id,
+        'name': name,
+        'description': description,
+        'exercises': exercises.map((e) => e.toJson()).toList(),
+        'level': level,
+        'duration': duration,
+        'isCustom': isCustom,
+      };
 
   factory Routine.fromJson(Map<String, dynamic> json) {
+    List<RoutineExercise> exercises = [];
+    
+    if (json['exercises'] != null) {
+      exercises = (json['exercises'] as List)
+          .map((e) => RoutineExercise.fromJson(e))
+          .toList();
+    } else if (json['exerciseNames'] != null) {
+      // Handle legacy format
+      exercises = (json['exerciseNames'] as List<dynamic>).map((name) {
+        return RoutineExercise(
+          id: const Uuid().v4(),
+          name: name.toString(),
+          sets: [], // Empty sets for legacy
+        );
+      }).toList();
+    }
+
     return Routine(
       id: json['id'],
       name: json['name'],
       description: json['description'],
-      exerciseNames: List<String>.from(json['exerciseNames']),
+      exercises: exercises,
       level: json['level'],
       duration: json['duration'],
       isCustom: json['isCustom'] ?? false,

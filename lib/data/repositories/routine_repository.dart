@@ -5,7 +5,7 @@ import '../models/routine.dart';
 
 class RoutineRepository extends ChangeNotifier {
   final List<Routine> _defaultRoutines = [
-    // ... (same as before)
+    // ... (same as before - kept simple/hardcoded for defaults)
     Routine.create(
       name: 'Full Body Power',
       description: 'Compound movements for maximum strength.',
@@ -56,15 +56,29 @@ class RoutineRepository extends ChangeNotifier {
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         _customRoutines = data.where((json) => json['is_custom'] == true).map((json) {
-          final exercises = (json['routine_exercises'] as List)
-              .map((e) => e['exercise_name'] as String)
-              .toList();
           
+          List<RoutineExercise> exercises = [];
+          if (json['routine_exercises'] != null) {
+            exercises = (json['routine_exercises'] as List).map((e) {
+              final sets = (e['routine_exercise_sets'] as List?)?.map((s) => RoutineSet(
+                id: s['id']?.toString() ?? '',
+                weight: s['weight'] ?? 0,
+                reps: s['reps'] ?? 0,
+              )).toList() ?? [];
+
+              return RoutineExercise(
+                id: e['id']?.toString() ?? '',
+                name: e['exercise_name'] ?? '',
+                sets: sets,
+              );
+            }).toList();
+          }
+
           return Routine(
             id: json['id'],
             name: json['name'],
             description: json['description'] ?? '',
-            exerciseNames: exercises,
+            exercises: exercises,
             level: json['level'] ?? 'Intermediate',
             duration: json['duration'] ?? 45,
             isCustom: true,
@@ -85,7 +99,14 @@ class RoutineRepository extends ChangeNotifier {
         'description': routine.description,
         'level': routine.level,
         'duration': routine.duration,
-        'exerciseNames': routine.exerciseNames,
+        // Send full structure
+        'exercises': routine.exercises.map((e) => {
+          'name': e.name,
+          'sets': e.sets.map((s) => {
+            'weight': s.weight,
+            'reps': s.reps,
+          }).toList(),
+        }).toList(),
       };
 
       final response = await ApiClient.post('/routines', routineData);
@@ -117,7 +138,13 @@ class RoutineRepository extends ChangeNotifier {
         'description': routine.description,
         'level': routine.level,
         'duration': routine.duration,
-        'exerciseNames': routine.exerciseNames,
+        'exercises': routine.exercises.map((e) => {
+          'name': e.name,
+          'sets': e.sets.map((s) => {
+            'weight': s.weight,
+            'reps': s.reps,
+          }).toList(),
+        }).toList(),
       };
 
       final response = await ApiClient.put('/routines/${routine.id}', routineData);

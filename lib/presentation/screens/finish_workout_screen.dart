@@ -78,11 +78,21 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
                       subValue: 'kg',
                       icon: LucideIcons.trendingUp,
                     )),
-                    const SizedBox(width: 12),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
                     Expanded(child: _SummaryStat(
                       label: 'Sets',
                       value: '${provider.totalSets}',
                       icon: LucideIcons.layers,
+                    )),
+                    const SizedBox(width: 12),
+                    Expanded(child: _SummaryStat(
+                      label: 'PRs',
+                      value: '${provider.totalPRsAchieved}',
+                      icon: LucideIcons.trophy,
                     )),
                   ],
                 ),

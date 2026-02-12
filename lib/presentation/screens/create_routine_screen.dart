@@ -24,7 +24,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
   final _durationController = TextEditingController(text: '45');
   
   String _selectedLevel = 'Intermediate';
-  List<String> _selectedExercises = [];
+  List<RoutineExercise> _selectedExercises = []; // Changed type
   bool get _isEditing => widget.initialRoutine != null;
 
   @override
@@ -36,7 +36,8 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
       _descriptionController.text = initial.description;
       _durationController.text = initial.duration.toString();
       _selectedLevel = initial.level;
-      _selectedExercises = List<String>.from(initial.exerciseNames);
+      // Copy existing exercises including sets/reps
+      _selectedExercises = List<RoutineExercise>.from(initial.exercises);
     }
   }
 
@@ -49,12 +50,19 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
   }
 
   Future<void> _selectExercises() async {
-    final result = await context.push<List<String>>(
-      '/workout/add',
-      extra: {
-        'isMultiSelect': true,
-        'initialSelectedExercises': _selectedExercises,
-      },
+    // Create a temporary routine with current exercises to pass to editor
+    final tempRoutine = Routine(
+      id: 'temp', 
+      name: _nameController.text, 
+      description: '', 
+      exercises: _selectedExercises, 
+      level: _selectedLevel, 
+      duration: 0
+    );
+
+    final result = await context.push<List<RoutineExercise>>(
+      '/workout/edit',
+      extra: tempRoutine,
     );
 
     if (result != null) {
@@ -81,7 +89,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
           id: widget.initialRoutine!.id,
           name: _nameController.text,
           description: _descriptionController.text,
-          exerciseNames: _selectedExercises,
+          exercises: _selectedExercises,
           level: _selectedLevel,
           duration: int.tryParse(_durationController.text) ?? 45,
           isCustom: true,
@@ -124,7 +132,8 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
         final routine = Routine.create(
           name: customName,
           description: _descriptionController.text,
-          exerciseNames: _selectedExercises,
+          exerciseNames: _selectedExercises.map((e) => e.name).toList(),
+          detailedExercises: _selectedExercises,
           level: _selectedLevel,
           duration: int.tryParse(_durationController.text) ?? 45,
           isCustom: true,
@@ -135,7 +144,8 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
         final routine = Routine.create(
           name: _nameController.text,
           description: _descriptionController.text,
-          exerciseNames: _selectedExercises,
+          exerciseNames: _selectedExercises.map((e) => e.name).toList(),
+          detailedExercises: _selectedExercises,
           level: _selectedLevel,
           duration: int.tryParse(_durationController.text) ?? 45,
           isCustom: true,
@@ -330,7 +340,16 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                                 const Icon(LucideIcons.activity, size: 16, color: AppTheme.primary),
                                 const SizedBox(width: 12),
                                 Expanded(
-                                  child: Text(exercise, style: const TextStyle(fontSize: 14)),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(exercise.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                                      Text(
+                                        '${exercise.sets.length} sets', 
+                                        style: const TextStyle(fontSize: 12, color: AppTheme.mutedForeground)
+                                      ),
+                                    ],
+                                  ),
                                 ),
                                 IconButton(
                                   icon: const Icon(LucideIcons.x, size: 16, color: Colors.red),

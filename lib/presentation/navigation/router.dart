@@ -114,6 +114,20 @@ GoRouter createRouter(AuthRepository authRepo) {
             },
           ),
           GoRoute(
+            path: 'edit',
+            builder: (context, state) {
+               final routine = state.extra as Routine;
+               return WorkoutScreen(initialRoutine: routine, isEditing: true);
+            },
+          ),
+          GoRoute(
+            path: 'edit-log',
+            builder: (context, state) {
+               // Provider should be pre-loaded by the caller (WorkoutDetailsScreen)
+               return const WorkoutScreen(isEditingLog: true);
+            },
+          ),
+          GoRoute(
             path: 'finish/:id',
             builder: (context, state) {
               final id = state.pathParameters['id'];

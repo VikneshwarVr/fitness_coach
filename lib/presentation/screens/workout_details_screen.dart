@@ -31,7 +31,7 @@ class WorkoutDetailsScreen extends StatelessWidget {
                     icon: const Icon(LucideIcons.edit2, size: 20),
                     onPressed: () {
                       context.read<WorkoutProvider>().loadWorkoutForEditing(workout);
-                      context.push('/workout/finish/${workout.id}');
+                      context.push('/workout/edit-log');
                     },
                     tooltip: 'Edit Workout',
                   ),

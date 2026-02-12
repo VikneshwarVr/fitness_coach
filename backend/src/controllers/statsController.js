@@ -36,7 +36,7 @@ const majorCategories = {
   'T-Bar Row': { Back: 60, Arms: 25, Shoulders: 15 },
   'Seated Cable Row': { Back: 60, Arms: 25, Shoulders: 15 },
   'Inverted Row': { Back: 60, Arms: 25, Shoulders: 15 },
-  Deadlift: { Back: 50, Legs: 30, Glutes: 20 },
+  'Deadlift': { Back: 50, Legs: 30, Glutes: 20 },
   'Rack Pull': { Back: 60, Legs: 20, Glutes: 20 },
   'Straight-arm Pulldown': { Back: 70, Arms: 30 },
   'Face Pull': { Back: 40, Shoulders: 40, Arms: 20 },
@@ -72,7 +72,7 @@ const majorCategories = {
   'Rope Pushdown': { Arms: 100 },
   'Skull Crushers': { Arms: 100 },
   'Overhead Tricep Extension': { Arms: 100 },
-  Dips: { Chest: 40, Arms: 60 },
+  'Dips': { Chest: 40, Arms: 60 },
   'Bench Dips': { Chest: 40, Arms: 60 },
   'Close-Grip Bench Press': { Chest: 50, Arms: 50 },
   'Cable Overhead Extension': { Arms: 100 },
@@ -104,9 +104,9 @@ const majorCategories = {
   'Leg Press Calf Raise': { Legs: 100 },
 
   // Core / Abs
-  Plank: { Core: 100 },
+  'Plank': { Core: 100 },
   'Side Plank': { Core: 100 },
-  Crunch: { Core: 100 },
+  'Crunch': { Core: 100 },
   'Sit-ups': { Core: 100 },
   'Hanging Leg Raise': { Core: 100 },
   'Lying Leg Raise': { Core: 100 },
@@ -118,26 +118,26 @@ const majorCategories = {
   'Toe Touches': { Core: 100 },
 
   // Cardio
-  Running: { Cardio: 100 },
+  'Running': { Cardio: 100 },
   'Treadmill Walk': { Cardio: 100 },
-  Cycling: { Cardio: 100 },
+  'Cycling': { Cardio: 100 },
   'Stationary Bike': { Cardio: 100 },
   'Jump Rope': { Cardio: 100 },
   'Rowing Machine': { Cardio: 100 },
-  Elliptical: { Cardio: 100 },
+  'Elliptical': { Cardio: 100 },
   'Stair Climber': { Cardio: 100 },
-  HIIT: { Cardio: 100 },
-  Swimming: { Cardio: 100 },
+  'HIIT': { Cardio: 100 },
+  'Swimming': { Cardio: 100 },
 
   // Full Body
-  Burpees: { 'Full Body': 100 },
+  'Burpees': { 'Full Body': 100 },
   'Kettlebell Swing': { 'Full Body': 100 },
   "Farmer\u2019s Carry": { 'Full Body': 100 },
   'Battle Ropes': { 'Full Body': 100 },
   'Sled Push': { 'Full Body': 100 },
   'Medicine Ball Slam': { 'Full Body': 100 },
   'Clean and Press': { 'Full Body': 100 },
-  Snatch: { 'Full Body': 100 },
+  'Snatch': { 'Full Body': 100 },
 };
 
 const normalize = (name) => name.trim().toLowerCase();
