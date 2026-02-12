@@ -6,6 +6,7 @@ class Workout {
   final DateTime date;
   final int duration; // in minutes
   final int totalVolume; // in kg
+  final String? photoUrl;
   final List<ExerciseSession> exercises;
 
   Workout({
@@ -14,6 +15,7 @@ class Workout {
     required this.date,
     required this.duration,
     required this.totalVolume,
+    this.photoUrl,
     required this.exercises,
   });
 
@@ -39,17 +41,19 @@ class Workout {
       'date': date.toIso8601String(),
       'duration': duration,
       'totalVolume': totalVolume,
+      'photo_url': photoUrl,
       'exercises': exercises.map((e) => e.toJson()).toList(),
     };
   }
 
   factory Workout.fromJson(Map<String, dynamic> json) {
     return Workout(
-      id: json['id'],
-      name: json['name'],
-      date: DateTime.parse(json['date']),
-      duration: json['duration'],
-      totalVolume: json['totalVolume'],
+      id: json['id']?.toString() ?? '',
+      name: json['name'] ?? '',
+      date: DateTime.parse(json['date'] ?? DateTime.now().toIso8601String()),
+      duration: json['duration'] ?? 0,
+      totalVolume: json['totalVolume'] ?? json['total_volume'] ?? 0,
+      photoUrl: json['photo_url'],
       exercises: (json['exercises'] as List)
           .map((e) => ExerciseSession.fromJson(e))
           .toList(),
@@ -81,9 +85,9 @@ class ExerciseSession {
 
   factory ExerciseSession.fromJson(Map<String, dynamic> json) {
     return ExerciseSession(
-      id: json['id'],
-      exerciseId: json['exerciseId'],
-      name: json['name'],
+      id: json['id']?.toString() ?? '',
+      exerciseId: json['exerciseId']?.toString() ?? json['exercise_id']?.toString() ?? '',
+      name: json['name'] ?? '',
       sets: (json['sets'] as List).map((s) => ExerciseSet.fromJson(s)).toList(),
     );
   }
@@ -111,10 +115,10 @@ class ExerciseSet {
 
   factory ExerciseSet.fromJson(Map<String, dynamic> json) {
     return ExerciseSet(
-      id: json['id'],
-      weight: json['weight'],
-      reps: json['reps'],
-      completed: json['completed'],
+      id: json['id']?.toString() ?? '',
+      weight: json['weight'] ?? 0,
+      reps: json['reps'] ?? 0,
+      completed: json['completed'] ?? false,
     );
   }
 }

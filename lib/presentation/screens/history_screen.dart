@@ -61,28 +61,51 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(
-                                      DateFormat('MMM d, yyyy').format(workout.date),
-                                      style: const TextStyle(
-                                        color: AppTheme.mutedForeground,
-                                        fontSize: 12,
+                                    if (workout.photoUrl != null) ...[
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.network(
+                                          workout.photoUrl!,
+                                          width: 40,
+                                          height: 40,
+                                          fit: BoxFit.cover,
+                                        ),
                                       ),
-                                    ),
-                                    Text(
-                                      '${workout.duration} min',
-                                      style: const TextStyle(
-                                        color: AppTheme.mutedForeground,
-                                        fontSize: 12,
+                                      const SizedBox(width: 12),
+                                    ],
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                DateFormat('MMM d, yyyy').format(workout.date),
+                                                style: const TextStyle(
+                                                  color: AppTheme.mutedForeground,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                              Text(
+                                                '${workout.duration} min',
+                                                style: const TextStyle(
+                                                  color: AppTheme.mutedForeground,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            workout.name,
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  workout.name,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                 ),
                                 const SizedBox(height: 12),
                                 const Divider(color: AppTheme.border),

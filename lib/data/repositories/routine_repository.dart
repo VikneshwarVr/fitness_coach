@@ -1,11 +1,12 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import '../api/api_client.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/routine.dart';
 
 class RoutineRepository extends ChangeNotifier {
+  final _supabase = Supabase.instance.client;
+
   final List<Routine> _defaultRoutines = [
-    // ... (same as before - kept simple/hardcoded for defaults)
+    // ... (same as before - kept hardcoded for defaults)
     Routine.create(
       name: 'Full Body Power',
       description: 'Compound movements for maximum strength.',
@@ -51,111 +52,129 @@ class RoutineRepository extends ChangeNotifier {
   
   Future<void> loadRoutines() async {
     try {
-      final response = await ApiClient.get('/routines');
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      final data = await _supabase
+          .from('routines')
+          .select('*, routine_exercises(*)')
+          .eq('is_custom', true)
+          .eq('user_id', userId)
+          .order('created_at', ascending: false);
       
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        _customRoutines = data.where((json) => json['is_custom'] == true).map((json) {
-          
-          List<RoutineExercise> exercises = [];
-          if (json['routine_exercises'] != null) {
-            exercises = (json['routine_exercises'] as List).map((e) {
-              final sets = (e['routine_exercise_sets'] as List?)?.map((s) => RoutineSet(
-                id: s['id']?.toString() ?? '',
-                weight: s['weight'] ?? 0,
-                reps: s['reps'] ?? 0,
-              )).toList() ?? [];
+      _customRoutines = (data as List).map((json) {
+        List<RoutineExercise> exercises = [];
+        if (json['routine_exercises'] != null) {
+          exercises = (json['routine_exercises'] as List).map((e) {
+            final setsData = e['sets'] as List? ?? [];
+            final sets = setsData.map((s) => RoutineSet(
+              id: s['id']?.toString() ?? '',
+              weight: s['weight']?.toInt() ?? 0,
+              reps: s['reps']?.toInt() ?? 0,
+            )).toList();
 
-              return RoutineExercise(
-                id: e['id']?.toString() ?? '',
-                name: e['exercise_name'] ?? '',
-                sets: sets,
-              );
-            }).toList();
-          }
+            return RoutineExercise(
+              id: e['id']?.toString() ?? '',
+              name: e['exercise_name'] ?? '',
+              sets: sets,
+            );
+          }).toList();
+        }
 
-          return Routine(
-            id: json['id'],
-            name: json['name'],
-            description: json['description'] ?? '',
-            exercises: exercises,
-            level: json['level'] ?? 'Intermediate',
-            duration: json['duration'] ?? 45,
-            isCustom: true,
-          );
-        }).toList();
-        
-        notifyListeners();
-      }
-    } catch (e) {
-      debugPrint('Error loading routines: $e');
+        return Routine(
+          id: json['id'].toString(),
+          name: json['name'],
+          description: json['description'] ?? '',
+          exercises: exercises,
+          level: json['level'] ?? 'Intermediate',
+          duration: json['duration'] ?? 45,
+          isCustom: true,
+        );
+      }).toList();
+      
+      notifyListeners();
+    } catch (e, stack) {
+      debugPrint('Error loading routines from Supabase: $e');
+      debugPrint('Stack trace: $stack');
     }
   }
 
   Future<void> addRoutine(Routine routine) async {
     try {
-      final routineData = {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      // 1. Insert routine
+      final response = await _supabase.from('routines').insert({
         'name': routine.name,
         'description': routine.description,
         'level': routine.level,
         'duration': routine.duration,
-        // Send full structure
-        'exercises': routine.exercises.map((e) => {
-          'name': e.name,
-          'sets': e.sets.map((s) => {
-            'weight': s.weight,
-            'reps': s.reps,
-          }).toList(),
-        }).toList(),
-      };
+        'is_custom': true,
+        'user_id': userId,
+      }).select().single();
 
-      final response = await ApiClient.post('/routines', routineData);
+      final routineId = response['id'];
 
-      if (response.statusCode == 201) {
-        await loadRoutines();
+      // 2. Insert exercises and their sets
+      for (var i = 0; i < routine.exercises.length; i++) {
+        final exercise = routine.exercises[i];
+        await _supabase.from('routine_exercises').insert({
+          'routine_id': routineId,
+          'exercise_name': exercise.name,
+          'order_index': i,
+          'sets': exercise.sets.map((s) => s.toJson()).toList(),
+        });
       }
+
+      await loadRoutines();
     } catch (e) {
-      debugPrint('Error adding routine: $e');
+      debugPrint('Error adding routine to Supabase: $e');
+      rethrow;
     }
   }
 
   Future<void> deleteRoutine(String id) async {
     try {
-      final response = await ApiClient.delete('/routines/$id');
-      if (response.statusCode == 204) {
-        _customRoutines.removeWhere((r) => r.id == id);
-        notifyListeners();
-      }
+      // Supabase cascade delete should handle child records if configured in DB
+      await _supabase.from('routines').delete().eq('id', id);
+      _customRoutines.removeWhere((r) => r.id == id);
+      notifyListeners();
     } catch (e) {
-      debugPrint('Error deleting routine: $e');
+      debugPrint('Error deleting routine from Supabase: $e');
+      rethrow;
     }
   }
 
   Future<void> updateRoutine(Routine routine) async {
     try {
-      final routineData = {
+      // 1. Update routine header
+      await _supabase.from('routines').update({
         'name': routine.name,
         'description': routine.description,
         'level': routine.level,
         'duration': routine.duration,
-        'exercises': routine.exercises.map((e) => {
-          'name': e.name,
-          'sets': e.sets.map((s) => {
-            'weight': s.weight,
-            'reps': s.reps,
-          }).toList(),
-        }).toList(),
-      };
+      }).eq('id', routine.id);
 
-      final response = await ApiClient.put('/routines/${routine.id}', routineData);
-
-      if (response.statusCode == 200) {
-        await loadRoutines();
-      } else {
-        debugPrint('Error updating routine: ${response.statusCode}');
+      // 2. Simplify update: Delete current exercises and re-insert 
+      // (Alternatively, perform complex diffing)
+      await _supabase.from('routine_exercises').delete().eq('routine_id', routine.id);
+      
+      // 3. Re-insert exercises and sets (same as addRoutine)
+      for (var i = 0; i < routine.exercises.length; i++) {
+        final exercise = routine.exercises[i];
+        await _supabase.from('routine_exercises').insert({
+          'routine_id': routine.id,
+          'exercise_name': exercise.name,
+          'order_index': i,
+          'sets': exercise.sets.map((s) => s.toJson()).toList(),
+        });
       }
+
+      await loadRoutines();
     } catch (e) {
-      debugPrint('Error updating routine: $e');
+      debugPrint('Error updating routine in Supabase: $e');
+      rethrow;
     }
   }
 }

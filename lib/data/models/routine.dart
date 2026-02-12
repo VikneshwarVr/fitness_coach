@@ -22,7 +22,7 @@ class RoutineSet {
 
   factory RoutineSet.fromJson(Map<String, dynamic> json) {
     return RoutineSet(
-      id: json['id'] ?? const Uuid().v4(),
+      id: json['id']?.toString() ?? const Uuid().v4(),
       weight: json['weight'] ?? 0,
       reps: json['reps'] ?? 0,
     );
@@ -48,7 +48,7 @@ class RoutineExercise {
 
   factory RoutineExercise.fromJson(Map<String, dynamic> json) {
     return RoutineExercise(
-      id: json['id'] ?? const Uuid().v4(),
+      id: json['id']?.toString() ?? const Uuid().v4(),
       name: json['name'] ?? '',
       sets: (json['sets'] as List<dynamic>?)
               ?.map((s) => RoutineSet.fromJson(s))
@@ -147,8 +147,8 @@ class Routine {
     }
 
     return Routine(
-      id: json['id'],
-      name: json['name'],
+      id: json['id']?.toString() ?? '',
+      name: json['name'] ?? '',
       description: json['description'],
       exercises: exercises,
       level: json['level'],

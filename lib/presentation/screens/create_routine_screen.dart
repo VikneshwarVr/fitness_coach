@@ -25,6 +25,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
   
   String _selectedLevel = 'Intermediate';
   List<RoutineExercise> _selectedExercises = []; // Changed type
+  bool _isLoading = false;
   bool get _isEditing => widget.initialRoutine != null;
 
   @override
@@ -81,80 +82,98 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
         return;
       }
 
-      final repo = context.read<RoutineRepository>();
+      setState(() {
+        _isLoading = true;
+      });
 
-      if (_isEditing && widget.initialRoutine!.isCustom) {
-        // Update existing custom routine
-        final updated = Routine(
-          id: widget.initialRoutine!.id,
-          name: _nameController.text,
-          description: _descriptionController.text,
-          exercises: _selectedExercises,
-          level: _selectedLevel,
-          duration: int.tryParse(_durationController.text) ?? 45,
-          isCustom: true,
-        );
-        await repo.updateRoutine(updated);
-      } else if (_isEditing && !widget.initialRoutine!.isCustom) {
-        // Editing a default routine -> ask to save as custom
-        String customName = _nameController.text;
-        await showDialog(
-          context: context,
-          builder: (context) {
-            final controller = TextEditingController(text: customName);
-            return AlertDialog(
-              title: const Text('Save as Custom Routine'),
-              content: TextField(
-                controller: controller,
-                decoration: const InputDecoration(
-                  labelText: 'Custom routine name',
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    customName = controller.text.isNotEmpty ? controller.text : customName;
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Save'),
-                ),
-              ],
-            );
-          },
-        );
+      try {
+        final repo = context.read<RoutineRepository>();
 
-        if (!mounted) return;
+        if (_isEditing && widget.initialRoutine!.isCustom) {
+          // Update existing custom routine
+          final updated = Routine(
+            id: widget.initialRoutine!.id,
+            name: _nameController.text,
+            description: _descriptionController.text,
+            exercises: _selectedExercises,
+            level: _selectedLevel,
+            duration: int.tryParse(_durationController.text) ?? 45,
+            isCustom: true,
+          );
+          await repo.updateRoutine(updated);
+        } else if (_isEditing && !widget.initialRoutine!.isCustom) {
+          // Editing a default routine -> ask to save as custom
+          String customName = _nameController.text;
+          await showDialog(
+            context: context,
+            builder: (context) {
+              final controller = TextEditingController(text: customName);
+              return AlertDialog(
+                title: const Text('Save as Custom Routine'),
+                content: TextField(
+                  controller: controller,
+                  decoration: const InputDecoration(
+                    labelText: 'Custom routine name',
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      customName = controller.text.isNotEmpty ? controller.text : customName;
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Save'),
+                  ),
+                ],
+              );
+            },
+          );
 
-        final routine = Routine.create(
-          name: customName,
-          description: _descriptionController.text,
-          exerciseNames: _selectedExercises.map((e) => e.name).toList(),
-          detailedExercises: _selectedExercises,
-          level: _selectedLevel,
-          duration: int.tryParse(_durationController.text) ?? 45,
-          isCustom: true,
-        );
-        await repo.addRoutine(routine);
-      } else {
-        // Creating brand new custom routine
-        final routine = Routine.create(
-          name: _nameController.text,
-          description: _descriptionController.text,
-          exerciseNames: _selectedExercises.map((e) => e.name).toList(),
-          detailedExercises: _selectedExercises,
-          level: _selectedLevel,
-          duration: int.tryParse(_durationController.text) ?? 45,
-          isCustom: true,
-        );
-        await repo.addRoutine(routine);
-      }
-      
-      if (mounted) {
-        context.pop();
+          if (!mounted) return;
+
+          final routine = Routine.create(
+            name: customName,
+            description: _descriptionController.text,
+            exerciseNames: _selectedExercises.map((e) => e.name).toList(),
+            detailedExercises: _selectedExercises,
+            level: _selectedLevel,
+            duration: int.tryParse(_durationController.text) ?? 45,
+            isCustom: true,
+          );
+          await repo.addRoutine(routine);
+        } else {
+          // Creating brand new custom routine
+          final routine = Routine.create(
+            name: _nameController.text,
+            description: _descriptionController.text,
+            exerciseNames: _selectedExercises.map((e) => e.name).toList(),
+            detailedExercises: _selectedExercises,
+            level: _selectedLevel,
+            duration: int.tryParse(_durationController.text) ?? 45,
+            isCustom: true,
+          );
+          await repo.addRoutine(routine);
+        }
+        
+        if (mounted) {
+          context.pop();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error saving routine: $e')),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }
@@ -165,15 +184,26 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
       appBar: AppBar(
         title: Text(_isEditing ? 'Edit Routine' : 'Create Routine'),
         actions: [
-          TextButton(
-            onPressed: _saveRoutine,
-            child: const Text('Save', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
-          ),
+          _isLoading 
+            ? const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: SizedBox(
+                  width: 20, 
+                  height: 20, 
+                  child: CircularProgressIndicator(strokeWidth: 2)
+                ),
+              )
+            : TextButton(
+                onPressed: _saveRoutine,
+                child: const Text('Save', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+              ),
         ],
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
+      body: AbsorbPointer(
+        absorbing: _isLoading,
+        child: Form(
+          key: _formKey,
+          child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             // Name
@@ -370,7 +400,8 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                 ],
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );

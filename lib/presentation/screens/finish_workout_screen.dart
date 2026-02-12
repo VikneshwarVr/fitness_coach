@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme.dart';
@@ -135,6 +137,57 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 24),
+
+                // Photo Selection Section
+                const Text('Post-Workout Photo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 12),
+                if (provider.workoutPhotoPath != null) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Stack(
+                      children: [
+                        provider.workoutPhotoPath!.startsWith('http')
+                          ? Image.network(
+                              provider.workoutPhotoPath!,
+                              height: 200,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            )
+                          : Image.file(
+                              File(provider.workoutPhotoPath!),
+                              height: 200,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: CircleAvatar(
+                            backgroundColor: Colors.black.withOpacity(0.5),
+                            child: IconButton(
+                              icon: const Icon(LucideIcons.x, color: Colors.white, size: 20),
+                              onPressed: () => provider.setWorkoutPhoto(null),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    icon: const Icon(LucideIcons.camera, size: 20),
+                    label: Text(provider.workoutPhotoPath == null ? 'Add Photo' : 'Change Photo'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () => _showSourceSelection(context, provider),
+                  ),
+                ),
 
                 const SizedBox(height: 48),
                 
@@ -204,6 +257,60 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
           ),
         );
       },
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source, WorkoutProvider provider) async {
+    final picker = ImagePicker();
+    try {
+      final XFile? image = await picker.pickImage(
+        source: source,
+        maxWidth: 1080,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+      if (image != null) {
+        provider.setWorkoutPhoto(image.path);
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+    }
+  }
+
+  void _showSourceSelection(BuildContext context, WorkoutProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Select Photo Source', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 20),
+              ListTile(
+                leading: const Icon(LucideIcons.camera),
+                title: const Text('Take Photo'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.camera, provider);
+                },
+              ),
+              ListTile(
+                leading: const Icon(LucideIcons.image),
+                title: const Text('Pick from Gallery'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.gallery, provider);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

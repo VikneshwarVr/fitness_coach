@@ -318,8 +318,25 @@ class _RecentWorkoutsSection extends StatelessWidget {
                 child: FitnessCard(
                   onTap: () => context.push('/workout-details/${workout.id}'),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      if (workout.photoUrl != null) ...[
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            workout.photoUrl!,
+                            width: 48,
+                            height: 48,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              width: 48,
+                              height: 48,
+                              color: AppTheme.card,
+                              child: const Icon(LucideIcons.image, size: 20, color: AppTheme.mutedForeground),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                      ],
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,6 +350,7 @@ class _RecentWorkoutsSection extends StatelessWidget {
                           ],
                         ),
                       ),
+                      const SizedBox(width: 8),
                        Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [

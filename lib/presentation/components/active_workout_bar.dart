@@ -12,7 +12,7 @@ class ActiveWorkoutBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<WorkoutProvider>(
       builder: (context, provider, child) {
-        if (!provider.isWorkoutActive) {
+        if (!provider.isLiveWorkout) {
           return const SizedBox.shrink();
         }
 

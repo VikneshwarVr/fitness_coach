@@ -19,6 +19,7 @@ class WorkoutProvider extends ChangeNotifier {
   String? _editingWorkoutId; // ID of the workout being edited (if any)
   DateTime? _editingWorkoutDate; // Original date of the workout being edited
   final List<ExerciseSession> _exercises = [];
+  String? _workoutPhotoPath; // Local path to selected photo
   
   // Previous session data for current exercises
   final Map<String, List<ExerciseSet>> _previousSets = {};
@@ -56,6 +57,7 @@ class WorkoutProvider extends ChangeNotifier {
   String get workoutName => _workoutName;
   String? get editingWorkoutId => _editingWorkoutId;
   DateTime? get editingWorkoutDate => _editingWorkoutDate;
+  String? get workoutPhotoPath => _workoutPhotoPath;
   List<ExerciseSession> get exercises => List.unmodifiable(_exercises);
   Map<String, List<ExerciseSet>> get previousSets => Map.unmodifiable(_previousSets);
   int get totalPRsAchieved => _totalPRCount;
@@ -65,6 +67,8 @@ class WorkoutProvider extends ChangeNotifier {
   int get currentRestSeconds => _currentRestSeconds;
   int get totalRestSeconds => _totalRestSeconds;
   double get restTimerProgress => _totalRestSeconds > 0 ? _currentRestSeconds / _totalRestSeconds : 0.0;
+  
+  bool get isLiveWorkout => _isWorkoutActive && !_isEditingRoutine && _editingWorkoutId == null;
   
   int getRestTime(String exerciseId) => _exerciseRestTimes[exerciseId] ?? 0;
   
@@ -208,6 +212,11 @@ class WorkoutProvider extends ChangeNotifier {
     debugPrint('WorkoutProvider: addWorkout called with name: $name');
     stopTimer();
     
+    String? photoUrl;
+    if (_workoutPhotoPath != null) {
+      photoUrl = await _workoutRepository.uploadWorkoutPhoto(_workoutPhotoPath!);
+    }
+    
     if (name != null) {
       // Save the workout
       final workout = Workout(
@@ -216,6 +225,7 @@ class WorkoutProvider extends ChangeNotifier {
         date: DateTime.now(),
         duration: (_secondsElapsed / 60).ceil(), // Convert seconds to minutes
         totalVolume: _cachedTotalVolume,
+        photoUrl: photoUrl,
         exercises: _exercises,
       );
       await _workoutRepository.addWorkout(workout);
@@ -228,17 +238,32 @@ class WorkoutProvider extends ChangeNotifier {
   Future<void> saveUpdate({required String id, required String name}) async {
     debugPrint('WorkoutProvider: saveUpdate called for id: $id');
     
+    String? photoUrl;
+    if (_workoutPhotoPath != null) {
+      if (_workoutPhotoPath!.startsWith('http')) {
+        photoUrl = _workoutPhotoPath; // Keep existing cloud URL
+      } else {
+        photoUrl = await _workoutRepository.uploadWorkoutPhoto(_workoutPhotoPath!);
+      }
+    }
+
     final workout = Workout(
       id: id,
       name: name,
       date: _editingWorkoutDate ?? DateTime.now(), // Preserve original date or use now
       duration: (_secondsElapsed / 60).ceil(),
       totalVolume: _cachedTotalVolume,
+      photoUrl: photoUrl,
       exercises: _exercises,
     );
     
     await _workoutRepository.updateWorkout(workout);
     _resetToInitial();
+    notifyListeners();
+  }
+
+  void setWorkoutPhoto(String? path) {
+    _workoutPhotoPath = path;
     notifyListeners();
   }
 
@@ -249,6 +274,7 @@ class WorkoutProvider extends ChangeNotifier {
     _workoutName = workout.name;
     _editingWorkoutId = workout.id;
     _editingWorkoutDate = workout.date;
+    _workoutPhotoPath = workout.photoUrl;
     _secondsElapsed = workout.duration * 60;
     _exercises.clear();
     // Deep copy exercises to avoid mutating the original workout in the repo
@@ -288,6 +314,7 @@ class WorkoutProvider extends ChangeNotifier {
     _editingWorkoutDate = null;
     _cachedTotalVolume = 0;
     _cachedTotalSets = 0;
+    _workoutPhotoPath = null;
     _sessionBests.clear();
   }
 

@@ -27,7 +27,8 @@ CREATE TABLE public.routine_exercises (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   routine_id UUID REFERENCES public.routines(id) ON DELETE CASCADE NOT NULL,
   exercise_name TEXT NOT NULL,
-  order_index INTEGER NOT NULL
+  order_index INTEGER NOT NULL,
+  sets JSONB DEFAULT '[]'::jsonb
 );
 
 -- 4. Workouts Table

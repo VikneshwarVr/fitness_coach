@@ -46,6 +46,42 @@ class AuthRepository extends ChangeNotifier {
     }
   }
 
+  Future<void> signInWithGoogle() async {
+    try {
+      await _supabase.auth.signInWithOAuth(
+        OAuthProvider.google,
+        // redirectTo: kIsWeb ? null : 'io.supabase.fitness://login-callback/',
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> signInWithPhone(String phoneNumber) async {
+    try {
+      await _supabase.auth.signInWithOtp(
+        phone: phoneNumber,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> verifyOtp({
+    required String phoneNumber,
+    required String token,
+  }) async {
+    try {
+      await _supabase.auth.verifyOTP(
+        phone: phoneNumber,
+        token: token,
+        type: OtpType.sms,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> signOut() async {
     try {
       await _supabase.auth.signOut();
