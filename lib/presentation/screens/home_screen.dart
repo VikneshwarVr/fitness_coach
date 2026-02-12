@@ -68,11 +68,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: SecondaryButton(
                         label: 'Exercises',
                         icon: LucideIcons.library,
-                        // onPressed: () => context.go('/exercises'), // TODO: Implement route
+                        onPressed: () => context.push('/exercises'),
                       ),
                     ),
                   ],

@@ -26,9 +26,6 @@ class ExerciseDetailScreen extends StatelessWidget {
       secondaryMuscles = sortedEntries.skip(1).map((e) => e.key).toList();
     }
 
-    final repo = context.watch<WorkoutRepository>();
-    final prs = repo.getExercisePRs(exerciseName);
-
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
@@ -70,39 +67,64 @@ class ExerciseDetailScreen extends StatelessWidget {
             // Personal Records Section
             const Text('Personal Records', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 1.5,
-              children: [
-                _PRCard(
-                  label: 'Heaviest Weight',
-                  value: '${prs['heaviestWeight']?.toStringAsFixed(1)}',
-                  unit: 'kg',
-                  icon: LucideIcons.dumbbell,
-                ),
-                _PRCard(
-                  label: 'Best 1RM',
-                  value: '${prs['best1RM']?.toStringAsFixed(1)}',
-                  unit: 'kg',
-                  icon: LucideIcons.trophy,
-                ),
-                _PRCard(
-                  label: 'Best Set Volume',
-                  value: '${(prs['bestSetVolume']! / 1).toStringAsFixed(0)}',
-                  unit: 'kg',
-                  icon: LucideIcons.barChart,
-                ),
-                _PRCard(
-                  label: 'Best Session Volume',
-                  value: '${(prs['bestSessionVolume']! / 1).toStringAsFixed(0)}',
-                  unit: 'kg',
-                  icon: LucideIcons.layers,
-                ),
-              ],
+            Consumer<WorkoutRepository>(
+              builder: (context, repo, _) {
+                return FutureBuilder<Map<String, double>>(
+                  future: repo.getExercisePRs(exerciseName),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+
+                    final prs = snapshot.data ?? {
+                      'heaviestWeight': 0.0,
+                      'best1RM': 0.0,
+                      'bestSetVolume': 0.0,
+                      'bestSessionVolume': 0.0,
+                    };
+
+                    return GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 1.5,
+                      children: [
+                        _PRCard(
+                          label: 'Heaviest Weight',
+                          value: prs['heaviestWeight']!.toStringAsFixed(1),
+                          unit: 'kg',
+                          icon: LucideIcons.dumbbell,
+                        ),
+                        _PRCard(
+                          label: 'Best 1RM',
+                          value: prs['best1RM']!.toStringAsFixed(1),
+                          unit: 'kg',
+                          icon: LucideIcons.trophy,
+                        ),
+                        _PRCard(
+                          label: 'Best Set Volume',
+                          value: prs['bestSetVolume']!.toStringAsFixed(0),
+                          unit: 'kg',
+                          icon: LucideIcons.barChart,
+                        ),
+                        _PRCard(
+                          label: 'Best Session Volume',
+                          value: prs['bestSessionVolume']!.toStringAsFixed(0),
+                          unit: 'kg',
+                          icon: LucideIcons.layers,
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
             ),
             
             const SizedBox(height: 32),

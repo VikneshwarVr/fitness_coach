@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme.dart';
 import '../../data/repositories/workout_repository.dart';
@@ -49,17 +50,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const Center(
                 child: Text('Level 1 Athlete', style: TextStyle(color: AppTheme.primary, fontSize: 14)),
               ),
-              const SizedBox(height: 16),
-              SecondaryButton(
-                label: 'Exercises Library',
-                icon: LucideIcons.bookOpen,
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ExerciseListScreen()),
-                ),
-              ),
               const SizedBox(height: 24),
-              
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -143,6 +134,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
               ),
               
+              const SizedBox(height: 24),
+              SecondaryButton(
+                label: 'Exercises Library',
+                icon: LucideIcons.bookOpen,
+                onPressed: () => context.push('/exercises'),
+              ),
+
               const SizedBox(height: 32),
               const Text('Settings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),

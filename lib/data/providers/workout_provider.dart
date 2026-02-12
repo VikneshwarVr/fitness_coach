@@ -66,7 +66,7 @@ class WorkoutProvider extends ChangeNotifier {
   WorkoutProvider(this._workoutRepository);
 
   // Actions
-  void startWorkout({Routine? routine}) {
+  Future<void> startWorkout({Routine? routine}) async {
     if (_isWorkoutActive) return;
 
     _resetState();
@@ -76,8 +76,8 @@ class WorkoutProvider extends ChangeNotifier {
 
     if (routine != null) {
       for (final exerciseName in routine.exerciseNames) {
-        // Load previous sets for this exercise
-        _previousSets[exerciseName] = _workoutRepository.getPreviousSets(exerciseName);
+        // Load previous sets for this exercise from backend
+        _previousSets[exerciseName] = await _workoutRepository.getPreviousSets(exerciseName);
 
         // Pre-fill first set from previous session if available
         final prevSets = _previousSets[exerciseName] ?? [];
@@ -213,8 +213,8 @@ class WorkoutProvider extends ChangeNotifier {
   }
 
   // Exercise Management
-  void addExercise(String name) {
-    _previousSets[name] = _workoutRepository.getPreviousSets(name);
+  Future<void> addExercise(String name) async {
+    _previousSets[name] = await _workoutRepository.getPreviousSets(name);
     
     // Pre-fill first set if previous data exists
     final prevSets = _previousSets[name] ?? [];
@@ -280,7 +280,7 @@ class WorkoutProvider extends ChangeNotifier {
     }
   }
   
-  void toggleSetCompletion(int exerciseIndex, int setIndex) {
+  Future<void> toggleSetCompletion(int exerciseIndex, int setIndex) async {
      if (exerciseIndex >= 0 && exerciseIndex < _exercises.length) {
        final sets = _exercises[exerciseIndex].sets;
        if (setIndex >= 0 && setIndex < sets.length) {
@@ -295,7 +295,7 @@ class WorkoutProvider extends ChangeNotifier {
          _recalculateStats();
 
          if (newSet.completed) {
-           _checkForPRs(_exercises[exerciseIndex].name, newSet);
+           await _checkForPRs(_exercises[exerciseIndex].name, newSet);
          }
          
          notifyListeners();
@@ -303,9 +303,9 @@ class WorkoutProvider extends ChangeNotifier {
      }
   }
 
-  void _checkForPRs(String exerciseName, ExerciseSet set) {
-    // 1. Get Historical Bests
-    final historicalPRs = _workoutRepository.getExercisePRs(exerciseName);
+  Future<void> _checkForPRs(String exerciseName, ExerciseSet set) async {
+    // 1. Get Historical Bests from backend
+    final historicalPRs = await _workoutRepository.getExercisePRs(exerciseName);
     
     // 2. Initialize Session Bests for this exercise if not exists
     _sessionBests.putIfAbsent(exerciseName, () => {

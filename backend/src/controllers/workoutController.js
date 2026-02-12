@@ -7,6 +7,117 @@ const getClient = (token) => {
     });
 };
 
+// Helper: update exercise_prs table based on a workout's exercises/sets
+const updateExercisePRsForWorkout = async (supabase, userId, exercises = []) => {
+    if (!exercises || exercises.length === 0) return;
+
+    // Aggregate stats for this workout per exercise
+    const sessionStats = {};
+
+    for (const exercise of exercises) {
+        const name = exercise.name;
+        if (!name || !exercise.sets) continue;
+
+        if (!sessionStats[name]) {
+            sessionStats[name] = {
+                heaviestWeight: 0,
+                best1RM: 0,
+                bestSetVolume: 0,
+                bestSessionVolume: 0,
+                sessionVolume: 0
+            };
+        }
+
+        for (const set of exercise.sets) {
+            if (!set.completed) continue;
+
+            const weight = Number(set.weight || 0);
+            const reps = Number(set.reps || 0);
+            if (weight <= 0 || reps <= 0) continue;
+
+            const volume = weight * reps;
+            const oneRM = weight * (1 + reps / 30.0);
+
+            if (weight > sessionStats[name].heaviestWeight) {
+                sessionStats[name].heaviestWeight = weight;
+            }
+            if (oneRM > sessionStats[name].best1RM) {
+                sessionStats[name].best1RM = oneRM;
+            }
+            if (volume > sessionStats[name].bestSetVolume) {
+                sessionStats[name].bestSetVolume = volume;
+            }
+
+            sessionStats[name].sessionVolume += volume;
+        }
+
+        // After processing all sets for this exercise in this workout
+        if (sessionStats[name].sessionVolume > sessionStats[name].bestSessionVolume) {
+            sessionStats[name].bestSessionVolume = sessionStats[name].sessionVolume;
+        }
+    }
+
+    // Merge with existing PRs in DB
+    for (const [exerciseName, stats] of Object.entries(sessionStats)) {
+        if (
+            stats.heaviestWeight === 0 &&
+            stats.best1RM === 0 &&
+            stats.bestSetVolume === 0 &&
+            stats.bestSessionVolume === 0
+        ) {
+            continue; // nothing meaningful to update
+        }
+
+        const { data: existing, error: fetchError } = await supabase
+            .from('exercise_prs')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('exercise_name', exerciseName)
+            .maybeSingle();
+
+        if (fetchError) {
+            console.error('Fetch exercise_prs error:', fetchError);
+            continue;
+        }
+
+        const newRow = {
+            user_id: userId,
+            exercise_name: exerciseName,
+            heaviest_weight: stats.heaviestWeight,
+            best_1rm: stats.best1RM,
+            best_set_volume: stats.bestSetVolume,
+            best_session_volume: stats.bestSessionVolume
+        };
+
+        if (existing) {
+            newRow.heaviest_weight = Math.max(
+                Number(existing.heaviest_weight || 0),
+                stats.heaviestWeight
+            );
+            newRow.best_1rm = Math.max(
+                Number(existing.best_1rm || 0),
+                stats.best1RM
+            );
+            newRow.best_set_volume = Math.max(
+                Number(existing.best_set_volume || 0),
+                stats.bestSetVolume
+            );
+            newRow.best_session_volume = Math.max(
+                Number(existing.best_session_volume || 0),
+                stats.bestSessionVolume
+            );
+        }
+
+        const { error: upsertError } = await supabase
+            .from('exercise_prs')
+            .upsert(newRow, { onConflict: 'user_id,exercise_name' });
+
+        if (upsertError) {
+            console.error('Upsert exercise_prs error:', upsertError);
+        }
+    }
+};
+
 /**
  * @openapi
  * /workouts:
@@ -23,12 +134,60 @@ const getClient = (token) => {
  */
 exports.getAllWorkouts = async (req, res) => {
     const supabase = getClient(req.userToken);
+    const { from, to } = req.query;
+
+    try {
+        let query = supabase
+            .from('workouts')
+            .select('*, workout_exercises(*, workout_sets(*))')
+            .eq('user_id', req.user.id)
+            .order('date', { ascending: false });
+
+        if (from) {
+            query = query.gte('date', from);
+        }
+        if (to) {
+            query = query.lte('date', to);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * @openapi
+ * /workouts/recent:
+ *   get:
+ *     summary: Get recent workouts for the authenticated user
+ *     tags: [Workouts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         required: false
+ *     responses:
+ *       200:
+ *         description: List of recent workouts
+ */
+exports.getRecentWorkouts = async (req, res) => {
+    const supabase = getClient(req.userToken);
+    const limit = parseInt(req.query.limit || '3', 10);
+
     try {
         const { data, error } = await supabase
             .from('workouts')
             .select('*, workout_exercises(*, workout_sets(*))')
             .eq('user_id', req.user.id)
-            .order('date', { ascending: false });
+            .order('date', { ascending: false })
+            .limit(limit);
 
         if (error) throw error;
         res.json(data);
@@ -123,6 +282,9 @@ exports.addWorkout = async (req, res) => {
                 }
             }
         }
+
+        // 3. Update exercise PRs for this workout
+        await updateExercisePRsForWorkout(supabase, req.user.id, exercises);
 
         res.status(201).json(workout);
     } catch (error) {
@@ -220,6 +382,9 @@ exports.updateWorkout = async (req, res) => {
                 }
             }
         }
+
+        // 4. Update exercise PRs for this (possibly edited) workout
+        await updateExercisePRsForWorkout(supabase, req.user.id, exercises);
 
         res.json(workout);
     } catch (error) {

@@ -7,6 +7,9 @@ const swaggerUi = require('swagger-ui-express');
 const specs = require('./config/swagger');
 const workoutRoutes = require('./routes/workoutRoutes');
 const routineRoutes = require('./routes/routineRoutes');
+const exercisePrRoutes = require('./routes/exercisePrRoutes');
+const statsRoutes = require('./routes/statsRoutes');
+const exerciseRoutes = require('./routes/exerciseRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +25,9 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 // Routes
 app.use('/api/workouts', workoutRoutes);
 app.use('/api/routines', routineRoutes);
+app.use('/api/exercise-prs', exercisePrRoutes);
+app.use('/api/stats', statsRoutes);
+app.use('/api/exercises', exerciseRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

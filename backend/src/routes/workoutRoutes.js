@@ -6,6 +6,7 @@ const authenticate = require('../middleware/auth');
 router.use(authenticate);
 
 router.get('/', workoutController.getAllWorkouts);
+router.get('/recent', workoutController.getRecentWorkouts);
 router.post('/', workoutController.addWorkout);
 router.put('/:id', workoutController.updateWorkout);
 router.delete('/:id', workoutController.deleteWorkout);

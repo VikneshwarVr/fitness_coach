@@ -9,6 +9,11 @@ class WorkoutRepository extends ChangeNotifier {
 
   List<Workout> get workouts => _workouts;
 
+  // Cached backend stats
+  int _workoutsThisWeek = 0;
+  int _totalVolumeStats = 0;
+  int _streak = 0;
+
   Future<void> loadWorkouts() async {
     try {
       final response = await ApiClient.get('/workouts');
@@ -43,7 +48,10 @@ class WorkoutRepository extends ChangeNotifier {
             exercises: exercises,
           );
         }).toList();
-        
+
+        // Also refresh overview stats from backend
+        await _loadOverviewStats();
+
         notifyListeners();
       } else {
         debugPrint('Error loading workouts: ${response.statusCode}');
@@ -120,17 +128,17 @@ class WorkoutRepository extends ChangeNotifier {
 
   // Stats helpers
   int get workoutsThisWeek {
-    final now = DateTime.now();
-    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-    return _workouts.where((w) => w.date.isAfter(startOfWeek)).length;
+    return _workoutsThisWeek;
   }
 
   int get totalVolume {
+    // Prefer backend-computed total if available, fall back to local sum
+    if (_totalVolumeStats > 0) return _totalVolumeStats;
     return _workouts.fold(0, (sum, w) => sum + w.totalVolume);
   }
 
   int get streak {
-    return _workouts.isNotEmpty ? 1 : 0; 
+    return _streak;
   }
 
   Map<String, double> getMuscleGroupStats(bool isWeekly) {
@@ -145,62 +153,87 @@ class WorkoutRepository extends ChangeNotifier {
     return StatsUtils.getAggregatedStats(_workouts, isWeekly: isWeekly, metric: metric);
   }
 
-  Map<String, double> getExercisePRs(String exerciseName) {
-    double heaviestWeight = 0;
-    double best1RM = 0;
-    double bestSetVolume = 0;
-    double bestSessionVolume = 0;
-
-    for (var workout in _workouts) {
-      double currentSessionVolume = 0;
-      bool hasExercise = false;
-
-      for (var session in workout.exercises) {
-        if (session.name.trim().toLowerCase() == exerciseName.trim().toLowerCase()) {
-          hasExercise = true;
-          for (var set in session.sets) {
-            if (set.completed) {
-              if (set.weight.toDouble() > heaviestWeight) heaviestWeight = set.weight.toDouble();
-              
-              double setVolume = (set.weight * set.reps).toDouble();
-              if (setVolume > bestSetVolume) bestSetVolume = setVolume;
-              
-              // Epley formula: weight * (1 + reps / 30.0)
-              double oneRM = set.weight * (1 + set.reps / 30.0);
-              if (oneRM > best1RM) best1RM = oneRM;
-              
-              currentSessionVolume += setVolume;
-            }
-          }
-        }
+  Future<void> _loadOverviewStats() async {
+    try {
+      final response = await ApiClient.get('/stats/overview');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        _workoutsThisWeek = data['workoutsThisWeek'] ?? 0;
+        _totalVolumeStats = data['totalVolume'] ?? 0;
+        _streak = data['streak'] ?? 0;
+      } else {
+        debugPrint('Error loading overview stats: ${response.statusCode}');
       }
-      
-      if (hasExercise && currentSessionVolume > bestSessionVolume) {
-        bestSessionVolume = currentSessionVolume;
-      }
+    } catch (e) {
+      debugPrint('Error loading overview stats: $e');
     }
-
-    return {
-      'heaviestWeight': heaviestWeight,
-      'best1RM': best1RM,
-      'bestSetVolume': bestSetVolume,
-      'bestSessionVolume': bestSessionVolume,
-    };
   }
 
-  List<ExerciseSet> getPreviousSets(String exerciseName) {
-    // Sort workouts by date descending
-    final sortedWorkouts = List<Workout>.from(_workouts)
-      ..sort((a, b) => b.date.compareTo(a.date));
+  /// Fetch PRs for a specific exercise from the backend / Supabase
+  Future<Map<String, double>> getExercisePRs(String exerciseName) async {
+    try {
+      final encodedName = Uri.encodeComponent(exerciseName);
+      final response = await ApiClient.get('/exercise-prs/$encodedName');
 
-    for (var workout in sortedWorkouts) {
-      for (var session in workout.exercises) {
-        if (session.name.trim().toLowerCase() == exerciseName.trim().toLowerCase()) {
-          // Found the most recent session for this exercise
-          return session.sets;
-        }
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'heaviestWeight': (data['heaviest_weight'] as num?)?.toDouble() ?? 0.0,
+          'best1RM': (data['best_1rm'] as num?)?.toDouble() ?? 0.0,
+          'bestSetVolume': (data['best_set_volume'] as num?)?.toDouble() ?? 0.0,
+          'bestSessionVolume': (data['best_session_volume'] as num?)?.toDouble() ?? 0.0,
+        };
+      } else if (response.statusCode == 404) {
+        // No PRs yet for this exercise
+        return {
+          'heaviestWeight': 0.0,
+          'best1RM': 0.0,
+          'bestSetVolume': 0.0,
+          'bestSessionVolume': 0.0,
+        };
+      } else {
+        debugPrint('Error fetching exercise PRs: ${response.statusCode}');
+        return {
+          'heaviestWeight': 0.0,
+          'best1RM': 0.0,
+          'bestSetVolume': 0.0,
+          'bestSessionVolume': 0.0,
+        };
       }
+    } catch (e) {
+      debugPrint('Error fetching exercise PRs: $e');
+      return {
+        'heaviestWeight': 0.0,
+        'best1RM': 0.0,
+        'bestSetVolume': 0.0,
+        'bestSessionVolume': 0.0,
+      };
     }
-    return [];
+  }
+
+  Future<List<ExerciseSet>> getPreviousSets(String exerciseName) async {
+    try {
+      final encoded = Uri.encodeComponent(exerciseName);
+      final response = await ApiClient.get('/exercises/$encoded/last-session');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final setsJson = data['sets'] as List<dynamic>? ?? [];
+        return setsJson.map((setJson) {
+          return ExerciseSet(
+            id: setJson['id'] ?? '',
+            weight: setJson['weight'] ?? 0,
+            reps: setJson['reps'] ?? 0,
+            completed: setJson['completed'] ?? false,
+          );
+        }).toList();
+      } else {
+        debugPrint('No previous sets from backend: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      debugPrint('Error fetching previous sets: $e');
+      return [];
+    }
   }
 }
