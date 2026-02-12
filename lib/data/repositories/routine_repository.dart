@@ -45,6 +45,8 @@ class RoutineRepository extends ChangeNotifier {
 
   List<Routine> _customRoutines = [];
 
+  List<Routine> get defaultRoutines => _defaultRoutines;
+  List<Routine> get customRoutines => _customRoutines;
   List<Routine> get routines => [..._defaultRoutines, ..._customRoutines];
   
   Future<void> loadRoutines() async {
@@ -105,6 +107,28 @@ class RoutineRepository extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Error deleting routine: $e');
+    }
+  }
+
+  Future<void> updateRoutine(Routine routine) async {
+    try {
+      final routineData = {
+        'name': routine.name,
+        'description': routine.description,
+        'level': routine.level,
+        'duration': routine.duration,
+        'exerciseNames': routine.exerciseNames,
+      };
+
+      final response = await ApiClient.put('/routines/${routine.id}', routineData);
+
+      if (response.statusCode == 200) {
+        await loadRoutines();
+      } else {
+        debugPrint('Error updating routine: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error updating routine: $e');
     }
   }
 }

@@ -56,13 +56,40 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                 const SizedBox(height: 24),
                 Consumer<RoutineRepository>(
                   builder: (context, repo, child) {
+                    final defaults = repo.defaultRoutines;
+                    final customs = repo.customRoutines;
+
                     return Column(
-                      children: repo.routines
-                          .map((routine) => Padding(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (defaults.isNotEmpty) ...[
+                          const Text('Default Routines', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          ...defaults.map((routine) => Padding(
                                 padding: const EdgeInsets.only(bottom: 12),
                                 child: _RoutineCard(routine: routine),
-                              ))
-                          .toList(),
+                              )),
+                          const SizedBox(height: 16),
+                        ],
+                        if (customs.isNotEmpty) ...[
+                          const Text('My Routines', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          ...customs.map((routine) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _RoutineCard(routine: routine),
+                              )),
+                        ],
+                        if (defaults.isEmpty && customs.isEmpty)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 24),
+                              child: Text(
+                                'No routines yet',
+                                style: TextStyle(color: AppTheme.mutedForeground),
+                              ),
+                            ),
+                          ),
+                      ],
                     );
                   },
                 ),
@@ -119,8 +146,17 @@ class _RoutineCard extends StatelessWidget {
                           fontSize: 10, color: AppTheme.mutedForeground),
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(LucideIcons.pencil, size: 18, color: AppTheme.mutedForeground),
+                    onPressed: () {
+                      context.push('/routines/create', extra: routine);
+                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
                   if (routine.isCustom) ...[
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 4),
                     IconButton(
                       icon: const Icon(LucideIcons.trash2, size: 18, color: Colors.red),
                       onPressed: () {

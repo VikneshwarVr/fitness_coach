@@ -110,6 +110,93 @@ exports.createRoutine = async (req, res) => {
 /**
  * @openapi
  * /routines/{id}:
+ *   put:
+ *     summary: Update an existing custom routine
+ *     tags: [Routines]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               level:
+ *                 type: string
+ *               duration:
+ *                 type: number
+ *               exerciseNames:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: Routine updated
+ */
+exports.updateRoutine = async (req, res) => {
+    const { id } = req.params;
+    const { name, description, level, duration, exerciseNames } = req.body;
+
+    const supabase = getClient(req.userToken);
+    try {
+        // 1. Update routine meta (only user-owned custom routines)
+        const { data: routine, error: updateError } = await supabase
+            .from('routines')
+            .update({ name, description, level, duration })
+            .eq('id', id)
+            .eq('user_id', req.user.id)
+            .eq('is_custom', true)
+            .select()
+            .single();
+
+        if (updateError) throw updateError;
+        if (!routine) {
+            return res.status(404).json({ error: 'Routine not found' });
+        }
+
+        // 2. Replace exercises
+        const { error: deleteError } = await supabase
+            .from('routine_exercises')
+            .delete()
+            .eq('routine_id', id);
+
+        if (deleteError) throw deleteError;
+
+        if (exerciseNames && exerciseNames.length > 0) {
+            const exercisesData = exerciseNames.map((name, index) => ({
+                routine_id: id,
+                exercise_name: name,
+                order_index: index,
+            }));
+
+            const { error: exercisesError } = await supabase
+                .from('routine_exercises')
+                .insert(exercisesData);
+
+            if (exercisesError) throw exercisesError;
+        }
+
+        res.json(routine);
+    } catch (error) {
+        console.error('Update routine error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * @openapi
+ * /routines/{id}:
  *   delete:
  *     summary: Delete a custom routine
  *     tags: [Routines]

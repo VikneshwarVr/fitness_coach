@@ -66,7 +66,10 @@ GoRouter createRouter(AuthRepository authRepo) {
                 routes: [
                   GoRoute(
                     path: 'create',
-                    builder: (context, state) => const CreateRoutineScreen(),
+                    builder: (context, state) {
+                      final routine = state.extra as Routine?;
+                      return CreateRoutineScreen(initialRoutine: routine);
+                    },
                   ),
                 ],
               ),

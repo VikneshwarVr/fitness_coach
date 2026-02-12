@@ -9,7 +9,9 @@ import '../../data/repositories/routine_repository.dart';
 import '../components/fitness_card.dart';
 
 class CreateRoutineScreen extends StatefulWidget {
-  const CreateRoutineScreen({super.key});
+  final Routine? initialRoutine;
+
+  const CreateRoutineScreen({super.key, this.initialRoutine});
 
   @override
   State<CreateRoutineScreen> createState() => _CreateRoutineScreenState();
@@ -23,6 +25,20 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
   
   String _selectedLevel = 'Intermediate';
   List<String> _selectedExercises = [];
+  bool get _isEditing => widget.initialRoutine != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialRoutine;
+    if (initial != null) {
+      _nameController.text = initial.name;
+      _descriptionController.text = initial.description;
+      _durationController.text = initial.duration.toString();
+      _selectedLevel = initial.level;
+      _selectedExercises = List<String>.from(initial.exerciseNames);
+    }
+  }
 
   @override
   void dispose() {
@@ -57,16 +73,75 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
         return;
       }
 
-      final routine = Routine.create(
-        name: _nameController.text,
-        description: _descriptionController.text,
-        exerciseNames: _selectedExercises,
-        level: _selectedLevel,
-        duration: int.tryParse(_durationController.text) ?? 45,
-        isCustom: true,
-      );
+      final repo = context.read<RoutineRepository>();
 
-      await context.read<RoutineRepository>().addRoutine(routine);
+      if (_isEditing && widget.initialRoutine!.isCustom) {
+        // Update existing custom routine
+        final updated = Routine(
+          id: widget.initialRoutine!.id,
+          name: _nameController.text,
+          description: _descriptionController.text,
+          exerciseNames: _selectedExercises,
+          level: _selectedLevel,
+          duration: int.tryParse(_durationController.text) ?? 45,
+          isCustom: true,
+        );
+        await repo.updateRoutine(updated);
+      } else if (_isEditing && !widget.initialRoutine!.isCustom) {
+        // Editing a default routine -> ask to save as custom
+        String customName = _nameController.text;
+        await showDialog(
+          context: context,
+          builder: (context) {
+            final controller = TextEditingController(text: customName);
+            return AlertDialog(
+              title: const Text('Save as Custom Routine'),
+              content: TextField(
+                controller: controller,
+                decoration: const InputDecoration(
+                  labelText: 'Custom routine name',
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    customName = controller.text.isNotEmpty ? controller.text : customName;
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+
+        if (!mounted) return;
+
+        final routine = Routine.create(
+          name: customName,
+          description: _descriptionController.text,
+          exerciseNames: _selectedExercises,
+          level: _selectedLevel,
+          duration: int.tryParse(_durationController.text) ?? 45,
+          isCustom: true,
+        );
+        await repo.addRoutine(routine);
+      } else {
+        // Creating brand new custom routine
+        final routine = Routine.create(
+          name: _nameController.text,
+          description: _descriptionController.text,
+          exerciseNames: _selectedExercises,
+          level: _selectedLevel,
+          duration: int.tryParse(_durationController.text) ?? 45,
+          isCustom: true,
+        );
+        await repo.addRoutine(routine);
+      }
       
       if (mounted) {
         context.pop();
@@ -78,7 +153,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Routine'),
+        title: Text(_isEditing ? 'Edit Routine' : 'Create Routine'),
         actions: [
           TextButton(
             onPressed: _saveRoutine,
