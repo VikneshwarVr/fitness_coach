@@ -124,10 +124,13 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               ),
             ],
           ),
-          body: Stack(
-            children: [
-              Column(
-                children: [
+          body: GestureDetector(
+            onTap: () => FocusScope.of(context).unfocus(),
+            behavior: HitTestBehavior.opaque,
+            child: Stack(
+              children: [
+                Column(
+                  children: [
                   // Stats Panel - Always Visible (Modified for Editing)
                   Padding(
                     padding: const EdgeInsets.all(16),
@@ -306,12 +309,14 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                                                       isDense: true,
                                                     ),
                                                     keyboardType: TextInputType.number,
+                                                    textInputAction: TextInputAction.done,
                                                     textAlign: TextAlign.center,
                                                     style: const TextStyle(fontSize: 14),
                                                     onChanged: (val) {
                                                       final weight = int.tryParse(val) ?? 0;
                                                       provider.updateSet(index, setIndex, weight: weight);
                                                     },
+                                                    onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
                                                   ),
                                                 ),
                                                 Padding(
@@ -327,12 +332,14 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                                                       isDense: true,
                                                     ),
                                                     keyboardType: TextInputType.number,
+                                                    textInputAction: TextInputAction.done,
                                                     textAlign: TextAlign.center,
                                                     style: const TextStyle(fontSize: 14),
                                                     onChanged: (val) {
                                                       final reps = int.tryParse(val) ?? 0;
                                                       provider.updateSet(index, setIndex, reps: reps);
                                                     },
+                                                    onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
                                                   ),
                                                 ),
                                                 IconButton(
@@ -370,13 +377,14 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                              },
                            ),
                    ),
-                 ],
-               ),
-              const Align(
-                alignment: Alignment.bottomCenter,
-                child: _RestTimerOverlay(),
-              ),
-            ],
+                  ],
+                ),
+                const Align(
+                  alignment: Alignment.bottomCenter,
+                  child: _RestTimerOverlay(),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -405,19 +413,21 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             top: false,
             child: Column(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    CupertinoButton(
-                      child: const Text('Cancel'),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    const Text('Rest Timer', style: TextStyle(fontWeight: FontWeight.bold)),
-                    CupertinoButton(
-                      child: const Text('Done'),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
+                CupertinoNavigationBar(
+                  automaticallyImplyLeading: false,
+                  backgroundColor: Colors.transparent,
+                  border: null,
+                  leading: CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    child: const Text('Cancel'),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  middle: const Text('Rest Timer', style: TextStyle(color: AppTheme.foreground)),
+                  trailing: CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    child: const Text('Done'),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                 ),
                 Expanded(
                   child: CupertinoPicker(
@@ -430,7 +440,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                       return Center(
                         child: Text(
                           seconds == 0 ? 'Off' : _formatRestTime(seconds),
-                          style: const TextStyle(fontSize: 16),
+                          style: const TextStyle(fontSize: 16, color: AppTheme.foreground),
                         ),
                       );
                     }).toList(),
@@ -666,7 +676,7 @@ class _RestTimerOverlay extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                    IconButton(
                     icon: const Icon(LucideIcons.minus, color: AppTheme.primary),
@@ -676,14 +686,13 @@ class _RestTimerOverlay extends StatelessWidget {
                       padding: const EdgeInsets.all(12),
                     ),
                   ),
-                   Column(
-                    children: [
-                      Text(
+                   Padding(
+                     padding: const EdgeInsets.symmetric(horizontal: 24),
+                     child: Text(
                         _formatTime(provider.currentRestSeconds),
                         style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, fontFeatures: [FontFeature.tabularFigures()]),
                       ),
-                    ],
-                  ),
+                   ),
                   IconButton(
                     icon: const Icon(LucideIcons.plus, color: AppTheme.primary),
                     onPressed: () => provider.adjustRestTimer(15),

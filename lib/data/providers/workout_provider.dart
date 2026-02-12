@@ -209,7 +209,6 @@ class WorkoutProvider extends ChangeNotifier {
 
   // Renamed to addWorkout as it now takes final details
   Future<void> addWorkout({String? name, String? description}) async {
-    debugPrint('WorkoutProvider: addWorkout called with name: $name');
     stopTimer();
     
     String? photoUrl;
@@ -236,7 +235,6 @@ class WorkoutProvider extends ChangeNotifier {
   }
 
   Future<void> saveUpdate({required String id, required String name}) async {
-    debugPrint('WorkoutProvider: saveUpdate called for id: $id');
     
     String? photoUrl;
     if (_workoutPhotoPath != null) {

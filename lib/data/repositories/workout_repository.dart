@@ -33,7 +33,6 @@ class WorkoutRepository extends ChangeNotifier {
       
       return publicUrl;
     } catch (e) {
-      debugPrint('Error uploading workout photo: $e');
       return null;
     }
   }
@@ -89,7 +88,6 @@ class WorkoutRepository extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      debugPrint('Error loading workouts from Supabase: $e');
     }
   }
 
@@ -133,7 +131,6 @@ class WorkoutRepository extends ChangeNotifier {
 
       await loadWorkouts();
     } catch (e) {
-      debugPrint('Error adding workout to Supabase: $e');
       rethrow;
     }
   }
@@ -178,7 +175,6 @@ class WorkoutRepository extends ChangeNotifier {
 
       await loadWorkouts();
     } catch (e) {
-      debugPrint('Error updating workout in Supabase: $e');
       rethrow;
     }
   }
@@ -190,7 +186,6 @@ class WorkoutRepository extends ChangeNotifier {
       _calculateOverviewStats();
       notifyListeners();
     } catch (e) {
-      debugPrint('Error deleting workout from Supabase: $e');
       rethrow;
     }
   }
@@ -293,7 +288,6 @@ class WorkoutRepository extends ChangeNotifier {
         'bestSessionVolume': (data['best_session_volume'] as num?)?.toDouble() ?? 0.0,
       };
     } catch (e) {
-      debugPrint('Error fetching exercise PRs from Supabase: $e');
       return {
         'heaviestWeight': 0.0,
         'best1RM': 0.0,
@@ -330,7 +324,6 @@ class WorkoutRepository extends ChangeNotifier {
         );
       }).toList();
     } catch (e) {
-      debugPrint('Error fetching previous sets from Supabase: $e');
       return [];
     }
   }

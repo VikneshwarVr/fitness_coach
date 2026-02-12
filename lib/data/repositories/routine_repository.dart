@@ -94,8 +94,7 @@ class RoutineRepository extends ChangeNotifier {
       
       notifyListeners();
     } catch (e, stack) {
-      debugPrint('Error loading routines from Supabase: $e');
-      debugPrint('Stack trace: $stack');
+      // Error logging removed
     }
   }
 
@@ -129,7 +128,6 @@ class RoutineRepository extends ChangeNotifier {
 
       await loadRoutines();
     } catch (e) {
-      debugPrint('Error adding routine to Supabase: $e');
       rethrow;
     }
   }
@@ -141,7 +139,6 @@ class RoutineRepository extends ChangeNotifier {
       _customRoutines.removeWhere((r) => r.id == id);
       notifyListeners();
     } catch (e) {
-      debugPrint('Error deleting routine from Supabase: $e');
       rethrow;
     }
   }
@@ -173,7 +170,6 @@ class RoutineRepository extends ChangeNotifier {
 
       await loadRoutines();
     } catch (e) {
-      debugPrint('Error updating routine in Supabase: $e');
       rethrow;
     }
   }

@@ -127,28 +127,6 @@ class WorkoutDetailsScreen extends StatelessWidget {
                 
                 const SizedBox(height: 24),
                 
-                // Workout Photo
-                if (workout.photoUrl != null) ...[
-                  const Text('Photo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                  const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      workout.photoUrl!,
-                      height: 300,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        height: 100,
-                        color: AppTheme.card,
-                        child: const Center(
-                          child: Icon(LucideIcons.imageOff, color: AppTheme.mutedForeground),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
 
                 const Text('Exercises', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 const SizedBox(height: 16),
