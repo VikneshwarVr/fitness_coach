@@ -26,6 +26,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(LucideIcons.arrowLeft),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text('Workout History', style: TextStyle(fontWeight: FontWeight.bold)),
+      ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () => context.read<WorkoutRepository>().loadWorkouts(),
@@ -35,7 +42,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Workout History', style: Theme.of(context).textTheme.headlineSmall),
                 const SizedBox(height: 24),
                 Consumer<WorkoutRepository>(
                   builder: (context, repo, child) {

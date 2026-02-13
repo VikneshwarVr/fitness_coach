@@ -44,8 +44,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
           destinations: [
             _buildDestination(LucideIcons.home, 'Home', 0),
             _buildDestination(LucideIcons.folderOpen, 'Routines', 1),
-            _buildDestination(LucideIcons.history, 'History', 2),
-            _buildDestination(LucideIcons.user, 'Profile', 3),
+            _buildDestination(LucideIcons.user, 'Profile', 2),
           ],
         ),
       ),

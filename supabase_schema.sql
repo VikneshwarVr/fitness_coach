@@ -6,6 +6,9 @@ CREATE TABLE public.profiles (
   username TEXT UNIQUE,
   full_name TEXT,
   avatar_url TEXT,
+  bio TEXT,
+  sex TEXT,
+  birthday DATE,
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   CONSTRAINT username_length CHECK (char_length(username) >= 3)
 );
@@ -72,6 +75,7 @@ ALTER TABLE public.workout_sets ENABLE ROW LEVEL SECURITY;
 
 -- Profiles
 CREATE POLICY "Users can view their own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Users can insert their own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
 CREATE POLICY "Users can update their own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
 -- Routines
@@ -106,12 +110,15 @@ CREATE POLICY "Access workout sets based on exercise ownership" ON public.workou
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.profiles (id, username, full_name, avatar_url)
+  INSERT INTO public.profiles (id, username, full_name, avatar_url, bio, sex, birthday)
   VALUES (
     new.id,
     new.raw_user_meta_data->>'username',
     new.raw_user_meta_data->>'full_name',
-    new.raw_user_meta_data->>'avatar_url'
+    new.raw_user_meta_data->>'avatar_url',
+    new.raw_user_meta_data->>'bio',
+    new.raw_user_meta_data->>'sex',
+    (new.raw_user_meta_data->>'birthday')::DATE
   );
   RETURN new;
 END;

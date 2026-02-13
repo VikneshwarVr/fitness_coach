@@ -15,6 +15,63 @@ class AuthRepository extends ChangeNotifier {
   bool get isAuthenticated => currentUser != null;
   Session? get currentSession => _supabase.auth.currentSession;
   String get displayName => currentUser?.userMetadata?['username'] ?? 'User';
+  String get bio => currentUser?.userMetadata?['bio'] ?? '';
+  String get sex => currentUser?.userMetadata?['sex'] ?? 'Not specified';
+  String get birthday => currentUser?.userMetadata?['birthday'] ?? '';
+  String? get profileImageUrl => currentUser?.userMetadata?['avatar_url'];
+
+  Future<void> updateProfile({
+    String? username,
+    String? bio,
+    String? sex,
+    String? birthday,
+    String? avatarUrl,
+  }) async {
+    try {
+      final Map<String, dynamic> metadata = Map.from(currentUser?.userMetadata ?? {});
+      if (username != null) metadata['username'] = username;
+      if (bio != null) metadata['bio'] = bio;
+      if (sex != null) metadata['sex'] = sex;
+      if (birthday != null) metadata['birthday'] = birthday;
+      if (avatarUrl != null) metadata['avatar_url'] = avatarUrl;
+
+      await _supabase.auth.updateUser(
+        UserAttributes(data: metadata),
+      );
+
+      // 2. Update public.profiles table for database storage
+      await _supabase.from('profiles').upsert({
+        'id': currentUser?.id,
+        'username': username ?? metadata['username'],
+        'full_name': username ?? metadata['username'], // Using username as full_name for now
+        'avatar_url': avatarUrl ?? metadata['avatar_url'],
+        'bio': bio ?? metadata['bio'],
+        'sex': sex ?? metadata['sex'],
+        'birthday': birthday ?? metadata['birthday'],
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Fetch from DB to ensure sync (optional but good for consistency)
+  Future<void> fetchProfile() async {
+    try {
+      final userId = currentUser?.id;
+      if (userId == null) return;
+
+      final data = await _supabase.from('profiles').select().eq('id', userId).maybeSingle();
+      if (data != null) {
+        // We could update local state here if needed, 
+        // but auth.updateUser already triggered metadata refresh.
+        // This confirms it's in the DB.
+      }
+    } catch (e) {
+    }
+  }
 
   Future<void> signInWithEmail({
     required String email,

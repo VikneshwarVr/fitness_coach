@@ -146,6 +146,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 12),
               
               _SettingsItem(
+                icon: LucideIcons.userCircle,
+                label: 'User Profile',
+                onTap: () => context.push('/profile/user'),
+              ),
+              const SizedBox(height: 8),
+              _SettingsItem(
+                icon: LucideIcons.history,
+                label: 'Workout Log',
+                onTap: () => context.push('/history'),
+              ),
+               const SizedBox(height: 8),
+              _SettingsItem(
                 icon: LucideIcons.settings,
                 label: 'General',
                 onTap: () {},

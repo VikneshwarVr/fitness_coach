@@ -12,13 +12,13 @@ import '../screens/history_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/exercise_list_screen.dart';
+import '../screens/user_profile_screen.dart';
 import '../../data/models/routine.dart';
 import '../../data/repositories/auth_repository.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> _shellNavigatorHomeKey = GlobalKey<NavigatorState>(debugLabel: 'shellHome');
 final GlobalKey<NavigatorState> _shellNavigatorRoutinesKey = GlobalKey<NavigatorState>(debugLabel: 'shellRoutines');
-final GlobalKey<NavigatorState> _shellNavigatorHistoryKey = GlobalKey<NavigatorState>(debugLabel: 'shellHistory');
 final GlobalKey<NavigatorState> _shellNavigatorProfileKey = GlobalKey<NavigatorState>(debugLabel: 'shellProfile');
 
 GoRouter createRouter(AuthRepository authRepo) {
@@ -72,15 +72,6 @@ GoRouter createRouter(AuthRepository authRepo) {
                     },
                   ),
                 ],
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            navigatorKey: _shellNavigatorHistoryKey,
-            routes: [
-              GoRoute(
-                path: '/history',
-                builder: (context, state) => const HistoryScreen(),
               ),
             ],
           ),
@@ -144,8 +135,16 @@ GoRouter createRouter(AuthRepository authRepo) {
         },
       ),
       GoRoute(
+        path: '/history',
+        builder: (context, state) => const HistoryScreen(),
+      ),
+      GoRoute(
         path: '/exercises',
         builder: (context, state) => const ExerciseListScreen(),
+      ),
+      GoRoute(
+        path: '/profile/user',
+        builder: (context, state) => const UserProfileScreen(),
       ),
     ],
   );
