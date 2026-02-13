@@ -62,7 +62,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _SettingsItem(
                 icon: LucideIcons.calendar,
                 label: 'Calendar',
-                onTap: () {}, // To be implemented or linked to calendar screen
+                onTap: () => context.push('/profile/calendar'),
               ),
               const SizedBox(height: 8),
               _SettingsItem(
