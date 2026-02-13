@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme.dart';
 import '../../../data/models/workout.dart';
@@ -122,6 +123,7 @@ class ExerciseListItem extends StatelessWidget {
                           isDense: true,
                         ),
                         keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                         textInputAction: TextInputAction.done,
                         textAlign: TextAlign.center,
                         style: const TextStyle(fontSize: 14),
@@ -145,6 +147,7 @@ class ExerciseListItem extends StatelessWidget {
                           isDense: true,
                         ),
                         keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                         textInputAction: TextInputAction.done,
                         textAlign: TextAlign.center,
                         style: const TextStyle(fontSize: 14),

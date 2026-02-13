@@ -23,6 +23,7 @@ class WorkoutProvider extends ChangeNotifier {
   
   // Previous session data for current exercises
   final Map<String, List<ExerciseSet>> _previousSets = {};
+  final Map<String, Map<String, double>> _historicalPRs = {};
 
   // Stream for PR events
   final _prStreamController = StreamController<PREvent>.broadcast();
@@ -114,8 +115,9 @@ class WorkoutProvider extends ChangeNotifier {
       for (final routineExercise in routine.exercises) {
         final exerciseName = routineExercise.name;
         
-        // Load previous sets for this exercise from backend
+        // Load previous sets and PRs from backend
         _previousSets[exerciseName] = await _workoutRepository.getPreviousSets(exerciseName);
+        _historicalPRs[exerciseName] = await _workoutRepository.getExercisePRs(exerciseName);
 
         // Map RoutineExercise -> ExerciseSession
         // If the routine has sets defined (editing mode saved them), use them.
@@ -314,6 +316,10 @@ class WorkoutProvider extends ChangeNotifier {
     _cachedTotalSets = 0;
     _workoutPhotoPath = null;
     _sessionBests.clear();
+    _historicalPRs.clear();
+    _exercisesWithPRs.clear();
+    _totalPRCount = 0;
+    _achievedPRTypes.clear();
   }
 
   void cancelWorkout() {
@@ -375,6 +381,7 @@ class WorkoutProvider extends ChangeNotifier {
   Future<void> _addOneExercise(String name) async {
     if (!_isEditingRoutine) {
         _previousSets[name] = await _workoutRepository.getPreviousSets(name);
+        _historicalPRs[name] = await _workoutRepository.getExercisePRs(name);
     }
     
     final prevSets = _previousSets[name] ?? [];
@@ -514,8 +521,13 @@ class WorkoutProvider extends ChangeNotifier {
   }
 
   Future<void> _checkForPRs(String exerciseName, ExerciseSet set) async {
-    // 1. Get Historical Bests from backend
-    final historicalPRs = await _workoutRepository.getExercisePRs(exerciseName);
+    // 1. Use cached Historical Bests
+    final historicalPRs = _historicalPRs[exerciseName] ?? {
+      'heaviestWeight': 0.0,
+      'best1RM': 0.0,
+      'bestSetVolume': 0.0,
+      'bestSessionVolume': 0.0,
+    };
     
     // 2. Initialize Session Bests for this exercise if not exists
     _sessionBests.putIfAbsent(exerciseName, () => {
@@ -528,42 +540,53 @@ class WorkoutProvider extends ChangeNotifier {
     
     // 3. Calculate current set stats
     final weight = set.weight.toDouble();
+    if (weight <= 0) return; // Don't trigger PR for empty weight
+
     final oneRM = weight * (1 + set.reps / 30.0);
     final volume = (weight * set.reps).toDouble();
 
-    // 4. Compare and notify (only if there's a previous non-zero value)
-    // Add delays between notifications so they don't overlap
+    // 4. Compare and notify
     int delayMs = 0;
     
-    // Track types achieved in this session to prevent duplicates
     _achievedPRTypes.putIfAbsent(exerciseName, () => {});
     final sessionAchieved = _achievedPRTypes[exerciseName]!;
     
-    final historicalWeight = historicalPRs['heaviestWeight'] ?? 0.0;
-    if (weight > currentBests['heaviestWeight']! && historicalWeight > 0) {
+    // Weight PR
+    // Trigger if > current best and (historical exists or this is first session)
+    if (weight > currentBests['heaviestWeight']!) {
+      final isFirstTime = (historicalPRs['heaviestWeight'] ?? 0.0) == 0;
       currentBests['heaviestWeight'] = weight;
-      _exercisesWithPRs.add(exerciseName); // Mark exercise as having PR for badge
+      _exercisesWithPRs.add(exerciseName);
       
-      // Notify for Every improvement (even within same session)
       Future.delayed(Duration(milliseconds: delayMs), () {
-        _prStreamController.add(PREvent(exerciseName, 'Heaviest Weight', weight, 'kg'));
+        _prStreamController.add(PREvent(
+          exerciseName, 
+          isFirstTime ? 'First Heavy Set' : 'Heaviest Weight', 
+          weight, 
+          'kg'
+        ));
       });
       delayMs += 3500;
 
-      // But only count ONCE per session for the final summary
       if (!sessionAchieved.contains('weight')) {
         sessionAchieved.add('weight');
         _totalPRCount++;
       }
     }
     
-    final historical1RM = historicalPRs['best1RM'] ?? 0.0;
-    if (oneRM > currentBests['best1RM']! && historical1RM > 0) {
+    // 1RM PR
+    if (oneRM > currentBests['best1RM']!) {
+      final isFirstTime = (historicalPRs['best1RM'] ?? 0.0) == 0;
       currentBests['best1RM'] = oneRM;
       _exercisesWithPRs.add(exerciseName);
       
       Future.delayed(Duration(milliseconds: delayMs), () {
-        _prStreamController.add(PREvent(exerciseName, 'Best 1RM', oneRM, 'kg'));
+        _prStreamController.add(PREvent(
+          exerciseName, 
+          isFirstTime ? 'First 1RM Calc' : 'Best 1RM', 
+          oneRM, 
+          'kg'
+        ));
       });
       delayMs += 3500;
 
@@ -573,13 +596,19 @@ class WorkoutProvider extends ChangeNotifier {
       }
     }
 
-    final historicalVolume = historicalPRs['bestSetVolume'] ?? 0.0;
-    if (volume > currentBests['bestSetVolume']! && historicalVolume > 0) {
+    // Volume PR
+    if (volume > currentBests['bestSetVolume']!) {
+      final isFirstTime = (historicalPRs['bestSetVolume'] ?? 0.0) == 0;
       currentBests['bestSetVolume'] = volume;
       _exercisesWithPRs.add(exerciseName);
       
       Future.delayed(Duration(milliseconds: delayMs), () {
-        _prStreamController.add(PREvent(exerciseName, 'Best Set Volume', volume, 'kg'));
+        _prStreamController.add(PREvent(
+          exerciseName, 
+          isFirstTime ? 'First Set Volume' : 'Best Set Volume', 
+          volume, 
+          'kg'
+        ));
       });
 
       if (!sessionAchieved.contains('volume')) {

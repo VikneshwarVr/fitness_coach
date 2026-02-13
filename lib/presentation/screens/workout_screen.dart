@@ -1,4 +1,4 @@
-
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -31,13 +31,15 @@ class WorkoutScreen extends StatefulWidget {
 }
 
 class _WorkoutScreenState extends State<WorkoutScreen> {
+  StreamSubscription<PREvent>? _prSubscription;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<WorkoutProvider>();
       
-      provider.prEvents.listen((event) {
+      _prSubscription = provider.prEvents.listen((event) {
         if (!mounted) return;
         _showTopPRNotification(context, event);
       });
@@ -54,6 +56,12 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         }
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _prSubscription?.cancel();
+    super.dispose();
   }
 
   void _showTopPRNotification(BuildContext context, PREvent event) {
@@ -159,7 +167,14 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                               label: 'Add First Exercise',
                               icon: LucideIcons.plus,
                               onPressed: () async {
-                                final result = await context.push<Object?>('/workout/add', extra: {'isMultiSelect': true});
+                                final existingNames = provider.exercises.map((e) => e.name).toList();
+                                final result = await context.push<Object?>(
+                                  '/workout/add', 
+                                  extra: {
+                                    'isMultiSelect': true,
+                                    'initialSelectedExercises': existingNames,
+                                  },
+                                );
                                 if (result != null) {
                                   if (result is List<String>) {
                                     provider.addExercises(result);
@@ -181,7 +196,14 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                                     label: 'Add Exercise',
                                     icon: LucideIcons.plus,
                                     onPressed: () async {
-                                      final result = await context.push<Object?>('/workout/add', extra: {'isMultiSelect': true});
+                                      final existingNames = provider.exercises.map((e) => e.name).toList();
+                                      final result = await context.push<Object?>(
+                                        '/workout/add', 
+                                        extra: {
+                                          'isMultiSelect': true,
+                                          'initialSelectedExercises': existingNames,
+                                        },
+                                      );
                                       if (result != null) {
                                         if (result is List<String>) {
                                           provider.addExercises(result);

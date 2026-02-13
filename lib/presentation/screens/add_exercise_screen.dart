@@ -58,6 +58,8 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
   }
 
   void _onExerciseTapped(String name) {
+    if (widget.initialSelectedExercises.contains(name)) return;
+
     if (widget.isMultiSelect) {
       setState(() {
         if (_selectedExercises.contains(name)) {
@@ -83,7 +85,12 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
         actions: [
           if (widget.isMultiSelect)
             TextButton(
-              onPressed: () => context.pop(_selectedExercises),
+              onPressed: () {
+                final newSelections = _selectedExercises
+                    .where((e) => !widget.initialSelectedExercises.contains(e))
+                    .toList();
+                context.pop(newSelections);
+              },
               child: const Text('Done', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
         ],
@@ -168,16 +175,29 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                       final exercise = _filteredExercises[index];
                       final name = exercise['name']!;
                       final isSelected = _selectedExercises.contains(name);
+                      final isAlreadyAdded = widget.initialSelectedExercises.contains(name);
                       
                       return ListTile(
-                        title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        enabled: !isAlreadyAdded,
+                        title: Text(
+                          name, 
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: isAlreadyAdded ? AppTheme.mutedForeground : AppTheme.foreground,
+                          )
+                        ),
                         subtitle: Text(exercise['tag']!, style: const TextStyle(color: AppTheme.mutedForeground)),
                         trailing: widget.isMultiSelect
-                            ? Icon(
-                                isSelected ? LucideIcons.checkCircle2 : LucideIcons.circle,
-                                color: isSelected ? AppTheme.primary : AppTheme.mutedForeground,
+                            ? Opacity(
+                                opacity: isAlreadyAdded ? 0.5 : 1.0,
+                                child: Icon(
+                                  isSelected ? LucideIcons.checkCircle2 : LucideIcons.circle,
+                                  color: isSelected ? AppTheme.primary : AppTheme.mutedForeground,
+                                ),
                               )
-                            : const Icon(LucideIcons.plusCircle, color: AppTheme.primary),
+                            : isAlreadyAdded 
+                                ? const Text('Added', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12))
+                                : const Icon(LucideIcons.plusCircle, color: AppTheme.primary),
                         onTap: () => _onExerciseTapped(name),
                       );
                     },
