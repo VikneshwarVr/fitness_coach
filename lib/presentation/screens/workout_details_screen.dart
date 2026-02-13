@@ -278,46 +278,83 @@ class _ExerciseDetailItem extends StatelessWidget {
                             'Set ${index + 1}',
                             style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
-                          Row(
-                            children: [
-                               Text(
-                                 settingsProvider.formatWeight(set.weight),
-                                 style: const TextStyle(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.w600),
-                               ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                '×',
-                                style: TextStyle(fontSize: 13, color: Color(0xFF737373)),
+                          if (exercise.category == 'Cardio') ...[
+                            Row(
+                              children: [
+                                Text(
+                                  '${set.distance?.toStringAsFixed(1) ?? '0.0'} km',
+                                  style: const TextStyle(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.w600),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  '×',
+                                  style: TextStyle(fontSize: 13, color: Color(0xFF737373)),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _formatDuration(set.durationSeconds ?? 0),
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                            ),
+                          ] else if (exercise.category == 'Timed') ...[
+                             Text(
+                                _formatDuration(set.durationSeconds ?? 0),
+                                style: const TextStyle(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.w600),
                               ),
-                              const SizedBox(width: 8),
-                              Text(
+                          ] else if (exercise.category == 'Bodyweight') ...[
+                             Text(
                                 '${set.reps} reps',
-                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                                style: const TextStyle(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.w600),
                               ),
-                            ],
-                          ),
+                          ] else if (exercise.category == 'Distance') ...[
+                             Text(
+                                '${set.distance?.toStringAsFixed(1) ?? '0.0'} km',
+                                style: const TextStyle(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.w600),
+                              ),
+                          ] else ...[
+                            Row(
+                              children: [
+                                Text(
+                                  settingsProvider.formatWeight(set.weight),
+                                  style: const TextStyle(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.w600),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  '×',
+                                  style: TextStyle(fontSize: 13, color: Color(0xFF737373)),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${set.reps} reps',
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     );
                   }),
 
-                  // Total Exercise Volume Footer
-                  const SizedBox(height: 8),
-                  Divider(color: Theme.of(context).colorScheme.outline, height: 1),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                        const Text(
-                          'Total Volume',
-                          style: TextStyle(fontSize: 11, color: Color(0xFF737373)),
-                        ),
-                       Text(
-                         settingsProvider.formatWeight(exercise.volume),
-                         style: const TextStyle(fontSize: 11, color: AppTheme.primary, fontWeight: FontWeight.bold),
-                       ),
-                    ],
-                  ),
+                  if (exercise.category == 'Strength') ...[
+                    const SizedBox(height: 8),
+                    Divider(color: Theme.of(context).colorScheme.outline, height: 1),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                          const Text(
+                            'Total Volume',
+                            style: TextStyle(fontSize: 11, color: Color(0xFF737373)),
+                          ),
+                         Text(
+                           settingsProvider.formatWeight(exercise.volume),
+                           style: const TextStyle(fontSize: 11, color: AppTheme.primary, fontWeight: FontWeight.bold),
+                         ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -325,5 +362,16 @@ class _ExerciseDetailItem extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatDuration(int seconds) {
+    if (seconds <= 0) return '0:00';
+    final h = seconds ~/ 3600;
+    final m = (seconds % 3600) ~/ 60;
+    final s = seconds % 60;
+    if (h > 0) {
+      return '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    }
+    return '$m:${s.toString().padLeft(2, '0')}';
   }
 }

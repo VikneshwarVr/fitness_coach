@@ -76,6 +76,7 @@ class RoutineRepository extends ChangeNotifier {
             return RoutineExercise(
               id: e['id']?.toString() ?? '',
               name: e['exercise_name'] ?? '',
+              category: e['category'] ?? 'Strength',
               sets: sets,
             );
           }).toList();
@@ -121,6 +122,7 @@ class RoutineRepository extends ChangeNotifier {
         await _supabase.from('routine_exercises').insert({
           'routine_id': routineId,
           'exercise_name': exercise.name,
+          'category': exercise.category,
           'order_index': i,
           'sets': exercise.sets.map((s) => s.toJson()).toList(),
         });
@@ -163,6 +165,7 @@ class RoutineRepository extends ChangeNotifier {
         await _supabase.from('routine_exercises').insert({
           'routine_id': routine.id,
           'exercise_name': exercise.name,
+          'category': exercise.category,
           'order_index': i,
           'sets': exercise.sets.map((s) => s.toJson()).toList(),
         });

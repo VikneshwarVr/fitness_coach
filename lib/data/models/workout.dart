@@ -65,21 +65,26 @@ class ExerciseSession {
   final String id;
   final String exerciseId;
   final String name;
+  final String category; // 'Strength' or 'Cardio'
   final List<ExerciseSet> sets;
 
   ExerciseSession({
     required this.id,
     required this.exerciseId,
     required this.name,
+    this.category = 'Strength',
     required this.sets,
   });
 
-  int get volume => sets.fold(0, (sum, set) => sum + (set.weight * set.reps));
+  int get volume => category == 'Cardio' 
+    ? 0 
+    : sets.fold(0, (sum, set) => sum + (set.weight * set.reps));
 
   Map<String, dynamic> toJson() => {
     'id': id,
     'exerciseId': exerciseId,
     'name': name,
+    'category': category,
     'sets': sets.map((s) => s.toJson()).toList(),
   };
 
@@ -88,6 +93,7 @@ class ExerciseSession {
       id: json['id']?.toString() ?? '',
       exerciseId: json['exerciseId']?.toString() ?? json['exercise_id']?.toString() ?? '',
       name: json['name'] ?? '',
+      category: json['category'] ?? 'Strength',
       sets: (json['sets'] as List).map((s) => ExerciseSet.fromJson(s)).toList(),
     );
   }
@@ -97,12 +103,16 @@ class ExerciseSet {
   final String id;
   final int weight;
   final int reps;
+  final double? distance; // in km
+  final int? durationSeconds;
   final bool completed;
 
   ExerciseSet({
     required this.id,
     required this.weight,
     required this.reps,
+    this.distance,
+    this.durationSeconds,
     required this.completed,
   });
 
@@ -110,14 +120,18 @@ class ExerciseSet {
     'id': id,
     'weight': weight,
     'reps': reps,
+    'distance': distance,
+    'duration_seconds': durationSeconds,
     'completed': completed,
   };
 
   factory ExerciseSet.fromJson(Map<String, dynamic> json) {
     return ExerciseSet(
       id: json['id']?.toString() ?? '',
-      weight: json['weight'] ?? 0,
-      reps: json['reps'] ?? 0,
+      weight: json['weight']?.toInt() ?? 0,
+      reps: json['reps']?.toInt() ?? 0,
+      distance: (json['distance'] as num?)?.toDouble(),
+      durationSeconds: json['duration_seconds']?.toInt(),
       completed: json['completed'] ?? false,
     );
   }

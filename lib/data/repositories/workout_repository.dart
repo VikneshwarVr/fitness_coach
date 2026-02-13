@@ -60,6 +60,8 @@ class WorkoutRepository extends ChangeNotifier {
               id: setJson['id'].toString(),
               weight: setJson['weight']?.toInt() ?? 0,
               reps: setJson['reps']?.toInt() ?? 0,
+              distance: (setJson['distance'] as num?)?.toDouble(),
+              durationSeconds: setJson['duration_seconds']?.toInt(),
               completed: setJson['completed'] ?? false,
             );
           }).toList();
@@ -68,6 +70,7 @@ class WorkoutRepository extends ChangeNotifier {
             id: excJson['id'].toString(),
             exerciseId: excJson['id'].toString(),
             name: excJson['exercise_name'],
+            category: excJson['category'] ?? 'Strength',
             sets: sets,
           );
         }).toList();
@@ -111,6 +114,7 @@ class WorkoutRepository extends ChangeNotifier {
         final excResponse = await _supabase.from('workout_exercises').insert({
           'workout_id': workoutId,
           'exercise_name': exc.name,
+          'category': exc.category,
           'order_index': i,
         }).select().single();
 
@@ -122,6 +126,8 @@ class WorkoutRepository extends ChangeNotifier {
               'workout_exercise_id': excId,
               'weight': entry.value.weight,
               'reps': entry.value.reps,
+              'distance': entry.value.distance,
+              'duration_seconds': entry.value.durationSeconds,
               'completed': entry.value.completed,
               'order_index': entry.key,
             }).toList(),
@@ -155,6 +161,7 @@ class WorkoutRepository extends ChangeNotifier {
         final excResponse = await _supabase.from('workout_exercises').insert({
           'workout_id': workout.id,
           'exercise_name': exc.name,
+          'category': exc.category,
           'order_index': i,
         }).select().single();
 
@@ -166,6 +173,8 @@ class WorkoutRepository extends ChangeNotifier {
               'workout_exercise_id': excId,
               'weight': entry.value.weight,
               'reps': entry.value.reps,
+              'distance': entry.value.distance,
+              'duration_seconds': entry.value.durationSeconds,
               'completed': entry.value.completed,
               'order_index': entry.key,
             }).toList(),
@@ -317,6 +326,8 @@ class WorkoutRepository extends ChangeNotifier {
           id: setJson['id'].toString(),
           weight: setJson['weight']?.toInt() ?? 0,
           reps: setJson['reps']?.toInt() ?? 0,
+          distance: (setJson['distance'] as num?)?.toDouble(),
+          durationSeconds: setJson['duration_seconds']?.toInt(),
           completed: setJson['completed'] ?? false,
         );
       }).toList();

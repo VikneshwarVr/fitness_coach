@@ -6,16 +6,23 @@ class RoutineSet {
   final int weight;
   final int reps;
 
+  final double? distance;
+  final int? durationSeconds;
+
   RoutineSet({
     required this.id,
     this.weight = 0,
     this.reps = 0,
+    this.distance,
+    this.durationSeconds,
   });
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'weight': weight,
         'reps': reps,
+        'distance': distance,
+        'duration_seconds': durationSeconds,
       };
 
   factory RoutineSet.fromJson(Map<String, dynamic> json) {
@@ -23,6 +30,8 @@ class RoutineSet {
       id: json['id']?.toString() ?? const Uuid().v4(),
       weight: json['weight'] ?? 0,
       reps: json['reps'] ?? 0,
+      distance: (json['distance'] as num?)?.toDouble(),
+      durationSeconds: json['duration_seconds']?.toInt(),
     );
   }
 }
@@ -30,17 +39,20 @@ class RoutineSet {
 class RoutineExercise {
   final String id;
   final String name;
+  final String category;
   final List<RoutineSet> sets;
 
   RoutineExercise({
     required this.id,
     required this.name,
+    this.category = 'Strength',
     required this.sets,
   });
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
+        'category': category,
         'sets': sets.map((s) => s.toJson()).toList(),
       };
 
@@ -48,6 +60,7 @@ class RoutineExercise {
     return RoutineExercise(
       id: json['id']?.toString() ?? const Uuid().v4(),
       name: json['name'] ?? '',
+      category: json['category'] ?? 'Strength',
       sets: (json['sets'] as List<dynamic>?)
               ?.map((s) => RoutineSet.fromJson(s))
               .toList() ??
@@ -96,6 +109,7 @@ class Routine {
         return RoutineExercise(
           id: const Uuid().v4(),
           name: name,
+          category: 'Strength', // Default, can be refined by caller
           sets: [
             RoutineSet(id: const Uuid().v4(), weight: 0, reps: 0),
             RoutineSet(id: const Uuid().v4(), weight: 0, reps: 0),

@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../models/workout.dart';
 import '../models/routine.dart';
 import '../repositories/workout_repository.dart';
+import '../constants/exercise_data.dart';
 
 class WorkoutProvider extends ChangeNotifier {
   final WorkoutRepository _workoutRepository;
@@ -49,6 +50,11 @@ class WorkoutProvider extends ChangeNotifier {
   int _currentRestSeconds = 0;
   int _totalRestSeconds = 0;
   bool _isRestTimerRunning = false;
+  
+  // Set Timer State (for Plank, etc.)
+  Timer? _setTimer;
+  String? _activeTimingExerciseId;
+  String? _activeTimingSetId;
 
   // Getters
   int get secondsElapsed => _secondsElapsed;
@@ -57,6 +63,9 @@ class WorkoutProvider extends ChangeNotifier {
   bool get isEditingRoutine => _isEditingRoutine;
   String get workoutName => _workoutName;
   String? get editingWorkoutId => _editingWorkoutId;
+  String? get activeTimingSetId => _activeTimingSetId;
+  String? get activeTimingExerciseId => _activeTimingExerciseId;
+  bool get isAnySetTiming => _setTimer != null;
   DateTime? get editingWorkoutDate => _editingWorkoutDate;
   String? get workoutPhotoPath => _workoutPhotoPath;
   List<ExerciseSession> get exercises => List.unmodifiable(_exercises);
@@ -84,7 +93,10 @@ class WorkoutProvider extends ChangeNotifier {
     for (var ex in _exercises) {
       for (var set in ex.sets) {
         if (set.completed) {
-          volume += (set.weight * set.reps);
+          // Only count volume for strength exercises
+          if (ex.category == 'Strength') {
+            volume += (set.weight * set.reps);
+          }
           sets++;
         }
       }
@@ -114,6 +126,7 @@ class WorkoutProvider extends ChangeNotifier {
     if (routine != null) {
       for (final routineExercise in routine.exercises) {
         final exerciseName = routineExercise.name;
+        final category = routineExercise.category;
         
         // Initialize rest time with default if not already set
         if (defaultRestTime > 0) {
@@ -134,6 +147,8 @@ class WorkoutProvider extends ChangeNotifier {
              id: _uuid.v4(), // New session ID
              weight: s.weight,
              reps: s.reps,
+             distance: s.distance,
+             durationSeconds: s.durationSeconds,
              completed: false,
            )).toList();
         } else {
@@ -153,8 +168,9 @@ class WorkoutProvider extends ChangeNotifier {
         _exercises.add(
           ExerciseSession(
             id: _uuid.v4(),
-            exerciseId: exerciseName, // Using name as ID for now
+            exerciseId: routineExercise.id,
             name: exerciseName,
+            category: category,
             sets: sessSets,
           ),
         );
@@ -179,6 +195,8 @@ class WorkoutProvider extends ChangeNotifier {
          id: _uuid.v4(),
          weight: s.weight,
          reps: s.reps,
+         distance: s.distance,
+         durationSeconds: s.durationSeconds,
          completed: false, // Completion checkmarks don't mean "done" in editor, maybe just "valid"? or ignored?
                            // Actually in editor we might not show checkboxes? Or check = "include"?
                            // For now let's keep them false.
@@ -191,8 +209,9 @@ class WorkoutProvider extends ChangeNotifier {
 
        _exercises.add(ExerciseSession(
          id: _uuid.v4(),
-         exerciseId: routineExercise.name,
+         exerciseId: routineExercise.id,
          name: routineExercise.name,
+         category: routineExercise.category,
          sets: sessSets,
        ));
     }
@@ -202,14 +221,19 @@ class WorkoutProvider extends ChangeNotifier {
   // Extract data back to Routine format
   List<RoutineExercise> getRoutineExercises() {
     return _exercises.map((ex) {
-      return RoutineExercise(
-        id: const Uuid().v4(), // or keep original? doesnt matter much for new save
-        name: ex.name,
-        sets: ex.sets.map((s) => RoutineSet(
+      final List<RoutineSet> routineSets = ex.sets.map((s) => RoutineSet(
           id: const Uuid().v4(),
           weight: s.weight,
           reps: s.reps,
-        )).toList(),
+          distance: s.distance,
+          durationSeconds: s.durationSeconds,
+        )).toList();
+
+      return RoutineExercise(
+        id: const Uuid().v4(), // or keep original? doesnt matter much for new save
+        name: ex.name,
+        category: ex.category,
+        sets: routineSets,
       );
     }).toList();
   }
@@ -293,6 +317,8 @@ class WorkoutProvider extends ChangeNotifier {
                   // But let's keep it safe.
         weight: s.weight,
         reps: s.reps,
+        distance: s.distance,
+        durationSeconds: s.durationSeconds,
         completed: s.completed,
       )).toList();
 
@@ -300,6 +326,7 @@ class WorkoutProvider extends ChangeNotifier {
         id: ex.id,
         exerciseId: ex.exerciseId,
         name: ex.name,
+        category: ex.category,
         sets: newSets,
       ));
     }
@@ -344,12 +371,23 @@ class WorkoutProvider extends ChangeNotifier {
   }
 
   void _resetState() {
+    _timer?.cancel();
+    _restTimer?.cancel();
+    _setTimer?.cancel();
+    _activeTimingSetId = null;
+    _activeTimingExerciseId = null;
     _secondsElapsed = 0;
-    _exercises.clear();
-    _workoutName = 'Log Workout';
+    _isPlaying = false;
+    _isWorkoutActive = false;
     _isEditingRoutine = false;
-    _editingWorkoutId = null;
-    _editingWorkoutDate = null;
+    _exercises.clear();
+    _previousSets.clear();
+    _sessionBests.clear();
+    _exercisesWithPRs.clear();
+    _totalPRCount = 0;
+    _achievedPRTypes.clear();
+    _cachedTotalVolume = 0;
+    _cachedTotalSets = 0;
   }
 
   void toggleTimer() {
@@ -394,22 +432,51 @@ class WorkoutProvider extends ChangeNotifier {
     }
     
     final prevSets = _previousSets[name] ?? [];
-    final initialWeight = prevSets.isNotEmpty ? prevSets[0].weight : 0;
-    final initialReps = prevSets.isNotEmpty ? prevSets[0].reps : 0;
+    
+    // Look up category from ExerciseData
+    final exerciseData = ExerciseData.exercises.firstWhere(
+      (e) => e['name'] == name,
+      orElse: () => {'tag': 'Strength', 'type': 'strength'},
+    );
+    
+    // Determine category based on type or tag
+    String category = 'Strength';
+    final type = exerciseData['type'] ?? (exerciseData['tag'] == 'Cardio' ? 'cardio' : 'strength');
+    
+    if (type == 'cardio') {
+      category = 'Cardio';
+    } else if (type == 'timed') {
+      category = 'Timed';
+    } else if (type == 'reps') {
+      category = 'Bodyweight';
+    } else if (type == 'distance') {
+      category = 'Distance';
+    }
 
-    _exercises.add(ExerciseSession(
-      id: _uuid.v4(),
-      exerciseId: name,
+    final exercise = ExerciseSession(
+      id: const Uuid().v4(),
+      exerciseId: const Uuid().v4(),
       name: name,
-      sets: [
-        ExerciseSet(
-          id: _uuid.v4(), 
-          weight: initialWeight, 
-          reps: initialReps, 
-          completed: false
-        ),
-      ],
-    ));
+      category: category,
+      sets: prevSets.isNotEmpty 
+        ? prevSets.map((s) => ExerciseSet(
+            id: const Uuid().v4(),
+            weight: s.weight,
+            reps: s.reps,
+            distance: s.distance,
+            durationSeconds: s.durationSeconds,
+            completed: false,
+          )).toList()
+        : [ExerciseSet(
+            id: const Uuid().v4(), 
+            weight: 0, 
+            reps: 0, 
+            distance: (category == 'Cardio' || category == 'Distance') ? 0.0 : null,
+            durationSeconds: (category == 'Cardio' || category == 'Timed') ? 0 : null,
+            completed: false
+          )],
+    );
+    _exercises.add(exercise);
   }
 
   void addSet(int exerciseIndex) {
@@ -420,46 +487,67 @@ class WorkoutProvider extends ChangeNotifier {
       
       int weight = 0;
       int reps = 0;
+      double distance = 0.0;
+      int durationSeconds = 0;
 
       if (nextSetIndex < prevSets.length) {
         // Use matching set from previous session
         weight = prevSets[nextSetIndex].weight;
         reps = prevSets[nextSetIndex].reps;
+        distance = prevSets[nextSetIndex].distance ?? 0.0;
+        durationSeconds = prevSets[nextSetIndex].durationSeconds ?? 0;
       } else if (exercise.sets.isNotEmpty) {
         // Fallback to the last set of the current session
         weight = exercise.sets.last.weight;
         reps = exercise.sets.last.reps;
+        distance = exercise.sets.last.distance ?? 0.0;
+        durationSeconds = exercise.sets.last.durationSeconds ?? 0;
       }
 
       exercise.sets.add(
-        ExerciseSet(id: _uuid.v4(), weight: weight, reps: reps, completed: false),
+        ExerciseSet(
+          id: _uuid.v4(), 
+          weight: weight, 
+          reps: reps, 
+          distance: distance,
+          durationSeconds: durationSeconds,
+          completed: false
+        ),
       );
       notifyListeners();
     }
   }
 
-  void updateSet(int exerciseIndex, int setIndex, {int? weight, int? reps, bool? completed}) {
-    if (exerciseIndex >= 0 && exerciseIndex < _exercises.length) {
-       final sets = _exercises[exerciseIndex].sets;
-       if (setIndex >= 0 && setIndex < sets.length) {
-         final oldSet = sets[setIndex];
-         final newSet = ExerciseSet(
-           id: oldSet.id,
-           weight: weight ?? oldSet.weight,
-           reps: reps ?? oldSet.reps,
-           completed: completed ?? oldSet.completed,
-         );
-         sets[setIndex] = newSet;
-         notifyListeners();
-       }
+  void updateSet(String exerciseId, String setId, {int? weight, int? reps, double? distance, int? durationSeconds, bool? completed}) {
+    final exerciseIndex = _exercises.indexWhere((e) => e.id == exerciseId);
+    if (exerciseIndex != -1) {
+      final exercise = _exercises[exerciseIndex];
+      final setIndex = exercise.sets.indexWhere((s) => s.id == setId);
+      if (setIndex != -1) {
+        final oldSet = exercise.sets[setIndex];
+        
+        final newSet = ExerciseSet(
+          id: oldSet.id,
+          weight: weight ?? oldSet.weight,
+          reps: reps ?? oldSet.reps,
+          distance: distance ?? oldSet.distance,
+          durationSeconds: durationSeconds ?? oldSet.durationSeconds,
+          completed: completed ?? oldSet.completed,
+        );
+        exercise.sets[setIndex] = newSet;
+        _recalculateStats(); // Recalculate stats if a set was updated
+        notifyListeners();
+      }
     }
   }
 
-  void removeSet(int exerciseIndex, int setIndex) {
-    if (exerciseIndex >= 0 && exerciseIndex < _exercises.length) {
-      final sets = _exercises[exerciseIndex].sets;
-      if (setIndex >= 0 && setIndex < sets.length) {
-        sets.removeAt(setIndex);
+  void removeSet(String exerciseId, String setId) {
+    final exerciseIndex = _exercises.indexWhere((e) => e.id == exerciseId);
+    if (exerciseIndex != -1) {
+      final exercise = _exercises[exerciseIndex];
+      final setIndex = exercise.sets.indexWhere((s) => s.id == setId);
+      if (setIndex != -1) {
+        exercise.sets.removeAt(setIndex);
         _recalculateStats();
         notifyListeners();
       }
@@ -520,33 +608,37 @@ class WorkoutProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> toggleSetCompletion(int exerciseIndex, int setIndex) async {
-     if (exerciseIndex >= 0 && exerciseIndex < _exercises.length) {
-       final sets = _exercises[exerciseIndex].sets;
-       if (setIndex >= 0 && setIndex < sets.length) {
-         final oldSet = sets[setIndex];
-         final newSet = ExerciseSet(
-           id: oldSet.id,
-           weight: oldSet.weight,
-           reps: oldSet.reps,
-           completed: !oldSet.completed,
-         );
-         sets[setIndex] = newSet;
-         _recalculateStats();
+  Future<void> toggleSetCompletion(String exerciseId, String setId) async {
+    final exerciseIndex = _exercises.indexWhere((e) => e.id == exerciseId);
+    if (exerciseIndex != -1) {
+      final exercise = _exercises[exerciseIndex];
+      final setIndex = exercise.sets.indexWhere((s) => s.id == setId);
+      if (setIndex != -1) {
+        final oldSet = exercise.sets[setIndex];
+        final newSet = ExerciseSet(
+          id: oldSet.id,
+          weight: oldSet.weight,
+          reps: oldSet.reps,
+          distance: oldSet.distance,
+          durationSeconds: oldSet.durationSeconds,
+          completed: !oldSet.completed,
+        );
+        exercise.sets[setIndex] = newSet;
+        _recalculateStats();
 
-         if (newSet.completed) {
-           await _checkForPRs(_exercises[exerciseIndex].name, newSet);
-           
-           // Trigger Rest Timer if configured
-           final restTime = _exerciseRestTimes[_exercises[exerciseIndex].name] ?? 0;
-           if (restTime > 0) {
-             _startRestTimer(restTime);
-           }
-         }
-         
-         notifyListeners();
-       }
-     }
+        if (newSet.completed) {
+          await _checkForPRs(exercise.name, newSet);
+          
+          // Trigger Rest Timer if configured
+          final restTime = _exerciseRestTimes[exercise.name] ?? 0;
+          if (restTime > 0) {
+            _startRestTimer(restTime);
+          }
+        }
+        
+        notifyListeners();
+      }
+    }
   }
 
   Future<void> _checkForPRs(String exerciseName, ExerciseSet set) async {
@@ -644,10 +736,59 @@ class WorkoutProvider extends ChangeNotifier {
     }
   }
 
+  // Set Timer Methods
+  void toggleSetTimer(String exerciseId, String setId) {
+    if (_activeTimingSetId == setId) {
+      stopSetTimer();
+    } else {
+      startSetTimer(exerciseId, setId);
+    }
+  }
+
+  void startSetTimer(String exerciseId, String setId) {
+    _setTimer?.cancel();
+    _activeTimingExerciseId = exerciseId;
+    _activeTimingSetId = setId;
+    
+    _setTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      final exerciseIndex = _exercises.indexWhere((e) => e.id == exerciseId);
+      if (exerciseIndex != -1) {
+        final exercise = _exercises[exerciseIndex];
+        final setIndex = exercise.sets.indexWhere((s) => s.id == setId);
+        if (setIndex != -1) {
+          final oldSet = exercise.sets[setIndex];
+          exercise.sets[setIndex] = ExerciseSet(
+            id: oldSet.id,
+            weight: oldSet.weight,
+            reps: oldSet.reps,
+            distance: oldSet.distance,
+            durationSeconds: (oldSet.durationSeconds ?? 0) + 1,
+            completed: oldSet.completed,
+          );
+          notifyListeners();
+        } else {
+          stopSetTimer();
+        }
+      } else {
+        stopSetTimer();
+      }
+    });
+    notifyListeners();
+  }
+
+  void stopSetTimer() {
+    _setTimer?.cancel();
+    _setTimer = null;
+    _activeTimingExerciseId = null;
+    _activeTimingSetId = null;
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
     _restTimer?.cancel();
+    _setTimer?.cancel();
     _prStreamController.close();
     super.dispose();
   }
