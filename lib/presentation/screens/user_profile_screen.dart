@@ -88,15 +88,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     try {
       final auth = context.read<AuthRepository>();
       
-      // Note: In a real app, you'd upload the _avatarPath to storage first
-      // For now, we'll just update the metadata with local path or placeholder
+      String? uploadedUrl;
+      if (_avatarPath != null) {
+        uploadedUrl = await auth.uploadAvatar(_avatarPath!);
+      }
       
       await auth.updateProfile(
         username: _nameController.text,
         bio: _bioController.text,
         sex: _selectedSex,
         birthday: _selectedBirthday?.toIso8601String() ?? '',
-        avatarUrl: _avatarPath, 
+        avatarUrl: uploadedUrl, 
       );
 
       if (mounted) {

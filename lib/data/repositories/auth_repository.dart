@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -114,6 +115,22 @@ class AuthRepository extends ChangeNotifier {
     }
   }
 
+
+  Future<String?> uploadAvatar(String filePath) async {
+    try {
+      final file = File(filePath);
+      final fileExt = filePath.split('.').last;
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+      final path = '${currentUser!.id}/$fileName';
+
+      await _supabase.storage.from('avatars').upload(path, file);
+
+      final imageUrl = _supabase.storage.from('avatars').getPublicUrl(path);
+      return imageUrl;
+    } catch (e) {
+      rethrow;
+    }
+  }
 
   Future<void> signOut() async {
     try {

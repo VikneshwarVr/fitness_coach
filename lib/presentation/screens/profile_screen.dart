@@ -24,11 +24,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Center(
+              Center(
                 child: CircleAvatar(
                   radius: 40,
                   backgroundColor: AppTheme.muted,
-                  child: Icon(LucideIcons.user, size: 40, color: AppTheme.mutedForeground),
+                  backgroundImage: context.watch<AuthRepository>().profileImageUrl != null
+                      ? NetworkImage(context.watch<AuthRepository>().profileImageUrl!)
+                      : null,
+                  child: context.watch<AuthRepository>().profileImageUrl == null
+                      ? const Icon(LucideIcons.user, size: 40, color: AppTheme.mutedForeground)
+                      : null,
                 ),
               ),
               const SizedBox(height: 16),
