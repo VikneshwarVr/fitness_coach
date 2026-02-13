@@ -37,6 +37,8 @@ class ExerciseListItem extends StatelessWidget {
             children: [
               Row(
                 children: [
+                  const Icon(LucideIcons.gripVertical, size: 20, color: AppTheme.mutedForeground),
+                  const SizedBox(width: 8),
                   Text(exercise.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   if (hasPR) ...[
                     const SizedBox(width: 8),

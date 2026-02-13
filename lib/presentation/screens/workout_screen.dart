@@ -8,11 +8,9 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme.dart';
 import '../../data/models/routine.dart';
 import '../../data/providers/workout_provider.dart';
-import '../components/buttons.dart';
 import '../components/workout/workout_stats_panel.dart';
 import '../components/workout/pr_notification.dart';
 import '../components/workout/rest_timer_overlay.dart';
-import '../components/workout/exercise_list_item.dart';
 
 class WorkoutScreen extends StatefulWidget {
   final Routine? initialRoutine;
@@ -185,39 +183,38 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                               },
                             ),
                           )
-                        : ListView.builder(
+                        : ReorderableListView(
                             padding: const EdgeInsets.only(left: 16, right: 16, bottom: 100),
-                            itemCount: provider.exercises.length + 1,
-                            itemBuilder: (context, index) {
-                              if (index == provider.exercises.length) {
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 24),
-                                  child: PrimaryButton(
-                                    label: 'Add Exercise',
-                                    icon: LucideIcons.plus,
-                                    onPressed: () async {
-                                      final existingNames = provider.exercises.map((e) => e.name).toList();
-                                      final result = await context.push<Object?>(
-                                        '/workout/add', 
-                                        extra: {
-                                          'isMultiSelect': true,
-                                          'initialSelectedExercises': existingNames,
-                                        },
-                                      );
-                                      if (result != null) {
-                                        if (result is List<String>) {
-                                          provider.addExercises(result);
-                                        } else if (result is String) {
-                                          provider.addExercise(result);
-                                        }
-                                      }
+                            onReorder: provider.reorderExercise,
+                            footer: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 24),
+                              child: PrimaryButton(
+                                label: 'Add Exercise',
+                                icon: LucideIcons.plus,
+                                onPressed: () async {
+                                  final existingNames = provider.exercises.map((e) => e.name).toList();
+                                  final result = await context.push<Object?>(
+                                    '/workout/add', 
+                                    extra: {
+                                      'isMultiSelect': true,
+                                      'initialSelectedExercises': existingNames,
                                     },
-                                  ),
-                                );
-                              }
-
-                              final exercise = provider.exercises[index];
+                                  );
+                                  if (result != null) {
+                                    if (result is List<String>) {
+                                      provider.addExercises(result);
+                                    } else if (result is String) {
+                                      provider.addExercise(result);
+                                    }
+                                  }
+                                },
+                              ),
+                            ),
+                            children: provider.exercises.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final exercise = entry.value;
                               return Padding(
+                                key: ValueKey(exercise.id),
                                 padding: const EdgeInsets.only(bottom: 16),
                                 child: ExerciseListItem(
                                   exercise: exercise,
@@ -229,7 +226,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                                   onRestTimeTap: () => _showRestTimePicker(context, provider, exercise.name),
                                 ),
                               );
-                            },
+                            }).toList(),
                           ),
                   ),
                   ],

@@ -456,6 +456,15 @@ class WorkoutProvider extends ChangeNotifier {
       }
     }
   }
+
+  void reorderExercise(int oldIndex, int newIndex) {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final ExerciseSession item = _exercises.removeAt(oldIndex);
+    _exercises.insert(newIndex, item);
+    notifyListeners();
+  }
   
   // Rest Timer Logic
   void setRestTime(String exerciseId, int seconds) {
