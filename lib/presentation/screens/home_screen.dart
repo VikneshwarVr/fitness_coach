@@ -49,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const _QuickStats(),
                 const SizedBox(height: 24),
                 PrimaryButton(
-                  label: 'Start New Workout',
+                  label: 'Start Empty Workout',
                   icon: LucideIcons.plus,
                   onPressed: () {
                      context.read<WorkoutProvider>().startWorkout(); // Start fresh or resume

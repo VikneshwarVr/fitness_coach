@@ -74,21 +74,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _SettingsItem(
                 icon: LucideIcons.settings,
                 label: 'General',
-                onTap: () {},
+                onTap: null,
               ),
                const SizedBox(height: 8),
               _SettingsItem(
                 icon: LucideIcons.bell,
                 label: 'Notifications',
-                onTap: () {},
+                onTap: null,
               ),
                const SizedBox(height: 8),
               _SettingsItem(
                 icon: LucideIcons.moon,
                 label: 'Dark Mode',
+                onTap: null,
                 trailing: Switch(
                   value: true,
-                  onChanged: (val) {},
+                  onChanged: null,
                   activeThumbColor: AppTheme.primary,
                 ),
               ),
@@ -128,18 +129,21 @@ class _SettingsItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FitnessCard(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4), // Slimmer
-      onTap: onTap,
-       child: SizedBox(
-        height: 48,
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: AppTheme.foreground),
-            const SizedBox(width: 12),
-            Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w500))),
-            if (trailing != null) trailing! else const Icon(LucideIcons.chevronRight, size: 20, color: AppTheme.mutedForeground),
-          ],
+    return Opacity(
+      opacity: onTap == null ? 0.5 : 1.0,
+      child: FitnessCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4), // Slimmer
+        onTap: onTap,
+         child: SizedBox(
+          height: 48,
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: AppTheme.foreground),
+              const SizedBox(width: 12),
+              Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w500))),
+              if (trailing != null) trailing! else const Icon(LucideIcons.chevronRight, size: 20, color: AppTheme.mutedForeground),
+            ],
+          ),
         ),
       ),
     );
