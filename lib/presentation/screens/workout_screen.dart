@@ -107,8 +107,27 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                     // Return the modified exercises
                     final exercises = provider.getRoutineExercises();
                     context.pop(exercises);
-                  } else if (widget.isEditingLog) {
-                    final provider = context.read<WorkoutProvider>();
+                    return;
+                  }
+
+                  if (provider.totalVolume <= 0) {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Empty Workout?'),
+                        content: const Text('You haven\'t recorded any volume yet. Please add at least one set with weight before finishing.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Got it', style: TextStyle(color: AppTheme.primary)),
+                          ),
+                        ],
+                      ),
+                    );
+                    return;
+                  }
+
+                  if (widget.isEditingLog) {
                     if (provider.editingWorkoutId != null) {
                       context.push('/workout/finish/${provider.editingWorkoutId}');
                     }

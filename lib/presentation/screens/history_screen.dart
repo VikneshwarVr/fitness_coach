@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../components/fitness_card.dart';
@@ -62,7 +63,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    if (workout.photoUrl != null) ...[
+                                    if (workout.photoUrl != null && workout.photoUrl!.isNotEmpty) ...[
                                       ClipRRect(
                                         borderRadius: BorderRadius.circular(8),
                                         child: Image.network(
@@ -70,6 +71,29 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                           width: 40,
                                           height: 40,
                                           fit: BoxFit.cover,
+                                          loadingBuilder: (context, child, loadingProgress) {
+                                            if (loadingProgress == null) return child;
+                                            return Container(
+                                              width: 40,
+                                              height: 40,
+                                              color: AppTheme.card,
+                                              child: Center(
+                                                child: SizedBox(
+                                                  width: 15,
+                                                  height: 15,
+                                                  child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Container(
+                                              width: 40,
+                                              height: 40,
+                                              color: AppTheme.card,
+                                              child: Icon(LucideIcons.imageOff, size: 16, color: AppTheme.mutedForeground),
+                                            );
+                                          },
                                         ),
                                       ),
                                       const SizedBox(width: 12),
@@ -101,6 +125,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                           Text(
                                             workout.name,
                                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ],
                                       ),
@@ -113,17 +139,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    _StatColumn(
-                                      label: 'Volume',
-                                      value: '${(workout.totalVolume / 1000).toStringAsFixed(1)}k kg',
+                                    Expanded(
+                                      child: _StatColumn(
+                                        label: 'Volume',
+                                        value: workout.totalVolume >= 1000 
+                                          ? '${(workout.totalVolume / 1000).toStringAsFixed(1)}k kg'
+                                          : '${workout.totalVolume} kg',
+                                      ),
                                     ),
-                                    _StatColumn(
-                                      label: 'Exercises',
-                                      value: '${workout.exercises.length}',
+                                    Expanded(
+                                      child: _StatColumn(
+                                        label: 'Exercises',
+                                        value: '${workout.exercises.length}',
+                                      ),
                                     ),
-                                    _StatColumn(
-                                      label: 'Best Set',
-                                      value: '-', // Placeholder for complex calc
+                                    const Expanded(
+                                      child: _StatColumn(
+                                        label: 'Best Set',
+                                        value: '-', // Placeholder for complex calc
+                                      ),
                                     ),
                                   ],
                                 ),

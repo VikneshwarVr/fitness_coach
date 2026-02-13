@@ -98,6 +98,23 @@ class AppTheme {
         ),
       ),
     ),
+    dialogTheme: const DialogThemeData(
+      backgroundColor: card,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(16)),
+        side: BorderSide(color: border),
+      ),
+      titleTextStyle: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: foreground,
+      ),
+      contentTextStyle: TextStyle(
+        fontSize: 14,
+        color: mutedForeground,
+      ),
+    ),
     textTheme: textTheme,
   );
 }

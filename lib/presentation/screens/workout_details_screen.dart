@@ -99,6 +99,35 @@ class WorkoutDetailsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
 
+                if (workout.photoUrl != null) ...[
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: Image.network(
+                        workout.photoUrl!,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            color: AppTheme.card,
+                            child: const Center(
+                              child: CircularProgressIndicator(color: AppTheme.primary),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                           return Container(
+                             color: AppTheme.card,
+                             child: const Icon(LucideIcons.imageOff, color: AppTheme.mutedForeground),
+                           );
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+
                 // Stats Row
                 Row(
                   children: [

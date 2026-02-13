@@ -1,8 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:dotted_border/dotted_border.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 import '../../core/theme.dart';
 import '../../data/providers/workout_provider.dart';
 import '../components/buttons.dart';
@@ -136,11 +139,68 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
-
-                const SizedBox(height: 24),
-
-                const SizedBox(height: 48),
+                const SizedBox(height: 18),
+                GestureDetector(
+                  onTap: () => _showPhotoSourceSheet(provider),
+                  child: Row(
+                    children: [
+                      DottedBorder(
+                        color: AppTheme.mutedForeground.withOpacity(0.4),
+                        strokeWidth: 1.5,
+                        dashPattern: const [6, 4],
+                        borderType: BorderType.RRect,
+                        radius: const Radius.circular(16),
+                        child: Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            color: AppTheme.card,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: provider.workoutPhotoPath != null
+                              ? Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(14),
+                                      child: provider.workoutPhotoPath!.startsWith('http')
+                                          ? Image.network(provider.workoutPhotoPath!, fit: BoxFit.cover, width: 100, height: 100)
+                                          : Image.file(File(provider.workoutPhotoPath!), fit: BoxFit.cover, width: 100, height: 100),
+                                    ),
+                                    Positioned(
+                                      top: 4,
+                                      right: 4,
+                                      child: GestureDetector(
+                                        onTap: () => provider.setWorkoutPhoto(null),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(4),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.black54,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(LucideIcons.x, color: Colors.white, size: 12),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : const Center(
+                                  child: Icon(LucideIcons.imagePlus, color: AppTheme.mutedForeground, size: 32),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Text(
+                        'Add a photo / video',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
                 
                 // Actions
                 _isLoading 
@@ -149,6 +209,23 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
                   label: isEditing ? 'Update Workout' : 'Save Workout',
                   icon: isEditing ? LucideIcons.check : LucideIcons.save,
                   onPressed: () async {
+                    if (provider.totalVolume <= 0) {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Nothing to Save?'),
+                          content: const Text('This workout doesn\'t have any recorded volume. Add some sets with weight and reps to save your session!'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Oops, let me add some'),
+                            ),
+                          ],
+                        ),
+                      );
+                      return;
+                    }
+
                     setState(() => _isLoading = true);
                     try {
                       if (isEditing) {
@@ -211,7 +288,77 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
     );
   }
 
-  // Photo picking logic removed
+  void _showPhotoSourceSheet(WorkoutProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.card,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Text('Select Photo Source', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(LucideIcons.camera, color: AppTheme.primary),
+              title: const Text('Take Photo'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAndCropImage(ImageSource.camera, provider);
+              },
+            ),
+            ListTile(
+              leading: const Icon(LucideIcons.image, color: AppTheme.primary),
+              title: const Text('Choose from Gallery'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAndCropImage(ImageSource.gallery, provider);
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickAndCropImage(ImageSource source, WorkoutProvider provider) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source);
+    
+    if (pickedFile != null) {
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: pickedFile.path,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Photo (1:1)',
+            toolbarColor: AppTheme.background,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: true,
+            activeControlsWidgetColor: AppTheme.primary,
+            showCropGrid: true,
+          ),
+          IOSUiSettings(
+            title: 'Crop Photo (1:1)',
+            aspectRatioLockEnabled: true,
+            resetAspectRatioEnabled: false,
+            aspectRatioPickerButtonHidden: true,
+            doneButtonTitle: 'Done',
+            cancelButtonTitle: 'Cancel',
+          ),
+        ],
+      );
+
+      if (croppedFile != null) {
+        provider.setWorkoutPhoto(croppedFile.path);
+      }
+    }
+  }
 }
 
 class _SummaryStat extends StatelessWidget {
