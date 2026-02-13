@@ -15,6 +15,7 @@ import '../screens/exercise_list_screen.dart';
 import '../screens/user_profile_screen.dart';
 import '../screens/statistics_screen.dart';
 import '../screens/calendar_screen.dart';
+import '../screens/general_settings_screen.dart';
 import '../../data/models/routine.dart';
 import '../../data/repositories/auth_repository.dart';
 
@@ -155,6 +156,10 @@ GoRouter createRouter(AuthRepository authRepo) {
       GoRoute(
         path: '/profile/calendar',
         builder: (context, state) => const CalendarScreen(),
+      ),
+      GoRoute(
+        path: '/profile/settings',
+        builder: (context, state) => const GeneralSettingsScreen(),
       ),
     ],
   );

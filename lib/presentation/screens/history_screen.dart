@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../data/providers/settings_provider.dart';
 import '../components/fitness_card.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -110,15 +111,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                               padding: const EdgeInsets.symmetric(horizontal: 8),
                                               child: Text('•', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                                             ),
-                                            Text(
-                                              workout.totalVolume >= 1000 
-                                                ? '${(workout.totalVolume / 1000).toStringAsFixed(1)}k kg'
-                                                : '${workout.totalVolume} kg',
-                                              style: TextStyle(
-                                                color: Theme.of(context).colorScheme.primary,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 13,
-                                              ),
+                                            Consumer<SettingsProvider>(
+                                              builder: (context, settings, child) {
+                                                final label = settings.unitLabel;
+                                                final displayVolume = settings.convertToDisplay(workout.totalVolume);
+                                                final valueString = displayVolume >= 1000 
+                                                  ? '${(displayVolume / 1000).toStringAsFixed(1)}k $label'
+                                                  : '${displayVolume.toStringAsFixed(0)} $label';
+                                                
+                                                return Text(
+                                                  valueString,
+                                                  style: TextStyle(
+                                                    color: Theme.of(context).colorScheme.primary,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 13,
+                                                  ),
+                                                );
+                                              },
                                             ),
                                         ],
                                       ),

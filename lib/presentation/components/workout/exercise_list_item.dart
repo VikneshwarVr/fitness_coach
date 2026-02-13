@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/providers/workout_provider.dart';
+import '../../../data/providers/settings_provider.dart';
+import 'package:provider/provider.dart';
 import '../fitness_card.dart';
 
 class ExerciseListItem extends StatelessWidget {
@@ -27,6 +29,9 @@ class ExerciseListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final settingsProvider = context.read<SettingsProvider>();
+    final unit = settingsProvider.unitLabel;
+
     return FitnessCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -34,22 +39,33 @@ class ExerciseListItem extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(LucideIcons.gripVertical, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  const SizedBox(width: 8),
-                  Text(exercise.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  if (hasPR) ...[
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(LucideIcons.gripVertical, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     const SizedBox(width: 8),
-                    const Icon(LucideIcons.medal, size: 20, color: Color(0xFFFFD700)),
+                    Expanded(
+                      child: Text(
+                        exercise.name, 
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (hasPR) ...[
+                      const SizedBox(width: 8),
+                      const Icon(LucideIcons.medal, size: 20, color: Color(0xFFFFD700)),
+                    ],
                   ],
-                ],
+                ),
               ),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
                     icon: Icon(LucideIcons.moreVertical, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     onPressed: () {},
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.all(8),
                   ),
                   IconButton(
                     icon: Icon(
@@ -58,6 +74,8 @@ class ExerciseListItem extends StatelessWidget {
                       color: restTime > 0 ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant
                     ),
                     onPressed: onRestTimeTap,
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.all(8),
                   ),
                 ],
               ),
@@ -71,7 +89,7 @@ class ExerciseListItem extends StatelessWidget {
               children: [
                 SizedBox(width: 40, child: Text('Set', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
                 Expanded(child: Text('Previous', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
-                Expanded(child: Text('kg', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
+                Expanded(child: Text(unit, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
                 Expanded(child: Text('Reps', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
                 const SizedBox(width: 40),
               ],
@@ -120,7 +138,7 @@ class ExerciseListItem extends StatelessWidget {
                     // Previous
                     Expanded(
                       child: Text(
-                        prev != null ? '${prev.weight}kg × ${prev.reps}' : '-',
+                        prev != null ? '${settingsProvider.formatWeight(prev.weight)} × ${prev.reps}' : '-',
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
@@ -130,8 +148,8 @@ class ExerciseListItem extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: TextFormField(
-                          key: ValueKey('weight_${set.id}'),
-                          initialValue: set.weight > 0 ? '${set.weight}' : '',
+                          key: ValueKey('weight_${set.id}_$unit'), // Force rebuild on unit change
+                          initialValue: set.weight > 0 ? settingsProvider.formatWeight(set.weight, showUnit: false) : '',
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: Theme.of(context).colorScheme.surface,
@@ -139,14 +157,15 @@ class ExerciseListItem extends StatelessWidget {
                             contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                             isDense: true,
                           ),
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
                           textInputAction: TextInputAction.done,
                           textAlign: TextAlign.center,
                           style: const TextStyle(fontSize: 14),
                           onChanged: (val) {
-                            final weight = int.tryParse(val) ?? 0;
-                            provider.updateSet(exerciseIndex, setIndex, weight: weight);
+                            final weightValue = double.tryParse(val) ?? 0;
+                            final weightInKg = settingsProvider.convertToKg(weightValue).round();
+                            provider.updateSet(exerciseIndex, setIndex, weight: weightInKg);
                           },
                           onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
                         ),

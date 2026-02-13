@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:provider/provider.dart';
+import '../../../data/providers/settings_provider.dart';
 import '../fitness_card.dart';
 
 class WorkoutStatsPanel extends StatelessWidget {
@@ -32,13 +34,19 @@ class WorkoutStatsPanel extends StatelessWidget {
             color: Theme.of(context).colorScheme.outline,
           ),
           Expanded(
-            child: _StatItem(
-              icon: LucideIcons.trendingUp,
-              label: 'Volume',
-              value: totalVolume >= 1000
-                  ? '${(totalVolume / 1000).toStringAsFixed(1)}k'
-                  : '$totalVolume',
-              unit: 'kg',
+            child: Consumer<SettingsProvider>(
+              builder: (context, settings, _) {
+                final label = settings.unitLabel;
+                final displayVolume = settings.convertToDisplay(totalVolume);
+                return _StatItem(
+                  icon: LucideIcons.trendingUp,
+                  label: 'Volume',
+                  value: displayVolume >= 1000
+                      ? '${(displayVolume / 1000).toStringAsFixed(1)}k'
+                      : displayVolume.toStringAsFixed(0),
+                  unit: label,
+                );
+              },
             ),
           ),
           Container(

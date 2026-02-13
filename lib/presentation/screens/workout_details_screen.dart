@@ -7,6 +7,7 @@ import '../../core/theme.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/models/workout.dart';
 import '../../data/providers/workout_provider.dart';
+import '../../data/providers/settings_provider.dart';
 import '../components/fitness_card.dart';
 
 class WorkoutDetailsScreen extends StatelessWidget {
@@ -110,14 +111,23 @@ class WorkoutDetailsScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _SummaryStatCard(
-                        icon: LucideIcons.trendingUp,
-                        label: 'Total Volume',
-                        value: workout.totalVolume >= 1000 
-                          ? (workout.totalVolume / 1000).toStringAsFixed(1)
-                          : '${workout.totalVolume}',
-                        unit: workout.totalVolume >= 1000 ? 'k kg' : 'kg',
-                        valueColor: AppTheme.primary,
+                      child: Consumer<SettingsProvider>(
+                        builder: (context, settings, child) {
+                          final label = settings.unitLabel;
+                          final displayVolume = settings.convertToDisplay(workout.totalVolume);
+                          final value = displayVolume >= 1000 
+                            ? (displayVolume / 1000).toStringAsFixed(1)
+                            : displayVolume.toStringAsFixed(0);
+                          final unit = displayVolume >= 1000 ? 'k $label' : label;
+
+                          return _SummaryStatCard(
+                            icon: LucideIcons.trendingUp,
+                            label: 'Total Volume',
+                            value: value,
+                            unit: unit,
+                            valueColor: AppTheme.primary,
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -131,7 +141,7 @@ class WorkoutDetailsScreen extends StatelessWidget {
                       workout.photoUrl!,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const SizedBox(),
+                      errorBuilder: (context, error, stackTrace) => const SizedBox(),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -216,7 +226,7 @@ class _ExerciseDetailItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final completedSets = exercise.sets.where((s) => s.completed).toList();
-    final exerciseVolume = exercise.volume;
+    final settingsProvider = context.read<SettingsProvider>();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -270,10 +280,10 @@ class _ExerciseDetailItem extends StatelessWidget {
                           ),
                           Row(
                             children: [
-                              Text(
-                                '${set.weight} kg',
-                                style: const TextStyle(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.w600),
-                              ),
+                               Text(
+                                 settingsProvider.formatWeight(set.weight),
+                                 style: const TextStyle(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.w600),
+                               ),
                               const SizedBox(width: 8),
                               const Text(
                                 '×',
@@ -302,10 +312,10 @@ class _ExerciseDetailItem extends StatelessWidget {
                           'Total Volume',
                           style: TextStyle(fontSize: 11, color: Color(0xFF737373)),
                         ),
-                      Text(
-                        '$exerciseVolume kg',
-                        style: const TextStyle(fontSize: 11, color: AppTheme.primary, fontWeight: FontWeight.bold),
-                      ),
+                       Text(
+                         settingsProvider.formatWeight(exercise.volume),
+                         style: const TextStyle(fontSize: 11, color: AppTheme.primary, fontWeight: FontWeight.bold),
+                       ),
                     ],
                   ),
                 ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../data/providers/settings_provider.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../components/statistics/stat_box.dart';
 import '../components/statistics/muscle_distribution_chart.dart';
@@ -70,10 +71,17 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: StatBox(
-                        label: 'Total Volume',
-                        value: '${(repo.totalVolume / 1000).toStringAsFixed(1)}k',
-                        unit: 'kg',
+                      child: Consumer<SettingsProvider>(
+                        builder: (context, settings, child) {
+                          final label = settings.unitLabel;
+                          final displayVolume = settings.convertToDisplay(repo.totalVolume);
+                          final value = (displayVolume / 1000).toStringAsFixed(1);
+                          return StatBox(
+                            label: 'Total Volume',
+                            value: '${value}k',
+                            unit: label,
+                          );
+                        },
                       ),
                     ),
                   ],

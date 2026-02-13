@@ -7,6 +7,7 @@ import '../components/buttons.dart';
 import '../../data/repositories/routine_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/providers/workout_provider.dart';
+import '../../data/providers/settings_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -51,7 +52,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   label: 'Start Empty Workout',
                   icon: LucideIcons.plus,
                   onPressed: () {
-                     context.read<WorkoutProvider>().startWorkout(); // Start fresh or resume
+                     final settings = context.read<SettingsProvider>();
+                     context.read<WorkoutProvider>().startWorkout(defaultRestTime: settings.defaultRestTimer); 
                      context.go('/workout');
                   },
                 ),
@@ -217,12 +219,20 @@ class _QuickStats extends StatelessWidget {
               subLabel: 'workouts',
             )),
             const SizedBox(width: 12),
-            Expanded(child: _StatCard(
-              icon: LucideIcons.trendingUp,
-              label: 'Volume',
-              value: '${(repo.totalVolume / 1000).toStringAsFixed(1)}k',
-              subLabel: 'kg lifted',
-            )),
+            Expanded(
+              child: Consumer<SettingsProvider>(
+                builder: (context, settings, child) {
+                  final label = settings.unitLabel;
+                  final displayVolume = settings.convertToDisplay(repo.totalVolume);
+                  return _StatCard(
+                    icon: LucideIcons.trendingUp,
+                    label: 'Volume',
+                    value: '${(displayVolume / 1000).toStringAsFixed(1)}k',
+                    subLabel: '$label lifted',
+                  );
+                },
+              ),
+            ),
             const SizedBox(width: 12),
              Expanded(child: _StatCard(
               icon: LucideIcons.flame,
@@ -351,15 +361,25 @@ class _RecentWorkoutsSection extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                       Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          const Text('Volume', style: TextStyle(fontSize: 12, color: Color(0xFF737373))),
-                          Text(
-                            '${(workout.totalVolume / 1000).toStringAsFixed(1)}k kg',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ],
+                       Consumer<SettingsProvider>(
+                        builder: (context, settings, child) {
+                          final label = settings.unitLabel;
+                          final displayVolume = settings.convertToDisplay(workout.totalVolume);
+                          final valueString = displayVolume >= 1000 
+                            ? '${(displayVolume / 1000).toStringAsFixed(1)}k $label'
+                            : '${displayVolume.toStringAsFixed(0)} $label';
+                          
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Text('Volume', style: TextStyle(fontSize: 12, color: Color(0xFF737373))),
+                              Text(
+                                valueString,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ],
                   ),

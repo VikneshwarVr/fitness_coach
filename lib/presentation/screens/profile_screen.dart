@@ -83,7 +83,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _SettingsItem(
                 icon: LucideIcons.settings,
                 label: 'General',
-                onTap: () {}, // Empty for now to enable
+                onTap: () => context.push('/profile/settings'),
               ),
               const SizedBox(height: 8),
               _SettingsItem(

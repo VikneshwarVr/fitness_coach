@@ -102,7 +102,7 @@ class WorkoutProvider extends ChangeNotifier {
   WorkoutProvider(this._workoutRepository);
 
   // Actions
-  Future<void> startWorkout({Routine? routine}) async {
+  Future<void> startWorkout({Routine? routine, int defaultRestTime = 0}) async {
     if (_isWorkoutActive) return;
 
     _resetState();
@@ -114,6 +114,11 @@ class WorkoutProvider extends ChangeNotifier {
     if (routine != null) {
       for (final routineExercise in routine.exercises) {
         final exerciseName = routineExercise.name;
+        
+        // Initialize rest time with default if not already set
+        if (defaultRestTime > 0) {
+          _exerciseRestTimes[exerciseName] = defaultRestTime;
+        }
         
         // Load previous sets and PRs from backend
         _previousSets[exerciseName] = await _workoutRepository.getPreviousSets(exerciseName);
@@ -366,22 +371,26 @@ class WorkoutProvider extends ChangeNotifier {
   }
 
   // Exercise Management
-  Future<void> addExercises(List<String> names) async {
+  Future<void> addExercises(List<String> names, {int defaultRestTime = 0}) async {
     for (final name in names) {
-      await _addOneExercise(name);
+      await _addOneExercise(name, defaultRestTime: defaultRestTime);
     }
     notifyListeners();
   }
 
-  Future<void> addExercise(String name) async {
-    await _addOneExercise(name);
+  Future<void> addExercise(String name, {int defaultRestTime = 0}) async {
+    await _addOneExercise(name, defaultRestTime: defaultRestTime);
     notifyListeners();
   }
 
-  Future<void> _addOneExercise(String name) async {
+  Future<void> _addOneExercise(String name, {int defaultRestTime = 0}) async {
     if (!_isEditingRoutine) {
         _previousSets[name] = await _workoutRepository.getPreviousSets(name);
         _historicalPRs[name] = await _workoutRepository.getExercisePRs(name);
+        
+        if (defaultRestTime > 0) {
+           _exerciseRestTimes[name] = defaultRestTime;
+        }
     }
     
     final prevSets = _previousSets[name] ?? [];
@@ -582,8 +591,7 @@ class WorkoutProvider extends ChangeNotifier {
         _prStreamController.add(PREvent(
           exerciseName, 
           isFirstTime ? 'First Heavy Set' : 'Heaviest Weight', 
-          weight, 
-          'kg'
+          weight
         ));
       });
       delayMs += 3500;
@@ -604,8 +612,7 @@ class WorkoutProvider extends ChangeNotifier {
         _prStreamController.add(PREvent(
           exerciseName, 
           isFirstTime ? 'First 1RM Calc' : 'Best 1RM', 
-          oneRM, 
-          'kg'
+          oneRM
         ));
       });
       delayMs += 3500;
@@ -626,8 +633,7 @@ class WorkoutProvider extends ChangeNotifier {
         _prStreamController.add(PREvent(
           exerciseName, 
           isFirstTime ? 'First Set Volume' : 'Best Set Volume', 
-          volume, 
-          'kg'
+          volume
         ));
       });
 
@@ -651,7 +657,6 @@ class PREvent {
   final String exerciseName;
   final String type;
   final double value;
-  final String unit;
 
-  PREvent(this.exerciseName, this.type, this.value, this.unit);
+  PREvent(this.exerciseName, this.type, this.value);
 }

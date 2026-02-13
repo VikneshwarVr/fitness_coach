@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart';
+import '../../../data/providers/settings_provider.dart';
 import '../fitness_card.dart';
 import 'empty_chart.dart';
 
@@ -12,6 +14,14 @@ class BarMetricChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (data.isEmpty) return const EmptyChart();
+
+    final settings = context.watch<SettingsProvider>();
+    final displayData = metric == 'Volume' 
+      ? data.map((d) => {
+          ...d,
+          'value': settings.convertToDisplay(d['value'] * 1000) / 1000,
+        }).toList()
+      : data;
 
     return FitnessCard(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
@@ -29,22 +39,22 @@ class BarMetricChart extends StatelessWidget {
                   showTitles: true,
                   getTitlesWidget: (value, meta) {
                     final index = value.toInt();
-                    if (index < 0 || index >= data.length) return const SizedBox();
+                    if (index < 0 || index >= displayData.length) return const SizedBox();
                     return Padding(
                       padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(data[index]['label'], style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                      child: Text(displayData[index]['label'] as String, style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                     );
                   },
                 ),
               ),
             ),
             borderData: FlBorderData(show: false),
-            barGroups: data.asMap().entries.map((entry) {
+            barGroups: displayData.asMap().entries.map((entry) {
               return BarChartGroupData(
                 x: entry.key,
                 barRods: [
                   BarChartRodData(
-                    toY: entry.value['value'],
+                    toY: (entry.value['value'] as num).toDouble(),
                     color: Theme.of(context).colorScheme.primary,
                     width: 16,
                     borderRadius: BorderRadius.circular(4),
@@ -57,7 +67,7 @@ class BarMetricChart extends StatelessWidget {
                 getTooltipColor: (_) => Theme.of(context).colorScheme.surfaceContainer,
                 getTooltipItem: (group, groupIndex, rod, rodIndex) {
                   return BarTooltipItem(
-                    '${rod.toY.toStringAsFixed(1)}${metric == 'Volume' ? 'k' : ''}',
+                    '${rod.toY.toStringAsFixed(1)}${metric == 'Volume' ? 'k ${settings.unitLabel}' : ''}',
                     const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   );
                 },

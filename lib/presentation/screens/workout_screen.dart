@@ -12,6 +12,7 @@ import '../components/workout/workout_stats_panel.dart';
 import '../components/workout/pr_notification.dart';
 import '../components/workout/rest_timer_overlay.dart';
 import '../components/workout/exercise_list_item.dart';
+import '../../data/providers/settings_provider.dart';
 
 class WorkoutScreen extends StatefulWidget {
   final Routine? initialRoutine;
@@ -49,9 +50,13 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
          // Do nothing
       } else {
         if (!provider.isWorkoutActive || widget.initialRoutine != null) {
-           if (widget.initialRoutine != null || !provider.isWorkoutActive) {
-               provider.startWorkout(routine: widget.initialRoutine);
-           }
+          if (widget.initialRoutine != null || !provider.isWorkoutActive) {
+            final settings = context.read<SettingsProvider>();
+            provider.startWorkout(
+              routine: widget.initialRoutine,
+              defaultRestTime: settings.defaultRestTimer,
+            );
+          }
         }
       }
     });
@@ -175,10 +180,13 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                                   },
                                 );
                                 if (result != null) {
+                                  if (!mounted) return;
+                                  final settings = context.read<SettingsProvider>();
+                                  final restTimer = settings.defaultRestTimer;
                                   if (result is List<String>) {
-                                    provider.addExercises(result);
+                                    provider.addExercises(result, defaultRestTime: restTimer);
                                   } else if (result is String) {
-                                    provider.addExercise(result);
+                                    provider.addExercise(result, defaultRestTime: restTimer);
                                   }
                                 }
                               },
@@ -201,11 +209,14 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                                       'initialSelectedExercises': existingNames,
                                     },
                                   );
-                                  if (result != null) {
+                                   if (result != null) {
+                                    if (!mounted) return;
+                                    final settings = context.read<SettingsProvider>();
+                                    final restTimer = settings.defaultRestTimer;
                                     if (result is List<String>) {
-                                      provider.addExercises(result);
+                                      provider.addExercises(result, defaultRestTime: restTimer);
                                     } else if (result is String) {
-                                      provider.addExercise(result);
+                                      provider.addExercise(result, defaultRestTime: restTimer);
                                     }
                                   }
                                 },

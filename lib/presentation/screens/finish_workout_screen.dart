@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import '../../data/providers/workout_provider.dart';
+import '../../data/providers/settings_provider.dart';
 import '../components/buttons.dart';
 import '../components/fitness_card.dart';
 
@@ -73,14 +74,22 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
                       icon: LucideIcons.clock,
                     )),
                     const SizedBox(width: 12),
-                    Expanded(child: _SummaryStat(
-                      label: 'Volume',
-                      value: provider.totalVolume >= 1000 
-                        ? '${(provider.totalVolume / 1000).toStringAsFixed(1)}k'
-                        : '${provider.totalVolume}',
-                      subValue: 'kg',
-                      icon: LucideIcons.trendingUp,
-                    )),
+                    Expanded(
+                      child: Consumer<SettingsProvider>(
+                        builder: (context, settings, _) {
+                          final label = settings.unitLabel;
+                          final displayVolume = settings.convertToDisplay(provider.totalVolume);
+                          return _SummaryStat(
+                            label: 'Volume',
+                            value: displayVolume >= 1000 
+                              ? '${(displayVolume / 1000).toStringAsFixed(1)}k'
+                              : '${displayVolume.toStringAsFixed(0)}',
+                            subValue: label,
+                            icon: LucideIcons.trendingUp,
+                          );
+                        },
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../data/providers/settings_provider.dart';
 import '../../data/constants/exercise_data.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../components/fitness_card.dart';
@@ -86,6 +87,9 @@ class ExerciseDetailScreen extends StatelessWidget {
                       'bestSessionVolume': 0.0,
                     };
 
+                    final settings = context.read<SettingsProvider>();
+                    final label = settings.unitLabel;
+
                     return GridView.count(
                       crossAxisCount: 2,
                       shrinkWrap: true,
@@ -96,26 +100,26 @@ class ExerciseDetailScreen extends StatelessWidget {
                       children: [
                         _PRCard(
                           label: 'Heaviest Weight',
-                          value: prs['heaviestWeight']!.toStringAsFixed(1),
-                          unit: 'kg',
+                          value: settings.formatWeight(prs['heaviestWeight']!, showUnit: false),
+                          unit: label,
                           icon: LucideIcons.dumbbell,
                         ),
                         _PRCard(
                           label: 'Best 1RM',
-                          value: prs['best1RM']!.toStringAsFixed(1),
-                          unit: 'kg',
+                          value: settings.formatWeight(prs['best1RM']!, showUnit: false),
+                          unit: label,
                           icon: LucideIcons.trophy,
                         ),
                         _PRCard(
                           label: 'Best Set Volume',
-                          value: prs['bestSetVolume']!.toStringAsFixed(0),
-                          unit: 'kg',
+                          value: settings.formatWeight(prs['bestSetVolume']!, showUnit: false),
+                          unit: label,
                           icon: LucideIcons.barChart,
                         ),
                         _PRCard(
                           label: 'Best Session Volume',
-                          value: prs['bestSessionVolume']!.toStringAsFixed(0),
-                          unit: 'kg',
+                          value: settings.formatWeight(prs['bestSessionVolume']!, showUnit: false),
+                          unit: label,
                           icon: LucideIcons.layers,
                         ),
                       ],

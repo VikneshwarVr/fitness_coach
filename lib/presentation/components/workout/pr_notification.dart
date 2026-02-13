@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../../core/theme.dart';
 import '../../../data/providers/workout_provider.dart';
+import '../../../data/providers/settings_provider.dart';
+import 'package:provider/provider.dart';
 import '../fitness_card.dart';
 
 class PRNotification extends StatefulWidget {
@@ -66,7 +67,7 @@ class _PRNotificationState extends State<PRNotification> with SingleTickerProvid
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  const Icon(LucideIcons.trophy, color: AppTheme.primary, size: 24),
+                  Icon(LucideIcons.trophy, color: Theme.of(context).colorScheme.primary, size: 24),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
@@ -82,12 +83,16 @@ class _PRNotificationState extends State<PRNotification> with SingleTickerProvid
                           ),
                         ),
                         const SizedBox(height: 2),
-                        Text(
-                          '${widget.event.exerciseName}: ${widget.event.type} - ${widget.event.value.toStringAsFixed(1)}${widget.event.unit}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        Consumer<SettingsProvider>(
+                          builder: (context, settings, child) {
+                            return Text(
+                              '${widget.event.exerciseName}: ${widget.event.type} - ${settings.formatWeight(widget.event.value)}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),

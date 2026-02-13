@@ -11,6 +11,7 @@ import 'data/repositories/auth_repository.dart';
 import 'presentation/navigation/router.dart';
 import 'data/providers/workout_provider.dart';
 import 'data/providers/theme_provider.dart';
+import 'data/providers/settings_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,6 +49,7 @@ class _FitnessTrackerAppState extends State<FitnessTrackerApp> {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider.value(value: widget.authRepository),
         ChangeNotifierProvider(create: (_) => WorkoutRepository()),
         ChangeNotifierProvider(create: (_) => RoutineRepository()),
