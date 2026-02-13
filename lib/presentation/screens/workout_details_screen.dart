@@ -43,7 +43,7 @@ class WorkoutDetailsScreen extends StatelessWidget {
                         context: context,
                         builder: (context) => AlertDialog(
                           title: const Text('Delete Workout?'),
-                          content: const Text('Are you sure you want to delete this workout history? This action cannot be undone.'),
+                          content: const Text('Are you sure you want to delete this workout history?'),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context, false),
@@ -73,7 +73,6 @@ class WorkoutDetailsScreen extends StatelessWidget {
       ),
       body: Consumer<WorkoutRepository>(
         builder: (context, repo, child) {
-          // Find the workout in the repository
           final workout = repo.workouts.where((w) => w.id == workoutId).firstOrNull;
 
           if (workout == null) {
@@ -83,11 +82,11 @@ class WorkoutDetailsScreen extends StatelessWidget {
           }
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header with Name and Date
+                // Workout Header Info
                 Text(
                   workout.name,
                   style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
@@ -95,75 +94,57 @@ class WorkoutDetailsScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   DateFormat('EEEE, MMM d, yyyy • hh:mm a').format(workout.date),
-                  style: const TextStyle(color: AppTheme.mutedForeground, fontSize: 14),
+                  style: const TextStyle(color: AppTheme.mutedForeground, fontSize: 13),
+                ),
+                const SizedBox(height: 20),
+
+                // Stats Summary Cards (Horizontal)
+                Row(
+                  children: [
+                    Expanded(
+                      child: _SummaryStatCard(
+                        icon: LucideIcons.calendar,
+                        label: 'Duration',
+                        value: '${workout.duration}',
+                        unit: 'min',
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _SummaryStatCard(
+                        icon: LucideIcons.trendingUp,
+                        label: 'Total Volume',
+                        value: workout.totalVolume >= 1000 
+                          ? (workout.totalVolume / 1000).toStringAsFixed(1)
+                          : '${workout.totalVolume}',
+                        unit: workout.totalVolume >= 1000 ? 'k kg' : 'kg',
+                        valueColor: AppTheme.primary,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 24),
 
                 if (workout.photoUrl != null) ...[
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: AspectRatio(
-                      aspectRatio: 1,
-                      child: Image.network(
-                        workout.photoUrl!,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            color: AppTheme.card,
-                            child: const Center(
-                              child: CircularProgressIndicator(color: AppTheme.primary),
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                           return Container(
-                             color: AppTheme.card,
-                             child: const Icon(LucideIcons.imageOff, color: AppTheme.mutedForeground),
-                           );
-                        },
-                      ),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      workout.photoUrl!,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const SizedBox(),
                     ),
                   ),
                   const SizedBox(height: 24),
                 ],
 
-                // Stats Row
-                Row(
-                  children: [
-                    Expanded(child: _SummaryStat(
-                      label: 'Duration',
-                      value: '${workout.duration}m',
-                      icon: LucideIcons.clock,
-                    )),
-                    const SizedBox(width: 12),
-                    Expanded(child: _SummaryStat(
-                      label: 'Volume',
-                      value: workout.totalVolume >= 1000 
-                        ? '${(workout.totalVolume / 1000).toStringAsFixed(1)}k'
-                        : '${workout.totalVolume}',
-                      subValue: 'kg',
-                      icon: LucideIcons.trendingUp,
-                    )),
-                    const SizedBox(width: 12),
-                    Expanded(child: _SummaryStat(
-                      label: 'Exercises',
-                      value: '${workout.exercises.length}',
-                      icon: LucideIcons.dumbbell,
-                    )),
-                  ],
-                ),
-                
-                const SizedBox(height: 24),
-                
-
-                const Text('Exercises', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                const SizedBox(height: 16),
+                const Text('Exercises', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
 
                 // Exercises List
-                ...workout.exercises.map((exercise) => _ExerciseDetailCard(exercise: exercise)),
+                ...workout.exercises.map((exercise) => _ExerciseDetailItem(exercise: exercise)),
                 
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
               ],
             ),
           );
@@ -173,99 +154,166 @@ class WorkoutDetailsScreen extends StatelessWidget {
   }
 }
 
-class _ExerciseDetailCard extends StatelessWidget {
-  final ExerciseSession exercise;
-
-  const _ExerciseDetailCard({required this.exercise});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: FitnessCard(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              exercise.name,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.primary),
-            ),
-            const SizedBox(height: 12),
-            
-            // Sets Header
-            const Row(
-              children: [
-                SizedBox(width: 30, child: Text('SET', style: TextStyle(fontSize: 10, color: AppTheme.mutedForeground, fontWeight: FontWeight.bold))),
-                Expanded(child: Center(child: Text('WEIGHT', style: TextStyle(fontSize: 10, color: AppTheme.mutedForeground, fontWeight: FontWeight.bold)))),
-                Expanded(child: Center(child: Text('REPS', style: TextStyle(fontSize: 10, color: AppTheme.mutedForeground, fontWeight: FontWeight.bold)))),
-              ],
-            ),
-            const SizedBox(height: 8),
-            const Divider(height: 1, color: AppTheme.border),
-            const SizedBox(height: 8),
-
-            // Sets List
-            ...exercise.sets.asMap().entries.map((entry) {
-              final index = entry.key;
-              final set = entry.value;
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 30, 
-                      child: Text('${index + 1}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.mutedForeground))
-                    ),
-                    Expanded(child: Center(child: Text('${set.weight} kg', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)))),
-                    Expanded(child: Center(child: Text('${set.reps}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)))),
-                  ],
-                ),
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SummaryStat extends StatelessWidget {
+class _SummaryStatCard extends StatelessWidget {
+  final IconData icon;
   final String label;
   final String value;
-  final String? subValue;
-  final IconData icon;
+  final String unit;
+  final Color? valueColor;
 
-  const _SummaryStat({
+  const _SummaryStatCard({
+    required this.icon,
     required this.label,
     required this.value,
-    this.subValue,
-    required this.icon,
+    required this.unit,
+    this.valueColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return FitnessCard(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      padding: const EdgeInsets.all(16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppTheme.primary),
-          const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontSize: 10, color: AppTheme.mutedForeground)),
-          const SizedBox(height: 4),
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 14, color: AppTheme.mutedForeground),
+              const SizedBox(width: 6),
+              Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.mutedForeground)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              if (subValue != null) ...[
-                const SizedBox(width: 1),
-                Text(subValue!, style: const TextStyle(fontSize: 10, color: AppTheme.mutedForeground)),
-              ]
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: valueColor ?? AppTheme.foreground,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                unit,
+                style: const TextStyle(fontSize: 12, color: AppTheme.mutedForeground),
+              ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ExerciseDetailItem extends StatelessWidget {
+  final ExerciseSession exercise;
+
+  const _ExerciseDetailItem({required this.exercise});
+
+  @override
+  Widget build(BuildContext context) {
+    final completedSets = exercise.sets.where((s) => s.completed).toList();
+    final exerciseVolume = exercise.volume;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    exercise.name,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+                Text(
+                  '${completedSets.length} sets',
+                  style: const TextStyle(fontSize: 12, color: AppTheme.mutedForeground),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            
+            // Sets Details Container
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.muted.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  ...completedSets.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final set = entry.value;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Set ${index + 1}',
+                            style: const TextStyle(fontSize: 13, color: AppTheme.mutedForeground),
+                          ),
+                          Row(
+                            children: [
+                              Text(
+                                '${set.weight} kg',
+                                style: const TextStyle(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                '×',
+                                style: TextStyle(fontSize: 13, color: AppTheme.mutedForeground),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${set.reps} reps',
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+
+                  // Total Exercise Volume Footer
+                  const SizedBox(height: 8),
+                  const Divider(color: AppTheme.border, height: 1),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Total Volume',
+                        style: TextStyle(fontSize: 11, color: AppTheme.mutedForeground),
+                      ),
+                      Text(
+                        '$exerciseVolume kg',
+                        style: const TextStyle(fontSize: 11, color: AppTheme.primary, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
