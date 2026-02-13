@@ -63,116 +63,141 @@ class ExerciseListItem extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          Table(
-            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-            columnWidths: const {
-              0: FixedColumnWidth(40),
-              1: FlexColumnWidth(),
-              2: FlexColumnWidth(),
-              3: FlexColumnWidth(),
-              4: FixedColumnWidth(40),
-            },
-            children: [
-              const TableRow(
-                children: [
-                  Text('Set', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12), textAlign: TextAlign.center),
-                  Text('Previous', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12), textAlign: TextAlign.center),
-                  Text('kg', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12), textAlign: TextAlign.center),
-                  Text('Reps', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12), textAlign: TextAlign.center),
-                  SizedBox(),
-                ],
+          // Header Row
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              children: [
+                const SizedBox(width: 40, child: Text('Set', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12), textAlign: TextAlign.center)),
+                const Expanded(child: Text('Previous', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12), textAlign: TextAlign.center)),
+                const Expanded(child: Text('kg', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12), textAlign: TextAlign.center)),
+                const Expanded(child: Text('Reps', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12), textAlign: TextAlign.center)),
+                const SizedBox(width: 40),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Set Rows
+          ...exercise.sets.asMap().entries.map((entry) {
+            final setIndex = entry.key;
+            final set = entry.value;
+            final prev = setIndex < previousSets.length ? previousSets[setIndex] : null;
+            
+            return Dismissible(
+              key: ValueKey(set.id),
+              direction: DismissDirection.endToStart,
+              onDismissed: (_) => provider.removeSet(exerciseIndex, setIndex),
+              background: Container(
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.only(right: 20),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(LucideIcons.trash2, color: Colors.red, size: 20),
               ),
-              ...exercise.sets.asMap().entries.map((entry) {
-                final setIndex = entry.key;
-                final set = entry.value;
-                final prev = setIndex < previousSets.length ? previousSets[setIndex] : null;
-                return TableRow(
-                  key: ValueKey('${exercise.id}_$setIndex'),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                child: Row(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Container(
-                        width: 24,
-                        height: 24,
-                        alignment: Alignment.center,
-                        decoration: const BoxDecoration(
-                          color: AppTheme.muted,
-                          shape: BoxShape.circle,
+                    // Set Number
+                    SizedBox(
+                      width: 40,
+                      child: Center(
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          alignment: Alignment.center,
+                          decoration: const BoxDecoration(
+                            color: AppTheme.muted,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text('${setIndex + 1}', style: const TextStyle(fontSize: 12)),
                         ),
-                        child: Text('${setIndex + 1}', style: const TextStyle(fontSize: 12)),
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    // Previous
+                    Expanded(
                       child: Text(
                         prev != null ? '${prev.weight}kg × ${prev.reps}' : '-',
                         textAlign: TextAlign.center,
                         style: const TextStyle(fontSize: 12, color: AppTheme.mutedForeground),
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      child: TextFormField(
-                        key: ValueKey('weight_${exercise.id}_$setIndex'),
-                        initialValue: set.weight > 0 ? '${set.weight}' : '',
-                        decoration: const InputDecoration(
-                          filled: true,
-                          fillColor: AppTheme.input,
-                          border: OutlineInputBorder(borderSide: BorderSide.none),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                          isDense: true,
+                    // Weight
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: TextFormField(
+                          key: ValueKey('weight_${set.id}'),
+                          initialValue: set.weight > 0 ? '${set.weight}' : '',
+                          decoration: const InputDecoration(
+                            filled: true,
+                            fillColor: AppTheme.input,
+                            border: OutlineInputBorder(borderSide: BorderSide.none),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                            isDense: true,
+                          ),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          textInputAction: TextInputAction.done,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 14),
+                          onChanged: (val) {
+                            final weight = int.tryParse(val) ?? 0;
+                            provider.updateSet(exerciseIndex, setIndex, weight: weight);
+                          },
+                          onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
                         ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        textInputAction: TextInputAction.done,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 14),
-                        onChanged: (val) {
-                          final weight = int.tryParse(val) ?? 0;
-                          provider.updateSet(exerciseIndex, setIndex, weight: weight);
-                        },
-                        onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      child: TextFormField(
-                        key: ValueKey('reps_${exercise.id}_$setIndex'),
-                        initialValue: set.reps > 0 ? '${set.reps}' : '',
-                        decoration: const InputDecoration(
-                          filled: true,
-                          fillColor: AppTheme.input,
-                          border: OutlineInputBorder(borderSide: BorderSide.none),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                          isDense: true,
+                    // Reps
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: TextFormField(
+                          key: ValueKey('reps_${set.id}'),
+                          initialValue: set.reps > 0 ? '${set.reps}' : '',
+                          decoration: const InputDecoration(
+                            filled: true,
+                            fillColor: AppTheme.input,
+                            border: OutlineInputBorder(borderSide: BorderSide.none),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                            isDense: true,
+                          ),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          textInputAction: TextInputAction.done,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 14),
+                          onChanged: (val) {
+                            final reps = int.tryParse(val) ?? 0;
+                            provider.updateSet(exerciseIndex, setIndex, reps: reps);
+                          },
+                          onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
                         ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        textInputAction: TextInputAction.done,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 14),
-                        onChanged: (val) {
-                          final reps = int.tryParse(val) ?? 0;
-                          provider.updateSet(exerciseIndex, setIndex, reps: reps);
-                        },
-                        onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
                       ),
                     ),
-                    IconButton(
-                      icon: Icon(
-                        set.completed ? LucideIcons.checkSquare : LucideIcons.square,
-                        color: set.completed ? AppTheme.primary : AppTheme.mutedForeground,
-                        size: 20,
+                    // Completion Toggle
+                    SizedBox(
+                      width: 40,
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        icon: Icon(
+                          set.completed ? LucideIcons.checkSquare : LucideIcons.square,
+                          color: set.completed ? AppTheme.primary : AppTheme.mutedForeground,
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          provider.toggleSetCompletion(exerciseIndex, setIndex);
+                        },
                       ),
-                      onPressed: () {
-                        provider.toggleSetCompletion(exerciseIndex, setIndex);
-                      },
                     ),
                   ],
-                );
-              }),
-            ],
-          ),
+                ),
+              ),
+            );
+          }),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,

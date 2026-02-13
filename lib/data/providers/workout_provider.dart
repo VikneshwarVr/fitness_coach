@@ -445,6 +445,17 @@ class WorkoutProvider extends ChangeNotifier {
        }
     }
   }
+
+  void removeSet(int exerciseIndex, int setIndex) {
+    if (exerciseIndex >= 0 && exerciseIndex < _exercises.length) {
+      final sets = _exercises[exerciseIndex].sets;
+      if (setIndex >= 0 && setIndex < sets.length) {
+        sets.removeAt(setIndex);
+        _recalculateStats();
+        notifyListeners();
+      }
+    }
+  }
   
   // Rest Timer Logic
   void setRestTime(String exerciseId, int seconds) {
