@@ -192,6 +192,7 @@ class WorkoutRepository extends ChangeNotifier {
 
   // Stats helpers
   int get workoutsThisWeek => _workoutsThisWeek;
+  int get workoutsLast30Days => _workouts.where((w) => w.date.isAfter(DateTime.now().subtract(const Duration(days: 30)))).length;
   int get totalVolume => _totalVolumeStats > 0 ? _totalVolumeStats : _workouts.fold(0, (sum, w) => sum + w.totalVolume);
   int get streak => _streak;
 
