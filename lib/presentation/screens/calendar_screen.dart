@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../components/fitness_card.dart';
+
+import '../components/calendar/weekly_view.dart';
+import '../components/calendar/monthly_view.dart';
+import '../components/calendar/yearly_view.dart';
 
 enum ViewMode { weekly, monthly, yearly }
 
@@ -149,8 +152,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.orange.withOpacity(0.15),
-                    Colors.red.withOpacity(0.15),
+                    Colors.orange.withValues(alpha: 0.15),
+                    Colors.red.withValues(alpha: 0.15),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -161,7 +164,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                   Row(
                     children: [
                       const Icon(LucideIcons.flame, color: Colors.orange, size: 16),
                       const SizedBox(width: 8),
@@ -279,254 +282,36 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget _buildCalendarView() {
     switch (_viewMode) {
       case ViewMode.weekly:
-        return _buildWeeklyView();
-      case ViewMode.monthly:
-        return _buildMonthlyView();
-      case ViewMode.yearly:
-        return _buildYearlyView();
-    }
-  }
-
-  Widget _buildWeeklyView() {
-    final startOfWeek = _currentDate.subtract(Duration(days: _currentDate.weekday % 7));
-    final days = List.generate(7, (i) => startOfWeek.add(Duration(days: i)));
-
-    return Column(
-      children: days.map((date) {
-        final dayWorkouts = _getWorkoutsForDate(date);
-        final isToday = DateFormat('yyyy-MM-dd').format(date) == DateFormat('yyyy-MM-dd').format(DateTime.now());
-        
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: FitnessCard(
-            padding: const EdgeInsets.all(16),
-            border: isToday ? Border.all(color: Colors.orange, width: 2) : null,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(DateFormat('EEEE').format(date), style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12)),
-                        Text(DateFormat('MMMM d').format(date), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    if (dayWorkouts.isNotEmpty)
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: const BoxDecoration(
-                          color: Colors.orange,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text('${dayWorkouts.length}', 
-                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        ),
-                      ),
-                  ],
-                ),
-                if (dayWorkouts.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  ...dayWorkouts.map((w) => InkWell(
-                    onTap: () => context.push('/workout-details/${w.id}'),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      margin: const EdgeInsets.only(top: 8),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.muted.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(w.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                                const SizedBox(height: 2),
-                                Text('${w.exercises.length} exercises • ${w.duration} min', 
-                                     style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12)),
-                              ],
-                            ),
-                          ),
-                          const Icon(LucideIcons.chevronRight, size: 16, color: AppTheme.mutedForeground),
-                        ],
-                      ),
-                    ),
-                  )),
-                ] else ...[
-                  const SizedBox(height: 8),
-                  Text('Rest day', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 14)),
-                ],
-              ],
-            ),
-          ),
+        final startOfWeek = _currentDate.subtract(Duration(days: _currentDate.weekday % 7));
+        return WeeklyView(
+          days: List.generate(7, (i) => startOfWeek.add(Duration(days: i))),
+          getWorkoutsForDate: _getWorkoutsForDate,
         );
-      }).toList(),
-    );
-  }
-
-  Widget _buildMonthlyView() {
-    final firstDayOfMonth = DateTime(_currentDate.year, _currentDate.month, 1);
-    final startOfGrid = firstDayOfMonth.subtract(Duration(days: firstDayOfMonth.weekday % 7));
-    
-    final days = List.generate(42, (i) => startOfGrid.add(Duration(days: i)));
-
-    return Column(
-      children: [
-        // Headers
-        Row(
-          children: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(d, textAlign: TextAlign.center, 
-                        style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12, fontWeight: FontWeight.w500)),
-            ),
-          )).toList(),
-        ),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 7,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-          ),
-          itemCount: 42,
-          itemBuilder: (context, index) {
-            final date = days[index];
-            final workouts = _getWorkoutsForDate(date);
-            final isCurrentMonth = date.month == _currentDate.month;
-            final isToday = DateFormat('yyyy-MM-dd').format(date) == DateFormat('yyyy-MM-dd').format(DateTime.now());
-
-            return Opacity(
-              opacity: isCurrentMonth ? 1.0 : 0.2,
-              child: GestureDetector(
-                onTap: () {
-                  if (workouts.isNotEmpty) {
-                    if (workouts.length == 1) {
-                      context.push('/workout-details/${workouts[0].id}');
-                    } else {
-                      // If multiple workouts, switch to weekly view to show list
-                      setState(() {
-                        _viewMode = ViewMode.weekly;
-                        _currentDate = date;
-                      });
-                    }
-                  } else {
-                    // Switch to weekly view even if empty? 
-                    // Let's just switch to weekly view for that date anyway
-                    setState(() {
-                      _viewMode = ViewMode.weekly;
-                      _currentDate = date;
-                    });
-                  }
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: workouts.isNotEmpty ? Colors.orange.withOpacity(0.15) : AppTheme.muted.withOpacity(0.1),
-                    border: Border.all(
-                      color: isToday ? Colors.orange : (workouts.isNotEmpty ? Colors.orange.withOpacity(0.3) : Colors.transparent),
-                      width: isToday ? 2 : 1,
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('${date.day}', 
-                           style: TextStyle(
-                             fontSize: 12, 
-                             fontWeight: workouts.isNotEmpty ? FontWeight.bold : FontWeight.normal,
-                             color: workouts.isNotEmpty ? Colors.orange : (isCurrentMonth ? null : AppTheme.mutedForeground)
-                           )),
-                      if (workouts.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Container(
-                          width: 16,
-                          height: 16,
-                          decoration: const BoxDecoration(color: Colors.orange, shape: BoxShape.circle),
-                          child: Center(
-                            child: Text('${workouts.length}', 
-                                      style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
-                          ),
-                        ),
-                      ]
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildYearlyView() {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 0.8,
-      ),
-      itemCount: 12,
-      itemBuilder: (context, index) {
-        final monthDate = DateTime(_currentDate.year, index + 1, 1);
-        final workouts = context.read<WorkoutRepository>().workouts.where((w) => 
-          w.date.year == _currentDate.year && w.date.month == index + 1).toList();
-        
-        final daysInMonth = DateTime(_currentDate.year, index + 2, 0).day;
-        final workoutDays = workouts.map((w) => w.date.day).toSet();
-
-        return FitnessCard(
-          padding: const EdgeInsets.all(12),
-          onTap: () {
+      case ViewMode.monthly:
+        final firstDayOfMonth = DateTime(_currentDate.year, _currentDate.month, 1);
+        final startOfGrid = firstDayOfMonth.subtract(Duration(days: firstDayOfMonth.weekday % 7));
+        return MonthlyView(
+          currentDate: _currentDate,
+          days: List.generate(42, (i) => startOfGrid.add(Duration(days: i))),
+          getWorkoutsForDate: _getWorkoutsForDate,
+          onDateTap: (date) {
             setState(() {
-              _currentDate = monthDate;
+              _viewMode = ViewMode.weekly;
+              _currentDate = date;
+            });
+          },
+        );
+      case ViewMode.yearly:
+        return YearlyView(
+          currentDate: _currentDate,
+          workouts: context.read<WorkoutRepository>().workouts,
+          onMonthTap: (date) {
+            setState(() {
+              _currentDate = date;
               _viewMode = ViewMode.monthly;
             });
           },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(DateFormat('MMM').format(monthDate), 
-                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Expanded(
-                child: Center(
-                  child: Wrap(
-                    spacing: 2,
-                    runSpacing: 2,
-                    children: List.generate(daysInMonth, (d) {
-                      final reached = workoutDays.contains(d + 1);
-                      return Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: reached ? Colors.orange : AppTheme.muted.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(1.5),
-                        ),
-                      );
-                    }),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text('${workouts.length} workouts', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 10)),
-            ],
-          ),
         );
-      },
-    );
+    }
   }
 }

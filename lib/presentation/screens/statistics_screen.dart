@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:fl_chart/fl_chart.dart';
 import '../../core/theme.dart';
 import '../../data/repositories/workout_repository.dart';
-import '../components/fitness_card.dart';
+import '../components/statistics/stat_box.dart';
+import '../components/statistics/muscle_distribution_chart.dart';
+import '../components/statistics/bar_metric_chart.dart';
+import '../components/statistics/frequency_chart.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -62,14 +64,14 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: _StatBox(
+                      child: StatBox(
                         label: 'Workouts',
                         value: _isWeekly ? '${repo.workoutsThisWeek}' : '${repo.workoutsLast30Days}',
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _StatBox(
+                      child: StatBox(
                         label: 'Total Volume',
                         value: '${(repo.totalVolume / 1000).toStringAsFixed(1)}k',
                         unit: 'kg',
@@ -82,7 +84,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 // Muscle Distribution
                 const Text('Muscle Distribution', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
-                _MuscleDistributionChart(data: repo.getRadarStats(_isWeekly)),
+                MuscleDistributionChart(data: repo.getRadarStats(_isWeekly)),
                 const SizedBox(height: 32),
 
                 // Trend Chart
@@ -97,7 +99,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                _BarMetricChart(
+                BarMetricChart(
                   data: repo.getAggregatedStats(_isWeekly, _selectedMetric),
                   metric: _selectedMetric,
                 ),
@@ -106,7 +108,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 // Frequency Chart
                 const Text('Workout Frequency', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
-                _FrequencyChart(data: repo.getAggregatedStats(_isWeekly, 'Volume')),
+                FrequencyChart(data: repo.getAggregatedStats(_isWeekly, 'Volume')),
                 const SizedBox(height: 32),
               ],
             ),
@@ -142,90 +144,6 @@ class _ToggleBtn extends StatelessWidget {
             fontSize: 12,
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _StatBox extends StatelessWidget {
-  final String label;
-  final String value;
-  final String? unit;
-
-  const _StatBox({required this.label, required this.value, this.unit});
-
-  @override
-  Widget build(BuildContext context) {
-    return FitnessCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Text(label, style: const TextStyle(color: AppTheme.mutedForeground, fontSize: 12)),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              if (unit != null) ...[
-                const SizedBox(width: 4),
-                Text(unit!, style: const TextStyle(color: AppTheme.mutedForeground, fontSize: 12)),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MuscleDistributionChart extends StatelessWidget {
-  final List<double> data;
-
-  const _MuscleDistributionChart({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    if (data.isEmpty || data.every((e) => e == 0)) {
-      return const _EmptyChart();
-    }
-    
-    return FitnessCard(
-      child: Column(
-        children: [
-          SizedBox(
-            height: 250,
-            child: RadarChart(
-              RadarChartData(
-                dataSets: [
-                  RadarDataSet(
-                    fillColor: AppTheme.primary.withValues(alpha: 0.2),
-                    borderColor: AppTheme.primary,
-                    entryRadius: 3,
-                    dataEntries: data.map((e) => RadarEntry(value: e)).toList(),
-                  ),
-                ],
-                radarBackgroundColor: Colors.transparent,
-                borderData: FlBorderData(show: false),
-                radarBorderData: const BorderSide(color: AppTheme.border, width: 1),
-                radarShape: RadarShape.polygon,
-                getTitle: (index, angle) {
-                  const labels = ['Back', 'Chest', 'Core', 'Shoulders', 'Arms', 'Legs'];
-                  return RadarChartTitle(
-                    text: labels[index],
-                    angle: angle,
-                  );
-                },
-                titleTextStyle: const TextStyle(color: AppTheme.mutedForeground, fontSize: 10),
-                tickCount: 5,
-                ticksTextStyle: const TextStyle(color: Colors.transparent),
-                gridBorderData: const BorderSide(color: AppTheme.border, width: 1),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-        ],
       ),
     );
   }
@@ -267,142 +185,6 @@ class _MetricSelector extends StatelessWidget {
           ),
         );
       }).toList(),
-    );
-  }
-}
-
-class _BarMetricChart extends StatelessWidget {
-  final List<Map<String, dynamic>> data;
-  final String metric;
-
-  const _BarMetricChart({required this.data, required this.metric});
-
-  @override
-  Widget build(BuildContext context) {
-    if (data.isEmpty) return const _EmptyChart();
-
-    return FitnessCard(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-      child: SizedBox(
-        height: 200,
-        child: BarChart(
-          BarChartData(
-            gridData: const FlGridData(show: false),
-            titlesData: FlTitlesData(
-              leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  getTitlesWidget: (value, meta) {
-                    final index = value.toInt();
-                    if (index < 0 || index >= data.length) return const SizedBox();
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(data[index]['label'], style: const TextStyle(fontSize: 10, color: AppTheme.mutedForeground)),
-                    );
-                  },
-                ),
-              ),
-            ),
-            borderData: FlBorderData(show: false),
-            barGroups: data.asMap().entries.map((entry) {
-              return BarChartGroupData(
-                x: entry.key,
-                barRods: [
-                  BarChartRodData(
-                    toY: entry.value['value'],
-                    color: AppTheme.primary,
-                    width: 16,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ],
-              );
-            }).toList(),
-            barTouchData: BarTouchData(
-              touchTooltipData: BarTouchTooltipData(
-                getTooltipColor: (_) => AppTheme.muted,
-                getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                  return BarTooltipItem(
-                    '${rod.toY.toStringAsFixed(1)}${metric == 'Volume' ? 'k' : ''}',
-                    const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  );
-                },
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FrequencyChart extends StatelessWidget {
-  final List<Map<String, dynamic>> data;
-
-  const _FrequencyChart({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    if (data.isEmpty) return const _EmptyChart();
-
-    return FitnessCard(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-      child: SizedBox(
-        height: 200,
-        child: LineChart(
-          LineChartData(
-            gridData: const FlGridData(show: false),
-            titlesData: FlTitlesData(
-              leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  getTitlesWidget: (value, meta) {
-                    final index = value.toInt();
-                    if (index < 0 || index >= data.length) return const SizedBox();
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(data[index]['label'], style: const TextStyle(fontSize: 10, color: AppTheme.mutedForeground)),
-                    );
-                  },
-                ),
-              ),
-            ),
-            borderData: FlBorderData(show: false),
-            lineBarsData: [
-              LineChartBarData(
-                spots: data.asMap().entries.map((entry) {
-                  return FlSpot(entry.key.toDouble(), (entry.value['value'] ?? 0) > 0 ? 1 : 0);
-                }).toList(),
-                isCurved: true,
-                color: AppTheme.primary,
-                barWidth: 3,
-                dotData: const FlDotData(show: true),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyChart extends StatelessWidget {
-  const _EmptyChart();
-
-  @override
-  Widget build(BuildContext context) {
-    return const FitnessCard(
-      child: SizedBox(
-        height: 100,
-        child: Center(
-          child: Text('No data for this period', style: TextStyle(color: AppTheme.mutedForeground)),
-        ),
-      ),
     );
   }
 }

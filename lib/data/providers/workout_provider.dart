@@ -360,15 +360,23 @@ class WorkoutProvider extends ChangeNotifier {
   }
 
   // Exercise Management
+  Future<void> addExercises(List<String> names) async {
+    for (final name in names) {
+      await _addOneExercise(name);
+    }
+    notifyListeners();
+  }
+
   Future<void> addExercise(String name) async {
-    // If editing routine, we don't necessarily need previous history, but maybe nice to have default?
-    // Let's keep it consistent.
+    await _addOneExercise(name);
+    notifyListeners();
+  }
+
+  Future<void> _addOneExercise(String name) async {
     if (!_isEditingRoutine) {
         _previousSets[name] = await _workoutRepository.getPreviousSets(name);
     }
     
-    // Pre-fill first set if previous data exists (only if NOT editing routine? 
-    // actually user might want to see their usual weights even when designing a routine)
     final prevSets = _previousSets[name] ?? [];
     final initialWeight = prevSets.isNotEmpty ? prevSets[0].weight : 0;
     final initialReps = prevSets.isNotEmpty ? prevSets[0].reps : 0;
@@ -386,7 +394,6 @@ class WorkoutProvider extends ChangeNotifier {
         ),
       ],
     ));
-    notifyListeners();
   }
 
   void addSet(int exerciseIndex) {
