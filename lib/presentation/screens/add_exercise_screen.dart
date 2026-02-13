@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../core/theme.dart';
 import '../../data/constants/exercise_data.dart';
 
 class AddExerciseScreen extends StatefulWidget {
@@ -112,7 +111,6 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                       )
                     : null,
                 filled: true,
-                fillColor: AppTheme.input,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -139,17 +137,17 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                          _selectedTag = tag;
                       });
                     },
-                    backgroundColor: AppTheme.card,
-                    selectedColor: AppTheme.primary.withValues(alpha: 0.2),
-                    checkmarkColor: AppTheme.primary,
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+                    selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                    checkmarkColor: Theme.of(context).colorScheme.primary,
                     labelStyle: TextStyle(
-                      color: isSelected ? AppTheme.primary : AppTheme.foreground,
+                      color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                       side: BorderSide(
-                        color: isSelected ? AppTheme.primary : AppTheme.border,
+                      color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
                       ),
                     ),
                   ),
@@ -163,10 +161,10 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
           // Exercise List
           Expanded(
             child: _filteredExercises.isEmpty
-                ? const Center(
+                ? Center( // Removed const
                     child: Text(
                       'No exercises found',
-                      style: TextStyle(color: AppTheme.mutedForeground),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant), // Use theme color
                     ),
                   )
                 : ListView.builder(
@@ -183,21 +181,21 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                           name, 
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: isAlreadyAdded ? AppTheme.mutedForeground : AppTheme.foreground,
+                            color: isAlreadyAdded ? Theme.of(context).colorScheme.onSurfaceVariant : Theme.of(context).colorScheme.onSurface,
                           )
                         ),
-                        subtitle: Text(exercise['tag']!, style: const TextStyle(color: AppTheme.mutedForeground)),
+                        subtitle: Text(exercise['tag']!, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                         trailing: widget.isMultiSelect
                             ? Opacity(
                                 opacity: isAlreadyAdded ? 0.5 : 1.0,
                                 child: Icon(
                                   isSelected ? LucideIcons.checkCircle2 : LucideIcons.circle,
-                                  color: isSelected ? AppTheme.primary : AppTheme.mutedForeground,
+                                  color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
                               )
                             : isAlreadyAdded 
-                                ? const Text('Added', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12))
-                                : const Icon(LucideIcons.plusCircle, color: AppTheme.primary),
+                                ? Text('Added', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12))
+                                : Icon(LucideIcons.plusCircle, color: Theme.of(context).colorScheme.primary),
                         onTap: () => _onExerciseTapped(name),
                       );
                     },

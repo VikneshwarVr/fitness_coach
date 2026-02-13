@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/theme.dart';
 
 class FitnessCard extends StatelessWidget {
   final Widget child;
@@ -23,8 +22,8 @@ class FitnessCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: color ?? AppTheme.card,
-          border: border ?? Border.all(color: AppTheme.border),
+          color: color ?? Theme.of(context).colorScheme.surfaceContainer,
+          border: border ?? Border.all(color: Theme.of(context).colorScheme.outline),
           borderRadius: BorderRadius.circular(10),
         ),
         padding: padding ?? const EdgeInsets.all(16),

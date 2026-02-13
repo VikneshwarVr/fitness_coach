@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../../core/theme.dart';
 import '../fitness_card.dart';
 import 'empty_chart.dart';
 
@@ -33,7 +32,7 @@ class BarMetricChart extends StatelessWidget {
                     if (index < 0 || index >= data.length) return const SizedBox();
                     return Padding(
                       padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(data[index]['label'], style: const TextStyle(fontSize: 10, color: AppTheme.mutedForeground)),
+                      child: Text(data[index]['label'], style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                     );
                   },
                 ),
@@ -46,7 +45,7 @@ class BarMetricChart extends StatelessWidget {
                 barRods: [
                   BarChartRodData(
                     toY: entry.value['value'],
-                    color: AppTheme.primary,
+                    color: Theme.of(context).colorScheme.primary,
                     width: 16,
                     borderRadius: BorderRadius.circular(4),
                   ),
@@ -55,7 +54,7 @@ class BarMetricChart extends StatelessWidget {
             }).toList(),
             barTouchData: BarTouchData(
               touchTooltipData: BarTouchTooltipData(
-                getTooltipColor: (_) => AppTheme.muted,
+                getTooltipColor: (_) => Theme.of(context).colorScheme.surfaceContainer,
                 getTooltipItem: (group, groupIndex, rod, rodIndex) {
                   return BarTooltipItem(
                     '${rod.toY.toStringAsFixed(1)}${metric == 'Volume' ? 'k' : ''}',

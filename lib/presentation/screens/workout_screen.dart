@@ -5,12 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/theme.dart';
 import '../../data/models/routine.dart';
 import '../../data/providers/workout_provider.dart';
+import '../components/buttons.dart';
 import '../components/workout/workout_stats_panel.dart';
 import '../components/workout/pr_notification.dart';
 import '../components/workout/rest_timer_overlay.dart';
+import '../components/workout/exercise_list_item.dart';
 
 class WorkoutScreen extends StatefulWidget {
   final Routine? initialRoutine;
@@ -119,7 +120,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: const Text('Got it', style: TextStyle(color: AppTheme.primary)),
+                            child: Text('Got it', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
                           ),
                         ],
                       ),
@@ -138,7 +139,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                 },
                 child: Text(
                   widget.isEditing ? 'Save' : (widget.isEditingLog ? 'Save Updates' : 'Finish'), 
-                  style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)
+                  style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)
                 ),
               ),
             ],
@@ -272,7 +273,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                     child: const Text('Cancel'),
                     onPressed: () => Navigator.pop(context),
                   ),
-                  middle: const Text('Rest Timer', style: TextStyle(color: AppTheme.foreground)),
+                  middle: Text('Rest Timer', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
                   trailing: CupertinoButton(
                     padding: EdgeInsets.zero,
                     child: const Text('Done'),
@@ -290,7 +291,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                       return Center(
                         child: Text(
                           seconds == 0 ? 'Off' : _formatRestTime(seconds),
-                          style: const TextStyle(fontSize: 16, color: AppTheme.foreground),
+                          style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface),
                         ),
                       );
                     }).toList(),
@@ -321,7 +322,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                     final isSelected = seconds == currentSeconds;
                     return ListTile(
                       title: Text(seconds == 0 ? 'Off' : _formatRestTime(seconds)),
-                      trailing: isSelected ? const Icon(LucideIcons.check, color: AppTheme.primary) : null,
+                      trailing: isSelected ? Icon(LucideIcons.check, color: Theme.of(context).colorScheme.primary) : null,
                       onTap: () {
                         provider.setRestTime(exerciseId, seconds);
                         Navigator.pop(context);

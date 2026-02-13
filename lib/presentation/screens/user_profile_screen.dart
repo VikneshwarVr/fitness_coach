@@ -63,13 +63,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
       builder: (context, child) {
+        final currentTheme = Theme.of(context);
         return Theme(
-          data: AppTheme.darkTheme.copyWith(
-            colorScheme: AppTheme.darkTheme.colorScheme.copyWith(
+          data: currentTheme.copyWith(
+            colorScheme: currentTheme.colorScheme.copyWith(
               primary: AppTheme.primary,
               onPrimary: Colors.white,
-              surface: AppTheme.card,
-              onSurface: AppTheme.foreground,
             ),
           ),
           child: child!,
@@ -138,14 +137,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 children: [
                   CircleAvatar(
                     radius: 60,
-                    backgroundColor: AppTheme.muted,
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
                     backgroundImage: _avatarPath != null 
                       ? FileImage(File(_avatarPath!)) 
                       : (context.watch<AuthRepository>().profileImageUrl != null 
                           ? NetworkImage(context.watch<AuthRepository>().profileImageUrl!) as ImageProvider 
                           : null),
                     child: _avatarPath == null && context.watch<AuthRepository>().profileImageUrl == null
-                      ? const Icon(LucideIcons.user, size: 60, color: AppTheme.mutedForeground)
+                      ? Icon(LucideIcons.user, size: 60, color: Theme.of(context).colorScheme.onSurfaceVariant)
                       : null,
                   ),
                   Positioned(
@@ -197,10 +196,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppTheme.primary : AppTheme.card,
+                        color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceContainer,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isSelected ? AppTheme.primary : AppTheme.border,
+                          color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
                         ),
                       ),
                       child: Center(
@@ -209,7 +208,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            color: isSelected ? Colors.white : AppTheme.mutedForeground,
+                            color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -228,14 +227,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
-                    const Icon(LucideIcons.calendar, size: 20, color: AppTheme.mutedForeground),
+                    Icon(LucideIcons.calendar, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     const SizedBox(width: 12),
                     Text(
                       _selectedBirthday == null 
                         ? 'Select Birthday' 
                         : DateFormat('MMM d, yyyy').format(_selectedBirthday!),
                       style: TextStyle(
-                        color: _selectedBirthday == null ? AppTheme.mutedForeground : AppTheme.foreground,
+                        color: _selectedBirthday == null ? Theme.of(context).colorScheme.onSurfaceVariant : Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ],
@@ -274,13 +273,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           maxLines: maxLines,
           decoration: InputDecoration(
             hintText: hint,
-            prefixIcon: Icon(icon, color: AppTheme.mutedForeground),
-            filled: true,
-            fillColor: AppTheme.card,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
+            prefixIcon: Icon(icon),
           ),
         ),
       ],

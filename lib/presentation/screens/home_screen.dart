@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/theme.dart';
 import '../components/fitness_card.dart';
 import '../components/buttons.dart';
 import '../../data/repositories/routine_repository.dart';
@@ -133,9 +132,10 @@ class _AICoachBannerState extends State<_AICoachBanner> {
                   Container(
                     height: 40,
                     width: 40,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFEA580C),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
                       shape: BoxShape.circle,
+                      border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.outline)),
                     ),
                     child: const Icon(LucideIcons.sparkles, color: Colors.white, size: 20),
                   ),
@@ -151,17 +151,17 @@ class _AICoachBannerState extends State<_AICoachBanner> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFEA580C),
-                                borderRadius: BorderRadius.circular(12),
+                                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Text('Coming Soon', style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+                              child: Text('Coming Soon', style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.bold)),
                             ),
                           ],
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'Get personalized workout recommendations and form tips powered by AI',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.mutedForeground),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -175,7 +175,7 @@ class _AICoachBannerState extends State<_AICoachBanner> {
               child: IconButton(
                 icon: const Icon(LucideIcons.x, size: 16),
                 onPressed: () => setState(() => _visible = false),
-                color: AppTheme.mutedForeground,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -195,7 +195,7 @@ class _Header extends StatelessWidget {
       children: [
         Text('Welcome back!', style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 4),
-        Text('Ready to crush your workout?', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.mutedForeground)),
+        Text('Ready to crush your workout?', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
       ],
     );
   }
@@ -262,14 +262,14 @@ class _StatCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: iconColor ?? AppTheme.mutedForeground),
+              Icon(icon, size: 16, color: iconColor ?? Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(width: 6),
-              Text(label, style: const TextStyle(fontSize: 10, color: AppTheme.mutedForeground)),
+              Text(label, style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
             ],
           ),
           const SizedBox(height: 8),
           Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          Text(subLabel, style: const TextStyle(fontSize: 10, color: AppTheme.mutedForeground)),
+          Text(subLabel, style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
         ],
       ),
     );
@@ -289,7 +289,7 @@ class _RecentWorkoutsSection extends StatelessWidget {
             Text('Recent Workouts', style: Theme.of(context).textTheme.titleLarge),
             TextButton(
               onPressed: () => context.go('/history'),
-              child: const Text('View All', style: TextStyle(color: AppTheme.primary, fontSize: 14)),
+              child: Text('View All', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 14)),
             ),
           ],
         ),
@@ -299,13 +299,13 @@ class _RecentWorkoutsSection extends StatelessWidget {
             final workouts = repo.workouts.take(3).toList();
             
             if (workouts.isEmpty) {
-              return const FitnessCard(
+              return FitnessCard(
                 child: Center(
                   child: Column(
                     children: [
-                      Text('No workouts yet', style: TextStyle(color: AppTheme.mutedForeground)),
-                      SizedBox(height: 4),
-                      Text('Start your first workout to see it here', style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground)),
+                      Text('No workouts yet', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                      const SizedBox(height: 4),
+                      Text('Start your first workout to see it here', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                     ],
                   ),
                 ),
@@ -330,8 +330,8 @@ class _RecentWorkoutsSection extends StatelessWidget {
                             errorBuilder: (context, error, stackTrace) => Container(
                               width: 48,
                               height: 48,
-                              color: AppTheme.card,
-                              child: const Icon(LucideIcons.image, size: 20, color: AppTheme.mutedForeground),
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                              child: Icon(LucideIcons.image, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                             ),
                           ),
                         ),
@@ -345,7 +345,7 @@ class _RecentWorkoutsSection extends StatelessWidget {
                             const SizedBox(height: 4),
                             Text(
                               '${workout.exercises.length} exercises • ${workout.duration} min',
-                              style: const TextStyle(fontSize: 12, color: AppTheme.mutedForeground),
+                              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                             ),
                           ],
                         ),
@@ -354,7 +354,7 @@ class _RecentWorkoutsSection extends StatelessWidget {
                        Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          const Text('Volume', style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground)),
+                          const Text('Volume', style: TextStyle(fontSize: 12, color: Color(0xFF737373))),
                           Text(
                             '${(workout.totalVolume / 1000).toStringAsFixed(1)}k kg',
                             style: const TextStyle(fontWeight: FontWeight.bold),
@@ -397,9 +397,9 @@ class _QuickTips extends StatelessWidget {
         children: [
           const Text('💡 Tip of the Day', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Progressive overload is key! Try to increase weight or reps each week for consistent gains.',
-            style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground),
+            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),

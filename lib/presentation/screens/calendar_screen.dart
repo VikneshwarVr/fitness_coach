@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../core/theme.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../components/fitness_card.dart';
@@ -168,12 +167,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     children: [
                       const Icon(LucideIcons.flame, color: Colors.orange, size: 16),
                       const SizedBox(width: 8),
-                      Text('Week Streak', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12)),
+                      Text('Week Streak', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Text('$_weekStreak', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-                  Text('consecutive weeks', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 10)),
+                  Text('consecutive weeks', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 10)),
                 ],
               ),
             ),
@@ -190,12 +189,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   children: [
                     const Icon(LucideIcons.moon, color: Colors.blue, size: 16),
                     const SizedBox(width: 8),
-                    Text('Rest Days', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12)),
+                    Text('Rest Days', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Text('$_restDays', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-                Text('since last workout', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 10)),
+                Text('since last workout', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 10)),
               ],
             ),
           ),
@@ -206,8 +205,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Widget _buildViewModeTabs() {
     return Container(
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppTheme.border)),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.outline)),
       ),
       child: Row(
         children: [
@@ -229,7 +228,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: isSelected ? Colors.orange : Colors.transparent,
+                color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
                 width: 2,
               ),
             ),
@@ -238,7 +237,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: isSelected ? Colors.orange : AppTheme.mutedForeground,
+              color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
           ),

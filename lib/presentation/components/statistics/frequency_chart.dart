@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../../core/theme.dart';
 import '../fitness_card.dart';
 import 'empty_chart.dart';
 
@@ -32,7 +31,7 @@ class FrequencyChart extends StatelessWidget {
                     if (index < 0 || index >= data.length) return const SizedBox();
                     return Padding(
                       padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(data[index]['label'], style: const TextStyle(fontSize: 10, color: AppTheme.mutedForeground)),
+                      child: Text(data[index]['label'], style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                     );
                   },
                 ),
@@ -45,7 +44,7 @@ class FrequencyChart extends StatelessWidget {
                   return FlSpot(entry.key.toDouble(), (entry.value['value'] ?? 0) > 0 ? 1 : 0);
                 }).toList(),
                 isCurved: true,
-                color: AppTheme.primary,
+                color: Theme.of(context).colorScheme.primary,
                 barWidth: 3,
                 dotData: const FlDotData(show: true),
               ),

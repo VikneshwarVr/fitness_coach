@@ -93,7 +93,7 @@ class RoutineRepository extends ChangeNotifier {
       }).toList();
       
       notifyListeners();
-    } catch (e, stack) {
+    } catch (e) {
       // Error logging removed
     }
   }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../../core/theme.dart';
 import '../fitness_card.dart';
 
 class WorkoutStatsPanel extends StatelessWidget {
@@ -30,7 +29,7 @@ class WorkoutStatsPanel extends StatelessWidget {
           Container(
             width: 1,
             height: 40,
-            color: AppTheme.border,
+            color: Theme.of(context).colorScheme.outline,
           ),
           Expanded(
             child: _StatItem(
@@ -45,7 +44,7 @@ class WorkoutStatsPanel extends StatelessWidget {
           Container(
             width: 1,
             height: 40,
-            color: AppTheme.border,
+            color: Theme.of(context).colorScheme.outline,
           ),
           Expanded(
             child: _StatItem(
@@ -79,9 +78,9 @@ class _StatItem extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Column(
         children: [
-          Icon(icon, size: 20, color: AppTheme.primary),
+          Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
           const SizedBox(height: 4),
-          Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.mutedForeground)),
+          Text(label, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(height: 2),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -91,7 +90,7 @@ class _StatItem extends StatelessWidget {
               Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               if (unit != null) ...[
                 const SizedBox(width: 2),
-                Text(unit!, style: const TextStyle(fontSize: 10, color: AppTheme.mutedForeground)),
+                Text(unit!, style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
               ]
             ],
           ),

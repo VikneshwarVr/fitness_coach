@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../../core/theme.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/providers/workout_provider.dart';
 import '../fitness_card.dart';
@@ -37,7 +36,7 @@ class ExerciseListItem extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(LucideIcons.gripVertical, size: 20, color: AppTheme.mutedForeground),
+                  Icon(LucideIcons.gripVertical, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   const SizedBox(width: 8),
                   Text(exercise.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   if (hasPR) ...[
@@ -49,14 +48,14 @@ class ExerciseListItem extends StatelessWidget {
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(LucideIcons.moreVertical, size: 20, color: AppTheme.mutedForeground),
+                    icon: Icon(LucideIcons.moreVertical, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     onPressed: () {},
                   ),
                   IconButton(
                     icon: Icon(
                       LucideIcons.timer, 
                       size: 20, 
-                      color: restTime > 0 ? AppTheme.primary : AppTheme.mutedForeground
+                      color: restTime > 0 ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant
                     ),
                     onPressed: onRestTimeTap,
                   ),
@@ -70,10 +69,10 @@ class ExerciseListItem extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Row(
               children: [
-                const SizedBox(width: 40, child: Text('Set', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12), textAlign: TextAlign.center)),
-                const Expanded(child: Text('Previous', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12), textAlign: TextAlign.center)),
-                const Expanded(child: Text('kg', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12), textAlign: TextAlign.center)),
-                const Expanded(child: Text('Reps', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12), textAlign: TextAlign.center)),
+                SizedBox(width: 40, child: Text('Set', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
+                Expanded(child: Text('Previous', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
+                Expanded(child: Text('kg', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
+                Expanded(child: Text('Reps', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
                 const SizedBox(width: 40),
               ],
             ),
@@ -110,8 +109,8 @@ class ExerciseListItem extends StatelessWidget {
                           width: 24,
                           height: 24,
                           alignment: Alignment.center,
-                          decoration: const BoxDecoration(
-                            color: AppTheme.muted,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.secondary,
                             shape: BoxShape.circle,
                           ),
                           child: Text('${setIndex + 1}', style: const TextStyle(fontSize: 12)),
@@ -123,7 +122,7 @@ class ExerciseListItem extends StatelessWidget {
                       child: Text(
                         prev != null ? '${prev.weight}kg × ${prev.reps}' : '-',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 12, color: AppTheme.mutedForeground),
+                        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                     ),
                     // Weight
@@ -133,11 +132,11 @@ class ExerciseListItem extends StatelessWidget {
                         child: TextFormField(
                           key: ValueKey('weight_${set.id}'),
                           initialValue: set.weight > 0 ? '${set.weight}' : '',
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             filled: true,
-                            fillColor: AppTheme.input,
-                            border: OutlineInputBorder(borderSide: BorderSide.none),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                            fillColor: Theme.of(context).colorScheme.surface,
+                            border: const OutlineInputBorder(borderSide: BorderSide.none),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                             isDense: true,
                           ),
                           keyboardType: TextInputType.number,
@@ -160,11 +159,11 @@ class ExerciseListItem extends StatelessWidget {
                         child: TextFormField(
                           key: ValueKey('reps_${set.id}'),
                           initialValue: set.reps > 0 ? '${set.reps}' : '',
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             filled: true,
-                            fillColor: AppTheme.input,
-                            border: OutlineInputBorder(borderSide: BorderSide.none),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                            fillColor: Theme.of(context).colorScheme.surface,
+                            border: const OutlineInputBorder(borderSide: BorderSide.none),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                             isDense: true,
                           ),
                           keyboardType: TextInputType.number,
@@ -187,7 +186,7 @@ class ExerciseListItem extends StatelessWidget {
                         padding: EdgeInsets.zero,
                         icon: Icon(
                           set.completed ? LucideIcons.checkSquare : LucideIcons.square,
-                          color: set.completed ? AppTheme.primary : AppTheme.mutedForeground,
+                          color: set.completed ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
                           size: 20,
                         ),
                         onPressed: () {
@@ -207,8 +206,8 @@ class ExerciseListItem extends StatelessWidget {
               icon: const Icon(LucideIcons.plus, size: 16),
               label: const Text('Add Set'),
               style: TextButton.styleFrom(
-                foregroundColor: AppTheme.primary,
-                backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
+                foregroundColor: Theme.of(context).colorScheme.primary,
+                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
               ),
               onPressed: () => provider.addSet(exerciseIndex),
             ),

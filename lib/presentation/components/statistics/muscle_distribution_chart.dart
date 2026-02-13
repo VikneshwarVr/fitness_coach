@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../../core/theme.dart';
 import '../fitness_card.dart';
 import 'empty_chart.dart';
 
@@ -24,15 +23,15 @@ class MuscleDistributionChart extends StatelessWidget {
               RadarChartData(
                 dataSets: [
                   RadarDataSet(
-                    fillColor: AppTheme.primary.withValues(alpha: 0.2),
-                    borderColor: AppTheme.primary,
+                    fillColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                    borderColor: Theme.of(context).colorScheme.primary,
                     entryRadius: 3,
                     dataEntries: data.map((e) => RadarEntry(value: e)).toList(),
                   ),
                 ],
                 radarBackgroundColor: Colors.transparent,
                 borderData: FlBorderData(show: false),
-                radarBorderData: const BorderSide(color: AppTheme.border, width: 1),
+                radarBorderData: BorderSide(color: Theme.of(context).colorScheme.outline, width: 1),
                 radarShape: RadarShape.polygon,
                 getTitle: (index, angle) {
                   const labels = ['Back', 'Chest', 'Core', 'Shoulders', 'Arms', 'Legs'];
@@ -41,10 +40,10 @@ class MuscleDistributionChart extends StatelessWidget {
                     angle: angle,
                   );
                 },
-                titleTextStyle: const TextStyle(color: AppTheme.mutedForeground, fontSize: 10),
+                titleTextStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 10),
                 tickCount: 5,
                 ticksTextStyle: const TextStyle(color: Colors.transparent),
-                gridBorderData: const BorderSide(color: AppTheme.border, width: 1),
+                gridBorderData: BorderSide(color: Theme.of(context).colorScheme.outline, width: 1),
               ),
             ),
           ),

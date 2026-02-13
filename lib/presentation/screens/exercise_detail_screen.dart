@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../core/theme.dart';
 import '../../data/constants/exercise_data.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../components/fitness_card.dart';
@@ -27,7 +26,6 @@ class ExerciseDetailScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: Text(exerciseName),
         backgroundColor: Colors.transparent,
@@ -48,14 +46,14 @@ class ExerciseDetailScreen extends StatelessWidget {
                   _MuscleInfo(
                     label: 'Primary',
                     muscles: [primaryMuscle],
-                    color: AppTheme.primary,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                   if (secondaryMuscles.isNotEmpty) ...[
-                    const Divider(color: AppTheme.border, height: 24),
+                    const Divider(height: 24),
                     _MuscleInfo(
                       label: 'Secondary',
                       muscles: secondaryMuscles,
-                      color: AppTheme.mutedForeground,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ],
                 ],
@@ -153,7 +151,7 @@ class _MuscleInfo extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: AppTheme.mutedForeground, fontWeight: FontWeight.w500),
+          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 8),
         Wrap(
@@ -200,9 +198,9 @@ class _PRCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 14, color: AppTheme.primary),
+              Icon(icon, size: 14, color: Theme.of(context).colorScheme.primary),
               const SizedBox(width: 6),
-              Text(label, style: const TextStyle(fontSize: 10, color: AppTheme.mutedForeground)),
+              Text(label, style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
             ],
           ),
           const SizedBox(height: 8),
@@ -212,12 +210,12 @@ class _PRCard extends StatelessWidget {
             children: [
               Text(
                 value,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.foreground),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
               ),
               const SizedBox(width: 4),
               Text(
                 unit,
-                style: const TextStyle(fontSize: 12, color: AppTheme.mutedForeground),
+                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
           ),

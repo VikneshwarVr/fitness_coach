@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../core/theme.dart';
 import '../components/active_workout_bar.dart';
 
 class ScaffoldWithNavBar extends StatelessWidget {
@@ -29,9 +28,9 @@ class ScaffoldWithNavBar extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: AppTheme.border)),
-          color: AppTheme.card,
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outline)),
+          color: Theme.of(context).colorScheme.surfaceContainer,
         ),
         child: NavigationBar(
           selectedIndex: navigationShell.currentIndex,
@@ -42,27 +41,27 @@ class ScaffoldWithNavBar extends StatelessWidget {
           height: 60,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           destinations: [
-            _buildDestination(LucideIcons.home, 'Home', 0),
-            _buildDestination(LucideIcons.folderOpen, 'Routines', 1),
-            _buildDestination(LucideIcons.user, 'Profile', 2),
+            _buildDestination(context, LucideIcons.home, 'Home', 0),
+            _buildDestination(context, LucideIcons.folderOpen, 'Routines', 1),
+            _buildDestination(context, LucideIcons.user, 'Profile', 2),
           ],
         ),
       ),
     );
   }
 
-  NavigationDestination _buildDestination(IconData icon, String label, int index) {
+  NavigationDestination _buildDestination(BuildContext context, IconData icon, String label, int index) {
     final isSelected = navigationShell.currentIndex == index;
     return NavigationDestination(
       icon: Icon(
         icon,
-        color: isSelected ? AppTheme.primary : AppTheme.mutedForeground,
+        color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
         size: 20,
       ),
       label: label,
       selectedIcon: Icon(
         icon,
-        color: AppTheme.primary,
+        color: Theme.of(context).colorScheme.primary,
         size: 20,
       ),
     );

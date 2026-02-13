@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../core/theme.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../components/statistics/stat_box.dart';
 import '../components/statistics/muscle_distribution_chart.dart';
@@ -37,7 +36,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   children: [
                     Container(
                       decoration: BoxDecoration(
-                        color: AppTheme.muted,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -133,13 +132,13 @@ class _ToggleBtn extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? AppTheme.primary : Colors.transparent,
+          color: isActive ? Theme.of(context).colorScheme.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isActive ? Colors.white : AppTheme.mutedForeground,
+            color: isActive ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.bold,
             fontSize: 12,
           ),
@@ -167,10 +166,10 @@ class _MetricSelector extends StatelessWidget {
             margin: const EdgeInsets.only(left: 4),
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: isSelected ? AppTheme.primary.withValues(alpha: 0.1) : Colors.transparent,
+              color: isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent,
               borderRadius: BorderRadius.circular(4),
               border: Border.all(
-                color: isSelected ? AppTheme.primary : AppTheme.border,
+                color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
                 width: 1,
               ),
             ),
@@ -178,7 +177,7 @@ class _MetricSelector extends StatelessWidget {
               m,
               style: TextStyle(
                 fontSize: 10,
-                color: isSelected ? AppTheme.primary : AppTheme.mutedForeground,
+                color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),

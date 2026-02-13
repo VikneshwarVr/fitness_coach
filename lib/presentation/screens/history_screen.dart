@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../core/theme.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../components/fitness_card.dart';
 
@@ -46,13 +45,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 Consumer<WorkoutRepository>(
                   builder: (context, repo, child) {
                     if (repo.workouts.isEmpty) {
-                      return const Center(
+                      return Center(
                         child: Padding(
-                          padding: EdgeInsets.all(32.0),
+                          padding: const EdgeInsets.all(32.0),
                           child: Text(
                             'No workouts requested yet.\nStart a workout to see your history.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: AppTheme.mutedForeground),
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                         ),
                       );
@@ -81,54 +80,54 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                       const SizedBox(height: 4),
                                       Text(
                                         DateFormat('E, MMM d').format(workout.date),
-                                        style: const TextStyle(
-                                          color: AppTheme.mutedForeground,
-                                          fontSize: 14,
+                                          style: TextStyle(
+                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                            fontSize: 14,
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            '${workout.exercises.length} exercises',
-                                            style: const TextStyle(
-                                              color: AppTheme.mutedForeground,
-                                              fontSize: 13,
+                                        const SizedBox(height: 12),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              '${workout.exercises.length} exercises',
+                                              style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                fontSize: 13,
+                                              ),
                                             ),
-                                          ),
-                                          const Padding(
-                                            padding: EdgeInsets.symmetric(horizontal: 8),
-                                            child: Text('•', style: TextStyle(color: AppTheme.mutedForeground)),
-                                          ),
-                                          Text(
-                                            '${workout.duration} min',
-                                            style: const TextStyle(
-                                              color: AppTheme.mutedForeground,
-                                              fontSize: 13,
+                                            Padding(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                                              child: Text('•', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                                             ),
-                                          ),
-                                          const Padding(
-                                            padding: EdgeInsets.symmetric(horizontal: 8),
-                                            child: Text('•', style: TextStyle(color: AppTheme.mutedForeground)),
-                                          ),
-                                          Text(
-                                            workout.totalVolume >= 1000 
-                                              ? '${(workout.totalVolume / 1000).toStringAsFixed(1)}k kg'
-                                              : '${workout.totalVolume} kg',
-                                            style: const TextStyle(
-                                              color: AppTheme.primary,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 13,
+                                            Text(
+                                              '${workout.duration} min',
+                                              style: TextStyle(
+                                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                                fontSize: 13,
+                                              ),
                                             ),
-                                          ),
+                                            Padding(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                                              child: Text('•', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                                            ),
+                                            Text(
+                                              workout.totalVolume >= 1000 
+                                                ? '${(workout.totalVolume / 1000).toStringAsFixed(1)}k kg'
+                                                : '${workout.totalVolume} kg',
+                                              style: TextStyle(
+                                                color: Theme.of(context).colorScheme.primary,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 13,
+                                              ),
+                                            ),
                                         ],
                                       ),
                                     ],
                                   ),
                                 ),
-                                const Icon(
+                                Icon(
                                   LucideIcons.chevronRight,
-                                  color: AppTheme.mutedForeground,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   size: 20,
                                 ),
                               ],

@@ -10,6 +10,7 @@ import 'data/repositories/routine_repository.dart';
 import 'data/repositories/auth_repository.dart';
 import 'presentation/navigation/router.dart';
 import 'data/providers/workout_provider.dart';
+import 'data/providers/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,6 +47,7 @@ class _FitnessTrackerAppState extends State<FitnessTrackerApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider.value(value: widget.authRepository),
         ChangeNotifierProvider(create: (_) => WorkoutRepository()),
         ChangeNotifierProvider(create: (_) => RoutineRepository()),
@@ -54,12 +56,17 @@ class _FitnessTrackerAppState extends State<FitnessTrackerApp> {
           update: (context, repo, previous) => previous ?? WorkoutProvider(repo),
         ),
       ],
-      child: MaterialApp.router(
-        title: AppConstants.appName,
-        theme: AppTheme.darkTheme,
-        debugShowCheckedModeBanner: false,
-        routerConfig: _router,
-      ),
+      builder: (context, child) {
+        final themeProvider = context.watch<ThemeProvider>();
+        return MaterialApp.router(
+          title: AppConstants.appName,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeProvider.themeMode,
+          debugShowCheckedModeBanner: false,
+          routerConfig: _router,
+        );
+      },
     );
   }
 }

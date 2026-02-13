@@ -195,7 +195,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
               )
             : TextButton(
                 onPressed: _saveRoutine,
-                child: const Text('Save', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                child: Text('Save', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
               ),
         ],
       ),
@@ -273,13 +273,13 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                         const Text('Level', style: TextStyle(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         DropdownButtonFormField<String>(
-                          value: _selectedLevel,
+                          initialValue: _selectedLevel,
                           isExpanded: true,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             filled: true,
-                            fillColor: AppTheme.input,
-                            border: OutlineInputBorder(borderSide: BorderSide.none),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                            fillColor: Theme.of(context).colorScheme.surface,
+                            border: const OutlineInputBorder(borderSide: BorderSide.none),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                           ),
                           items: ['Beginner', 'Intermediate', 'Advanced']
                               .map((level) => DropdownMenuItem(value: level, child: Text(level)))
@@ -305,10 +305,10 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                         const SizedBox(height: 8),
                         TextFormField(
                           controller: _durationController,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             filled: true,
-                            fillColor: AppTheme.input,
-                            border: OutlineInputBorder(borderSide: BorderSide.none),
+                            fillColor: Theme.of(context).colorScheme.surface,
+                            border: const OutlineInputBorder(borderSide: BorderSide.none),
                           ),
                           keyboardType: TextInputType.number,
                           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -345,12 +345,12 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                   ),
                   const SizedBox(height: 12),
                   if (_selectedExercises.isEmpty)
-                    const Center(
+                    Center(
                       child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24),
+                        padding: const EdgeInsets.symmetric(vertical: 24),
                         child: Text(
                           'No exercises selected',
-                          style: TextStyle(color: AppTheme.mutedForeground),
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                       ),
                     )
@@ -362,12 +362,12 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             decoration: BoxDecoration(
-                              color: AppTheme.input,
+                              color: Theme.of(context).colorScheme.surface,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
                               children: [
-                                const Icon(LucideIcons.activity, size: 16, color: AppTheme.primary),
+                                Icon(LucideIcons.activity, size: 16, color: Theme.of(context).colorScheme.primary),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
@@ -375,8 +375,8 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                                     children: [
                                       Text(exercise.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                                       Text(
-                                        '${exercise.sets.length} sets', 
-                                        style: const TextStyle(fontSize: 12, color: AppTheme.mutedForeground)
+                                        '${exercise.sets.length} sets',
+                                        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)
                                       ),
                                     ],
                                   ),

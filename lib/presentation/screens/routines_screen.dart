@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/theme.dart';
 import '../../data/models/routine.dart';
 import '../../data/repositories/routine_repository.dart';
 import '../components/fitness_card.dart';
@@ -32,7 +31,7 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
         title: const Text('My Routines', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.plus, color: AppTheme.primary),
+            icon: Icon(LucideIcons.plus, color: Theme.of(context).colorScheme.primary),
             onPressed: () => context.push('/routines/create'),
             tooltip: 'New Routine',
           ),
@@ -52,7 +51,7 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                     style: Theme.of(context)
                         .textTheme
                         .bodyMedium
-                        ?.copyWith(color: AppTheme.mutedForeground)),
+                        ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 const SizedBox(height: 24),
                 Consumer<RoutineRepository>(
                   builder: (context, repo, child) {
@@ -80,12 +79,12 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
                               )),
                         ],
                         if (defaults.isEmpty && customs.isEmpty)
-                          const Center(
+                          Center(
                             child: Padding(
-                              padding: EdgeInsets.symmetric(vertical: 24),
+                              padding: const EdgeInsets.symmetric(vertical: 24),
                               child: Text(
                                 'No routines yet',
-                                style: TextStyle(color: AppTheme.mutedForeground),
+                                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                               ),
                             ),
                           ),
@@ -126,8 +125,8 @@ class _RoutineCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       '${routine.exerciseNames.length} exercises • ${routine.duration} min',
-                      style: const TextStyle(
-                          fontSize: 12, color: AppTheme.mutedForeground),
+                      style: TextStyle(
+                          fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -137,18 +136,18 @@ class _RoutineCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppTheme.muted,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       routine.level,
-                      style: const TextStyle(
-                          fontSize: 10, color: AppTheme.mutedForeground),
+                      style: TextStyle(
+                          fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ),
                   const SizedBox(width: 8),
                   IconButton(
-                    icon: const Icon(LucideIcons.pencil, size: 18, color: AppTheme.mutedForeground),
+                    icon: Icon(LucideIcons.pencil, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     onPressed: () {
                       context.push('/routines/create', extra: routine);
                     },
@@ -193,7 +192,7 @@ class _RoutineCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             routine.description,
-            style: const TextStyle(fontSize: 12, color: AppTheme.mutedForeground),
+            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 16),
           PrimaryButton(

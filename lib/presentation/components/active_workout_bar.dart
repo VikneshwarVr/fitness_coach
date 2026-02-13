@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
-import '../../core/theme.dart';
 import '../../data/providers/workout_provider.dart';
 
 class ActiveWorkoutBar extends StatelessWidget {
@@ -30,7 +29,10 @@ class ActiveWorkoutBar extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppTheme.primary, AppTheme.primary.withValues(alpha: 0.8)],
+                    colors: [
+                      Theme.of(context).colorScheme.primary,
+                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+                    ],
                   ),
                   borderRadius: BorderRadius.circular(16),
                 ),

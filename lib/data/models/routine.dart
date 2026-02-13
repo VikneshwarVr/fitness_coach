@@ -1,8 +1,6 @@
 
 import 'package:uuid/uuid.dart';
 
-import 'package:uuid/uuid.dart';
-
 class RoutineSet {
   final String id;
   final int weight;

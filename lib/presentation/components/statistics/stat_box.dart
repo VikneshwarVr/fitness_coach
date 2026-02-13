@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme.dart';
 import '../fitness_card.dart';
 
 class StatBox extends StatelessWidget {
@@ -15,7 +14,7 @@ class StatBox extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          Text(label, style: const TextStyle(color: AppTheme.mutedForeground, fontSize: 12)),
+          Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
           const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -25,7 +24,7 @@ class StatBox extends StatelessWidget {
               Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
               if (unit != null) ...[
                 const SizedBox(width: 4),
-                Text(unit!, style: const TextStyle(color: AppTheme.mutedForeground, fontSize: 12)),
+                Text(unit!, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
               ],
             ],
           ),

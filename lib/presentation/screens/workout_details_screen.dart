@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
@@ -76,8 +75,8 @@ class WorkoutDetailsScreen extends StatelessWidget {
           final workout = repo.workouts.where((w) => w.id == workoutId).firstOrNull;
 
           if (workout == null) {
-            return const Center(
-              child: Text('Workout not found', style: TextStyle(color: AppTheme.mutedForeground)),
+            return Center(
+              child: Text('Workout not found', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
             );
           }
 
@@ -94,7 +93,7 @@ class WorkoutDetailsScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   DateFormat('EEEE, MMM d, yyyy • hh:mm a').format(workout.date),
-                  style: const TextStyle(color: AppTheme.mutedForeground, fontSize: 13),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
                 ),
                 const SizedBox(height: 20),
 
@@ -178,9 +177,9 @@ class _SummaryStatCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 14, color: AppTheme.mutedForeground),
+              Icon(icon, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(width: 6),
-              Text(label, style: const TextStyle(fontSize: 11, color: AppTheme.mutedForeground)),
+              Text(label, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
             ],
           ),
           const SizedBox(height: 8),
@@ -193,13 +192,13 @@ class _SummaryStatCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: valueColor ?? AppTheme.foreground,
+                  color: valueColor ?? Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(width: 4),
               Text(
                 unit,
-                style: const TextStyle(fontSize: 12, color: AppTheme.mutedForeground),
+                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -222,9 +221,9 @@ class _ExerciseDetailItem extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppTheme.card,
+        color: Theme.of(context).colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.border),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -242,7 +241,7 @@ class _ExerciseDetailItem extends StatelessWidget {
                 ),
                 Text(
                   '${completedSets.length} sets',
-                  style: const TextStyle(fontSize: 12, color: AppTheme.mutedForeground),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -252,7 +251,7 @@ class _ExerciseDetailItem extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppTheme.muted.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -267,7 +266,7 @@ class _ExerciseDetailItem extends StatelessWidget {
                         children: [
                           Text(
                             'Set ${index + 1}',
-                            style: const TextStyle(fontSize: 13, color: AppTheme.mutedForeground),
+                            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                           Row(
                             children: [
@@ -278,7 +277,7 @@ class _ExerciseDetailItem extends StatelessWidget {
                               const SizedBox(width: 8),
                               const Text(
                                 '×',
-                                style: TextStyle(fontSize: 13, color: AppTheme.mutedForeground),
+                                style: TextStyle(fontSize: 13, color: Color(0xFF737373)),
                               ),
                               const SizedBox(width: 8),
                               Text(
@@ -294,15 +293,15 @@ class _ExerciseDetailItem extends StatelessWidget {
 
                   // Total Exercise Volume Footer
                   const SizedBox(height: 8),
-                  const Divider(color: AppTheme.border, height: 1),
+                  Divider(color: Theme.of(context).colorScheme.outline, height: 1),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Total Volume',
-                        style: TextStyle(fontSize: 11, color: AppTheme.mutedForeground),
-                      ),
+                        const Text(
+                          'Total Volume',
+                          style: TextStyle(fontSize: 11, color: Color(0xFF737373)),
+                        ),
                       Text(
                         '$exerciseVolume kg',
                         style: const TextStyle(fontSize: 11, color: AppTheme.primary, fontWeight: FontWeight.bold),

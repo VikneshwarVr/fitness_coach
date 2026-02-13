@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../core/theme.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../components/fitness_card.dart';
 import '../components/buttons.dart';
+import '../../data/providers/theme_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -17,6 +17,10 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
+    final isDark = themeProvider.themeMode == ThemeMode.dark || 
+                  (themeProvider.themeMode == ThemeMode.system && MediaQuery.of(context).platformBrightness == Brightness.dark);
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -27,12 +31,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Center(
                 child: CircleAvatar(
                   radius: 40,
-                  backgroundColor: AppTheme.muted,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
                   backgroundImage: context.watch<AuthRepository>().profileImageUrl != null
                       ? NetworkImage(context.watch<AuthRepository>().profileImageUrl!)
                       : null,
                   child: context.watch<AuthRepository>().profileImageUrl == null
-                      ? const Icon(LucideIcons.user, size: 40, color: AppTheme.mutedForeground)
+                      ? Icon(LucideIcons.user, size: 40, color: Theme.of(context).colorScheme.onSurfaceVariant)
                       : null,
                 ),
               ),
@@ -44,8 +48,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 4),
-              const Center(
-                child: Text('Level 1 Athlete', style: TextStyle(color: AppTheme.primary, fontSize: 14)),
+              Center(
+                child: Text('Level 1 Athlete', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 14)),
               ),
               const SizedBox(height: 24),
 
@@ -75,27 +79,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 label: 'Workout Log',
                 onTap: () => context.push('/history'),
               ),
-               const SizedBox(height: 8),
+              const SizedBox(height: 8),
               _SettingsItem(
                 icon: LucideIcons.settings,
                 label: 'General',
-                onTap: null,
+                onTap: () {}, // Empty for now to enable
               ),
-               const SizedBox(height: 8),
+              const SizedBox(height: 8),
               _SettingsItem(
                 icon: LucideIcons.bell,
                 label: 'Notifications',
-                onTap: null,
+                onTap: () {}, // Empty for now to enable
               ),
-               const SizedBox(height: 8),
+              const SizedBox(height: 8),
               _SettingsItem(
-                icon: LucideIcons.moon,
+                icon: isDark ? LucideIcons.moon : LucideIcons.sun,
                 label: 'Dark Mode',
-                onTap: null,
+                onTap: () => themeProvider.toggleTheme(),
                 trailing: Switch(
-                  value: true,
-                  onChanged: null,
-                  activeThumbColor: AppTheme.primary,
+                  value: isDark,
+                  onChanged: (_) => themeProvider.toggleTheme(),
+                  activeThumbColor: Theme.of(context).colorScheme.primary,
                 ),
               ),
               
@@ -108,8 +112,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
               ),
               const SizedBox(height: 24),
-              const Center(
-                child: Text('Version 1.0.0', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12)),
+              Center(
+                child: Text('Version 1.0.0', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
               ),
             ],
           ),
@@ -143,10 +147,10 @@ class _SettingsItem extends StatelessWidget {
           height: 48,
           child: Row(
             children: [
-              Icon(icon, size: 20, color: AppTheme.foreground),
+              Icon(icon, size: 20, color: Theme.of(context).colorScheme.onSurface),
               const SizedBox(width: 12),
               Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w500))),
-              if (trailing != null) trailing! else const Icon(LucideIcons.chevronRight, size: 20, color: AppTheme.mutedForeground),
+              if (trailing != null) trailing! else Icon(LucideIcons.chevronRight, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ],
           ),
         ),

@@ -6,7 +6,6 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
-import '../../core/theme.dart';
 import '../../data/providers/workout_provider.dart';
 import '../components/buttons.dart';
 import '../components/fitness_card.dart';
@@ -63,7 +62,7 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
               children: [
                 // Header Stats
                 Text(isEditing ? 'Update your workout' : 'Great job!', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                Text(isEditing ? 'Make changes to your saved session.' : 'Here is a summary of your session.', style: const TextStyle(color: AppTheme.mutedForeground)),
+                Text(isEditing ? 'Make changes to your saved session.' : 'Here is a summary of your session.', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 const SizedBox(height: 24),
 
                 Row(
@@ -113,12 +112,6 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
                     labelText: 'Workout Title',
                     hintText: 'e.g., Chest Day',
                     prefixIcon: Icon(LucideIcons.dumbbell),
-                    filled: true,
-                    fillColor: AppTheme.card,
-                    border: OutlineInputBorder(
-                       borderRadius: BorderRadius.all(Radius.circular(12)),
-                       borderSide: BorderSide.none,
-                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -130,13 +123,7 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
                     labelText: 'Description (Optional)',
                     hintText: 'How did it feel?',
                     alignLabelWithHint: true,
-                    prefixIcon: Icon(LucideIcons.fileText), // Aligned top? No, simplified
-                    filled: true,
-                    fillColor: AppTheme.card,
-                    border: OutlineInputBorder(
-                       borderRadius: BorderRadius.all(Radius.circular(12)),
-                       borderSide: BorderSide.none,
-                    ),
+                    prefixIcon: Icon(LucideIcons.fileText),
                   ),
                 ),
                 const SizedBox(height: 18),
@@ -145,7 +132,7 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
                   child: Row(
                     children: [
                       DottedBorder(
-                        color: AppTheme.mutedForeground.withOpacity(0.4),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                         strokeWidth: 1.5,
                         dashPattern: const [6, 4],
                         borderType: BorderType.RRect,
@@ -154,7 +141,7 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
                           width: 100,
                           height: 100,
                           decoration: BoxDecoration(
-                            color: AppTheme.card,
+                            color: Theme.of(context).colorScheme.surface,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: provider.workoutPhotoPath != null
@@ -177,14 +164,14 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
                                             color: Colors.black54,
                                             shape: BoxShape.circle,
                                           ),
-                                          child: const Icon(LucideIcons.x, color: Colors.white, size: 12),
+                                          child: Icon(LucideIcons.x, color: Theme.of(context).colorScheme.onSurface, size: 12),
                                         ),
                                       ),
                                     ),
                                   ],
                                 )
-                              : const Center(
-                                  child: Icon(LucideIcons.imagePlus, color: AppTheme.mutedForeground, size: 32),
+                              : Center(
+                                  child: Icon(LucideIcons.imagePlus, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 32),
                                 ),
                         ),
                       ),
@@ -192,7 +179,7 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
                       Text(
                         'Add a photo / video',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: 18,
                           fontWeight: FontWeight.w400,
                         ),
@@ -204,7 +191,7 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
                 
                 // Actions
                 _isLoading 
-                ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+                ? Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary))
                 : PrimaryButton(
                   label: isEditing ? 'Update Workout' : 'Save Workout',
                   icon: isEditing ? LucideIcons.check : LucideIcons.save,
@@ -291,7 +278,7 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
   void _showPhotoSourceSheet(WorkoutProvider provider) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.card,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => SafeArea(
         child: Column(
@@ -303,7 +290,7 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
             ),
             const Divider(height: 1),
             ListTile(
-              leading: const Icon(LucideIcons.camera, color: AppTheme.primary),
+              leading: Icon(LucideIcons.camera, color: Theme.of(context).colorScheme.primary),
               title: const Text('Take Photo'),
               onTap: () {
                 Navigator.pop(context);
@@ -311,7 +298,7 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(LucideIcons.image, color: AppTheme.primary),
+              leading: Icon(LucideIcons.image, color: Theme.of(context).colorScheme.primary),
               title: const Text('Choose from Gallery'),
               onTap: () {
                 Navigator.pop(context);
@@ -336,11 +323,11 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
         uiSettings: [
           AndroidUiSettings(
             toolbarTitle: 'Crop Photo (1:1)',
-            toolbarColor: AppTheme.background,
-            toolbarWidgetColor: Colors.white,
+            toolbarColor: Theme.of(context).colorScheme.surface,
+            toolbarWidgetColor: Theme.of(context).colorScheme.onSurface,
             initAspectRatio: CropAspectRatioPreset.square,
             lockAspectRatio: true,
-            activeControlsWidgetColor: AppTheme.primary,
+            activeControlsWidgetColor: Theme.of(context).colorScheme.primary,
             showCropGrid: true,
           ),
           IOSUiSettings(
@@ -380,9 +367,9 @@ class _SummaryStat extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       child: Column(
         children: [
-          Icon(icon, size: 20, color: AppTheme.primary),
+          Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
           const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontSize: 12, color: AppTheme.mutedForeground)),
+          Text(label, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -392,7 +379,7 @@ class _SummaryStat extends StatelessWidget {
               Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               if (subValue != null) ...[
                 const SizedBox(width: 2),
-                Text(subValue!, style: const TextStyle(fontSize: 10, color: AppTheme.mutedForeground)),
+                Text(subValue!, style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
               ]
             ],
           ),

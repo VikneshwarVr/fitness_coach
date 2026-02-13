@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/theme.dart';
 import '../../data/constants/exercise_data.dart';
 import '../components/fitness_card.dart';
 import 'exercise_detail_screen.dart';
@@ -28,7 +27,6 @@ class _ExerciseListScreenState extends State<ExerciseListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('Exercise Library'),
         backgroundColor: Colors.transparent,
@@ -40,18 +38,10 @@ class _ExerciseListScreenState extends State<ExerciseListScreen> {
             padding: const EdgeInsets.all(16.0),
             child: TextField(
               onChanged: (value) => setState(() => _searchQuery = value),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Search exercises or muscle groups...',
-                prefixIcon: const Icon(Icons.search, color: AppTheme.mutedForeground),
-                filled: true,
-                fillColor: AppTheme.card,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
-              style: const TextStyle(color: AppTheme.foreground),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
           ),
           Expanded(
@@ -83,18 +73,18 @@ class _ExerciseListScreenState extends State<ExerciseListScreen> {
                               children: [
                                 Text(
                                   exerciseName,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 16,
-                                    color: AppTheme.foreground,
+                                    color: Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   exercise['tag'] ?? '',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
-                                    color: AppTheme.mutedForeground,
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -103,16 +93,16 @@ class _ExerciseListScreenState extends State<ExerciseListScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AppTheme.primary.withValues(alpha: 0.1),
+                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               exercise['tag'] ?? '',
-                              style: const TextStyle(
-                                color: AppTheme.primary,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
                             ),
                           ),
                         ],

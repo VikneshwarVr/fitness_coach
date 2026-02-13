@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
-import '../../core/theme.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../components/fitness_card.dart';
 import '../components/buttons.dart';
@@ -87,7 +86,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -98,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(LucideIcons.dumbbell, size: 64, color: AppTheme.primary),
+                  Icon(LucideIcons.dumbbell, size: 64, color: Theme.of(context).colorScheme.primary),
                   const SizedBox(height: 24),
                   Text(
                     _isSignUp ? 'Create Account' : 'Welcome Back',
@@ -110,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     _isSignUp 
                       ? 'Join our community and track your progress'
                       : 'Sign in to continue your fitness journey',
-                    style: const TextStyle(color: AppTheme.mutedForeground),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 48),
@@ -125,12 +123,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: _usernameController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               hintText: 'howyoudoin',
-                              prefixIcon: Icon(LucideIcons.user, size: 20),
+                              prefixIcon: const Icon(LucideIcons.user, size: 20),
                               filled: true,
-                              fillColor: AppTheme.input,
-                              border: OutlineInputBorder(borderSide: BorderSide.none),
+                              fillColor: Theme.of(context).colorScheme.surface,
+                              border: const OutlineInputBorder(borderSide: BorderSide.none),
                             ),
                             validator: (value) {
                               if (_isSignUp && (value == null || value.length < 3)) {
@@ -155,12 +153,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             hintText: 'name@example.com',
-                            prefixIcon: Icon(LucideIcons.mail, size: 20),
+                            prefixIcon: const Icon(LucideIcons.mail, size: 20),
                             filled: true,
-                            fillColor: AppTheme.input,
-                            border: OutlineInputBorder(borderSide: BorderSide.none),
+                            fillColor: Theme.of(context).colorScheme.surface,
+                            border: const OutlineInputBorder(borderSide: BorderSide.none),
                           ),
                           validator: (value) {
                             if (value == null || !value.contains('@')) {
@@ -184,12 +182,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextFormField(
                           controller: _passwordController,
                           obscureText: true,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             hintText: '••••••••',
-                            prefixIcon: Icon(LucideIcons.lock, size: 20),
+                            prefixIcon: const Icon(LucideIcons.lock, size: 20),
                             filled: true,
-                            fillColor: AppTheme.input,
-                            border: OutlineInputBorder(borderSide: BorderSide.none),
+                            fillColor: Theme.of(context).colorScheme.surface,
+                            border: const OutlineInputBorder(borderSide: BorderSide.none),
                           ),
                           validator: (value) {
                             if (value == null || value.length < 6) {
@@ -204,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 32),
                   
                   if (_isLoading)
-                    const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+                    Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary))
                   else
                     PrimaryButton(
                       label: _isSignUp ? 'Sign Up' : 'Sign In',
@@ -217,7 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const Expanded(child: Divider()),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text('OR', style: TextStyle(color: AppTheme.mutedForeground, fontSize: 12)),
+                        child: Text('OR', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
                       ),
                       const Expanded(child: Divider()),
                     ],
@@ -240,14 +238,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       Text(
                         _isSignUp ? 'Already have an account? ' : "Don't have an account? ",
-                        style: const TextStyle(color: AppTheme.mutedForeground),
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                       GestureDetector(
                         onTap: () => setState(() => _isSignUp = !_isSignUp),
                         child: Text(
                           _isSignUp ? 'Sign In' : 'Sign Up',
-                          style: const TextStyle(
-                            color: AppTheme.primary,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

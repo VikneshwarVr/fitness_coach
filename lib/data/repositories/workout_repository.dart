@@ -247,23 +247,19 @@ class WorkoutRepository extends ChangeNotifier {
     return StatsUtils.getAggregatedStats(_workouts, isWeekly: isWeekly, metric: metric);
   }
 
-  List<Workout> _filterWorkoutsByRange(List<Workout> workouts, String range) {
-    final now = DateTime.now();
-    final limit = range == 'month' 
-        ? now.subtract(const Duration(days: 30))
-        : now.subtract(const Duration(days: 7));
-    return workouts.where((w) => w.date.isAfter(limit)).toList();
-  }
+
 
   /// Fetch PRs for a specific exercise directly from Supabase
   Future<Map<String, double>> getExercisePRs(String exerciseName) async {
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return {
-      'heaviestWeight': 0.0,
-      'best1RM': 0.0,
-      'bestSetVolume': 0.0,
-      'bestSessionVolume': 0.0,
-    };
+    if (userId == null) {
+      return {
+        'heaviestWeight': 0.0,
+        'best1RM': 0.0,
+        'bestSetVolume': 0.0,
+        'bestSessionVolume': 0.0,
+      };
+    }
 
     try {
       final data = await _supabase

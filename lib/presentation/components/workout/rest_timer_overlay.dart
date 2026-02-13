@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provider/provider.dart';
-import '../../../core/theme.dart';
 import '../../../data/providers/workout_provider.dart';
 
 class RestTimerOverlay extends StatelessWidget {
@@ -23,33 +22,33 @@ class RestTimerOverlay extends StatelessWidget {
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
           decoration: BoxDecoration(
-            color: AppTheme.card,
+            color: Theme.of(context).cardTheme.color,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
             ],
-            border: Border.all(color: AppTheme.border),
+            border: Border.all(color: Theme.of(context).colorScheme.outline),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              Text(
                 'Rest Time',
-                style: TextStyle(fontSize: 12, color: AppTheme.mutedForeground, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton(
-                    icon: const Icon(LucideIcons.minus, color: AppTheme.primary),
+                    icon: Icon(LucideIcons.minus, color: Theme.of(context).colorScheme.primary),
                     onPressed: () => provider.adjustRestTimer(-15),
                     style: IconButton.styleFrom(
-                      backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
+                      backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                       padding: const EdgeInsets.all(12),
                     ),
                   ),
@@ -61,10 +60,10 @@ class RestTimerOverlay extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(LucideIcons.plus, color: AppTheme.primary),
+                    icon: Icon(LucideIcons.plus, color: Theme.of(context).colorScheme.primary),
                     onPressed: () => provider.adjustRestTimer(15),
                     style: IconButton.styleFrom(
-                      backgroundColor: AppTheme.primary.withValues(alpha: 0.1),
+                      backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                       padding: const EdgeInsets.all(12),
                     ),
                   ),
@@ -76,7 +75,7 @@ class RestTimerOverlay extends StatelessWidget {
                 child: TextButton(
                   onPressed: provider.stopRestTimer,
                   style: TextButton.styleFrom(
-                    foregroundColor: AppTheme.mutedForeground,
+                    foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   child: const Text('Skip Rest'),
                 ),
@@ -86,8 +85,8 @@ class RestTimerOverlay extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2),
                 child: LinearProgressIndicator(
                   value: provider.restTimerProgress,
-                  backgroundColor: AppTheme.muted,
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primary),
+                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
                   minHeight: 4,
                 ),
               ),
