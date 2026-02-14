@@ -1,5 +1,5 @@
 class AppConstants {
-  static const String appName = 'Fitness Tracker';
+  static const String appName = 'Elevate';
   
   // Storage Keys
   static const String workoutsKey = 'workouts';

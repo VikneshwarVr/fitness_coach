@@ -76,7 +76,7 @@ class _SplashScreenState extends State<SplashScreen>
                 const SizedBox(height: 10),
                 // App Name - Archivo Black font, smaller, closer
                 Text(
-                  'ELEVATE',
+                  'Elevate',
                   style: GoogleFonts.archivoBlack(
                     fontSize: 42,
                     color: Colors.white,
@@ -132,7 +132,7 @@ class BrandLogoPainter extends CustomPainter {
     // Right-center bar (taller)
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(270 * scale, 155 * scale, 55 * scale, 202 * scale),
+        Rect.fromLTWH(275 * scale, 155 * scale, 55 * scale, 202 * scale),
         Radius.circular(15 * scale),
       ),
       paint,
@@ -141,7 +141,7 @@ class BrandLogoPainter extends CustomPainter {
     // Right bar
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(332 * scale, 195 * scale, 45 * scale, 122 * scale),
+        Rect.fromLTWH(337 * scale, 195 * scale, 45 * scale, 122 * scale),
         Radius.circular(15 * scale),
       ),
       paint,
