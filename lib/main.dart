@@ -9,6 +9,7 @@ import 'data/repositories/workout_repository.dart';
 import 'data/repositories/routine_repository.dart';
 import 'data/repositories/auth_repository.dart';
 import 'presentation/navigation/router.dart';
+import 'presentation/screens/splash_screen.dart';
 import 'data/providers/workout_provider.dart';
 import 'data/providers/theme_provider.dart';
 import 'data/providers/settings_provider.dart';
@@ -37,6 +38,7 @@ class FitnessTrackerApp extends StatefulWidget {
 
 class _FitnessTrackerAppState extends State<FitnessTrackerApp> {
   late final GoRouter _router;
+  bool _showSplash = true;
 
   @override
   void initState() {
@@ -60,6 +62,23 @@ class _FitnessTrackerAppState extends State<FitnessTrackerApp> {
       ],
       builder: (context, child) {
         final themeProvider = context.watch<ThemeProvider>();
+        
+        if (_showSplash) {
+          return MaterialApp(
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeProvider.themeMode,
+            debugShowCheckedModeBanner: false,
+            home: SplashScreen(
+              onFinish: () {
+                setState(() {
+                  _showSplash = false;
+                });
+              },
+            ),
+          );
+        }
+        
         return MaterialApp.router(
           title: AppConstants.appName,
           theme: AppTheme.lightTheme,
