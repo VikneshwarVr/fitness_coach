@@ -298,7 +298,7 @@ class _RecentWorkoutsSection extends StatelessWidget {
           children: [
             Text('Recent Workouts', style: Theme.of(context).textTheme.titleLarge),
             TextButton(
-              onPressed: () => context.go('/history'),
+              onPressed: () => context.push('/history'),
               child: Text('View All', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 14)),
             ),
           ],

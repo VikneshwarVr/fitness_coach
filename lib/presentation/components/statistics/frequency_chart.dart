@@ -43,7 +43,7 @@ class FrequencyChart extends StatelessWidget {
                 spots: data.asMap().entries.map((entry) {
                   return FlSpot(entry.key.toDouble(), (entry.value['value'] ?? 0) > 0 ? 1 : 0);
                 }).toList(),
-                isCurved: true,
+                isCurved: false,
                 color: Theme.of(context).colorScheme.primary,
                 barWidth: 3,
                 dotData: const FlDotData(show: true),

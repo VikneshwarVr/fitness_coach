@@ -174,7 +174,7 @@ class ExerciseListItem extends StatelessWidget {
                             initialValue: _getInitialValue(set, settingsProvider),
                             decoration: InputDecoration(
                               filled: true,
-                              fillColor: Theme.of(context).colorScheme.surface,
+                              fillColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                               border: const OutlineInputBorder(borderSide: BorderSide.none),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                               isDense: true,
@@ -206,7 +206,7 @@ class ExerciseListItem extends StatelessWidget {
                             initialValue: _getInitialValue(set, settingsProvider),
                             decoration: InputDecoration(
                               filled: true,
-                              fillColor: Theme.of(context).colorScheme.surface,
+                              fillColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                               border: const OutlineInputBorder(borderSide: BorderSide.none),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                               isDense: true,
@@ -237,7 +237,7 @@ class ExerciseListItem extends StatelessWidget {
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                                         decoration: BoxDecoration(
-                                          color: Theme.of(context).colorScheme.surface,
+                                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                                           borderRadius: BorderRadius.circular(4),
                                           border: provider.activeTimingSetId == set.id 
                                             ? Border.all(color: AppTheme.primary, width: 1.5) 
@@ -278,7 +278,7 @@ class ExerciseListItem extends StatelessWidget {
                                 initialValue: _getInitialValueForSecondColumn(set),
                                 decoration: InputDecoration(
                                   filled: true,
-                                  fillColor: Theme.of(context).colorScheme.surface,
+                                  fillColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                                   border: const OutlineInputBorder(borderSide: BorderSide.none),
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                                   isDense: true,
