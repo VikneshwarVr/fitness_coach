@@ -96,6 +96,13 @@ class WorkoutProvider extends ChangeNotifier {
           // Only count volume for strength exercises
           if (ex.category == 'Strength') {
             volume += (set.weight * set.reps);
+          } else if (ex.category == 'WeightedDistanceMeters') {
+             // For now, we can treat distance as "reps" for volume? 
+             // Or just ignore. The user didn't ask for volume calc change.
+             // Let's safe-guard it.
+             // If we want to track volume for weighted lunges, it's usually weight * distance.
+             // But distance is in meters (large number compared to reps).
+             // Let's leave volume as 0 for now for these new types to be safe.
           }
           sets++;
         }
@@ -451,6 +458,12 @@ class WorkoutProvider extends ChangeNotifier {
       category = 'Bodyweight';
     } else if (type == 'distance') {
       category = 'Distance';
+    } else if (type == 'distance_meters') {
+      category = 'DistanceMeters';
+    } else if (type == 'weighted_distance_meters') {
+      category = 'WeightedDistanceMeters';
+    } else if (type == 'distance_time_meters') {
+      category = 'DistanceTimeMeters';
     }
 
     final exercise = ExerciseSession(
@@ -471,8 +484,8 @@ class WorkoutProvider extends ChangeNotifier {
             id: const Uuid().v4(), 
             weight: 0, 
             reps: 0, 
-            distance: (category == 'Cardio' || category == 'Distance') ? 0.0 : null,
-            durationSeconds: (category == 'Cardio' || category == 'Timed') ? 0 : null,
+            distance: (category == 'Cardio' || category == 'Distance' || category == 'DistanceMeters' || category == 'WeightedDistanceMeters' || category == 'DistanceTimeMeters') ? 0.0 : null,
+            durationSeconds: (category == 'Cardio' || category == 'Timed' || category == 'DistanceTimeMeters') ? 0 : null,
             completed: false
           )],
     );

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/workout.dart';
+import '../constants/exercise_data.dart';
 import '../../core/utils/stats_utils.dart';
 
 class WorkoutRepository extends ChangeNotifier {
@@ -70,7 +71,7 @@ class WorkoutRepository extends ChangeNotifier {
             id: excJson['id'].toString(),
             exerciseId: excJson['id'].toString(),
             name: excJson['exercise_name'],
-            category: excJson['category'] ?? 'Strength',
+            category: ExerciseData.getCategory(excJson['exercise_name']),
             sets: sets,
           );
         }).toList();
@@ -114,7 +115,6 @@ class WorkoutRepository extends ChangeNotifier {
         final excResponse = await _supabase.from('workout_exercises').insert({
           'workout_id': workoutId,
           'exercise_name': exc.name,
-          'category': exc.category,
           'order_index': i,
         }).select().single();
 
@@ -161,7 +161,6 @@ class WorkoutRepository extends ChangeNotifier {
         final excResponse = await _supabase.from('workout_exercises').insert({
           'workout_id': workout.id,
           'exercise_name': exc.name,
-          'category': exc.category,
           'order_index': i,
         }).select().single();
 

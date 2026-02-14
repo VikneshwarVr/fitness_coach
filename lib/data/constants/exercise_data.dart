@@ -106,15 +106,15 @@ class ExerciseData {
     {'name': 'Leg Press', 'tag': 'Legs'},
     {'name': 'Hack Squat', 'tag': 'Legs'},
     {'name': 'Bulgarian Split Squat', 'tag': 'Legs'},
-    {'name': 'Walking Lunges', 'tag': 'Legs', 'type': 'distance'},
-    {'name': 'Reverse Lunges', 'tag': 'Legs'},
-    {'name': 'Weighted Walking Lunges', 'tag': 'Legs', 'type': 'distance'},
-    {'name': 'Step-ups', 'tag': 'Legs'},
+    {'name': 'Walking Lunges', 'tag': 'Legs', 'type': 'distance_meters'},
+    {'name': 'Reverse Lunges', 'tag': 'Legs', 'type': 'reps'},
+    {'name': 'Weighted Walking Lunges', 'tag': 'Legs', 'type': 'weighted_distance_meters'},
+    {'name': 'Step-ups', 'tag': 'Legs', 'type': 'reps'},
     {'name': 'Leg Extension', 'tag': 'Legs'},
     {'name': 'Leg Curl', 'tag': 'Legs'},
     {'name': 'Romanian Deadlift', 'tag': 'Legs'},
     {'name': 'Stiff-Leg Deadlift', 'tag': 'Legs'},
-    {'name': 'Glute Bridge', 'tag': 'Legs'},
+    {'name': 'Glute Bridge', 'tag': 'Legs', 'type': 'reps'},
     {'name': 'Hip Thrust', 'tag': 'Legs'},
     {'name': 'Cable Kickback', 'tag': 'Legs'},
     {'name': 'Sumo Deadlift', 'tag': 'Legs'},
@@ -163,10 +163,10 @@ class ExerciseData {
     // Functional / Full-Body
     {'name': 'Burpees', 'tag': 'Full Body', 'type': 'reps'},
     {'name': 'Kettlebell Swing', 'tag': 'Full Body'},
-    {'name': 'Farmer’s Carry', 'tag': 'Full Body', 'type': 'distance'},
-    {'name': 'Battle Ropes', 'tag': 'Full Body'},
-    {'name': 'Sled Push', 'tag': 'Full Body', 'type': 'distance'},
-    {'name': 'Medicine Ball Slam', 'tag': 'Full Body'},
+    {'name': 'Farmer’s Carry', 'tag': 'Full Body', 'type': 'distance_time_meters'},
+    {'name': 'Battle Ropes', 'tag': 'Full Body', 'type': 'timed'},
+    {'name': 'Sled Push', 'tag': 'Full Body', 'type': 'distance_meters'},
+    {'name': 'Medicine Ball Slam', 'tag': 'Full Body', 'type': 'reps'},
     {'name': 'Clean and Press', 'tag': 'Full Body'},
     {'name': 'Snatch', 'tag': 'Full Body'},
   ];
@@ -300,4 +300,30 @@ class ExerciseData {
     'Clean and Press': {'Legs': 30, 'Glutes': 20, 'Shoulders': 30, 'Arms': 20},
     'Snatch': {'Legs': 30, 'Glutes': 20, 'Shoulders': 30, 'Arms': 20},
   };
+
+  static String getCategory(String name) {
+    final exerciseData = exercises.firstWhere(
+      (e) => e['name'] == name,
+      orElse: () => {'tag': 'Strength', 'type': 'strength'},
+    );
+
+    final type = exerciseData['type'] ?? (exerciseData['tag'] == 'Cardio' ? 'cardio' : 'strength');
+
+    if (type == 'cardio') {
+      return 'Cardio';
+    } else if (type == 'timed') {
+      return 'Timed';
+    } else if (type == 'reps') {
+      return 'Bodyweight';
+    } else if (type == 'distance') {
+      return 'Distance';
+    } else if (type == 'distance_meters') {
+      return 'DistanceMeters';
+    } else if (type == 'weighted_distance_meters') {
+      return 'WeightedDistanceMeters';
+    } else if (type == 'distance_time_meters') {
+      return 'DistanceTimeMeters';
+    }
+    return 'Strength';
+  }
 }

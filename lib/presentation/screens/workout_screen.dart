@@ -116,12 +116,12 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                     return;
                   }
 
-                  if (provider.totalVolume <= 0) {
+                  if (provider.totalSets <= 0) {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
                         title: const Text('Empty Workout?'),
-                        content: const Text('You haven\'t recorded any volume yet. Please add at least one set with weight before finishing.'),
+                        content: const Text('You haven\'t completed any sets yet. Please complete at least one set before finishing.'),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),

@@ -100,6 +100,14 @@ class ExerciseListItem extends StatelessWidget {
                   Expanded(flex: 2, child: Text('Reps', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
                 ] else if (exercise.category == 'Distance') ...[
                   Expanded(flex: 2, child: Text('KM', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
+                ] else if (exercise.category == 'DistanceMeters') ...[
+                  Expanded(flex: 2, child: Text('Meters', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
+                ] else if (exercise.category == 'WeightedDistanceMeters') ...[
+                  Expanded(child: Text(unit, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
+                  Expanded(child: Text('Meters', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
+                ] else if (exercise.category == 'DistanceTimeMeters') ...[
+                   Expanded(child: Text('Meters', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
+                   Expanded(child: Text('Time', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
                 ] else ...[
                   Expanded(child: Text(unit, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
                   Expanded(child: Text('Reps', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
@@ -157,12 +165,12 @@ class ExerciseListItem extends StatelessWidget {
                       ),
                     ),
                     // KG / KM / Hide for Timed/Bodyweight
-                    if (exercise.category != 'Timed' && exercise.category != 'Bodyweight' && exercise.category != 'Distance')
+                    if (exercise.category != 'Timed' && exercise.category != 'Bodyweight' && exercise.category != 'Distance' && exercise.category != 'DistanceMeters')
                       Expanded(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: TextFormField(
-                            key: ValueKey('${exercise.category == 'Cardio' ? 'dist' : 'weight'}_${set.id}'),
+                            key: ValueKey('${(exercise.category == 'Cardio' || exercise.category == 'DistanceTimeMeters') ? 'dist' : 'weight'}_${set.id}'),
                             initialValue: _getInitialValue(set, settingsProvider),
                             decoration: InputDecoration(
                               filled: true,
@@ -176,7 +184,7 @@ class ExerciseListItem extends StatelessWidget {
                             textAlign: TextAlign.center,
                             style: const TextStyle(fontSize: 14),
                             onChanged: (val) {
-                              if (exercise.category == 'Cardio') {
+                              if (exercise.category == 'Cardio' || exercise.category == 'DistanceTimeMeters') {
                                 final dist = double.tryParse(val) ?? 0.0;
                                 provider.updateSet(exercise.id, set.id, distance: dist);
                               } else {
@@ -188,7 +196,7 @@ class ExerciseListItem extends StatelessWidget {
                           ),
                         ),
                       )
-                    else if (exercise.category == 'Distance')
+                    else if (exercise.category == 'Distance' || exercise.category == 'DistanceMeters')
                       Expanded(
                         flex: 2,
                         child: Padding(
@@ -214,13 +222,13 @@ class ExerciseListItem extends StatelessWidget {
                           ),
                         ),
                       ),
-                    // Reps / Time
-                    if (exercise.category != 'Strength' && exercise.category != 'Cardio' && exercise.category != 'Distance')
+                    // Reps / Time / Sec Distance
+                    if (exercise.category != 'Distance' && exercise.category != 'DistanceMeters')
                       Expanded(
                         flex: 2,
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: exercise.category == 'Timed'
+                          child: (exercise.category == 'Timed' || exercise.category == 'Cardio' || exercise.category == 'DistanceTimeMeters')
                             ? Row(
                                 children: [
                                   Expanded(
@@ -247,25 +255,27 @@ class ExerciseListItem extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  SizedBox(
-                                    width: 32,
-                                    height: 32,
-                                    child: IconButton(
-                                      padding: EdgeInsets.zero,
-                                      icon: Icon(
-                                        provider.activeTimingSetId == set.id ? LucideIcons.stopCircle : LucideIcons.playCircle,
-                                        size: 24,
-                                        color: provider.activeTimingSetId == set.id ? Colors.red : AppTheme.primary,
+                                  if (exercise.category == 'Timed') ...[
+                                    const SizedBox(width: 8),
+                                    SizedBox(
+                                      width: 32,
+                                      height: 32,
+                                      child: IconButton(
+                                        padding: EdgeInsets.zero,
+                                        icon: Icon(
+                                          provider.activeTimingSetId == set.id ? LucideIcons.stopCircle : LucideIcons.playCircle,
+                                          size: 24,
+                                          color: provider.activeTimingSetId == set.id ? Colors.red : AppTheme.primary,
+                                        ),
+                                        onPressed: () => provider.toggleSetTimer(exercise.id, set.id),
                                       ),
-                                      onPressed: () => provider.toggleSetTimer(exercise.id, set.id),
                                     ),
-                                  ),
+                                  ],
                                 ],
                               )
                             : TextFormField(
-                                key: ValueKey('reps_${set.id}'),
-                                initialValue: _getTimeOrRepsInitialValue(set),
+                                key: ValueKey('${exercise.category == 'WeightedDistanceMeters' ? 'dist' : 'reps'}_${set.id}'),
+                                initialValue: _getInitialValueForSecondColumn(set),
                                 decoration: InputDecoration(
                                   filled: true,
                                   fillColor: Theme.of(context).colorScheme.surface,
@@ -273,58 +283,22 @@ class ExerciseListItem extends StatelessWidget {
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                                   isDense: true,
                                 ),
-                                keyboardType: TextInputType.number,
-                                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(fontSize: 14),
                                 onChanged: (val) {
-                                  final reps = int.tryParse(val) ?? 0;
-                                  provider.updateSet(exercise.id, set.id, reps: reps);
+                                  if (exercise.category == 'WeightedDistanceMeters') {
+                                    final dist = double.tryParse(val) ?? 0.0;
+                                    provider.updateSet(exercise.id, set.id, distance: dist);
+                                  } else {
+                                    final reps = int.tryParse(val) ?? 0;
+                                    provider.updateSet(exercise.id, set.id, reps: reps);
+                                  }
                                 },
                               ),
                         ),
-                      )
-                    else
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: exercise.category == 'Cardio'
-                          ? GestureDetector(
-                              onTap: () => _showDurationPicker(context, set),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surface,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  _getTimeOrRepsInitialValue(set).isEmpty ? '0:00' : _getTimeOrRepsInitialValue(set),
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 14),
-                                ),
-                              ),
-                            )
-                          : TextFormField(
-                              key: ValueKey('reps_${set.id}'),
-                              initialValue: _getTimeOrRepsInitialValue(set),
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: Theme.of(context).colorScheme.surface,
-                                border: const OutlineInputBorder(borderSide: BorderSide.none),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                isDense: true,
-                              ),
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 14),
-                              onChanged: (val) {
-                                final reps = int.tryParse(val) ?? 0;
-                                provider.updateSet(exercise.id, set.id, reps: reps);
-                              },
-                            ),
                       ),
-                    ),
                     // Completion Toggle
                     SizedBox(
                       width: 40,
@@ -363,6 +337,13 @@ class ExerciseListItem extends StatelessWidget {
     );
   }
 
+  String _getInitialValueForSecondColumn(ExerciseSet set) {
+    if (exercise.category == 'WeightedDistanceMeters') {
+      return (set.distance ?? 0.0) > 0 ? (set.distance!).toStringAsFixed(1) : '';
+    }
+    return set.reps > 0 ? '${set.reps}' : '';
+  }
+
   String _formatPrevious(ExerciseSet? prev, SettingsProvider settings) {
     if (prev == null) return '-';
     if (exercise.category == 'Cardio') {
@@ -375,12 +356,20 @@ class ExerciseListItem extends StatelessWidget {
       return '${prev.reps} reps';
     } else if (exercise.category == 'Distance') {
       return '${(prev.distance ?? 0.0).toStringAsFixed(1)}km';
+    } else if (exercise.category == 'DistanceMeters') {
+      return '${(prev.distance ?? 0.0).toStringAsFixed(1)}m';
+    } else if (exercise.category == 'WeightedDistanceMeters') {
+      return '${settings.formatWeight(prev.weight)} × ${(prev.distance ?? 0.0).toStringAsFixed(1)}m';
+    } else if (exercise.category == 'DistanceTimeMeters') {
+      final time = _formatDuration(prev.durationSeconds ?? 0);
+      return '${(prev.distance ?? 0.0).toStringAsFixed(1)}m × $time';
     }
     return '${settings.formatWeight(prev.weight)} × ${prev.reps}';
   }
 
   String _getInitialValue(ExerciseSet set, SettingsProvider settings) {
-    if (exercise.category == 'Cardio' || exercise.category == 'Distance') {
+    if (exercise.category == 'Cardio' || exercise.category == 'Distance' || 
+        exercise.category == 'DistanceMeters' || exercise.category == 'DistanceTimeMeters') {
       return (set.distance ?? 0.0) > 0 ? set.distance!.toStringAsFixed(1) : '';
     } else if (exercise.category == 'Timed' || exercise.category == 'Bodyweight') {
       return ''; // Not used for these categories
@@ -389,7 +378,8 @@ class ExerciseListItem extends StatelessWidget {
   }
 
   String _getTimeOrRepsInitialValue(ExerciseSet set) {
-    if (exercise.category == 'Cardio' || exercise.category == 'Timed') {
+    if (exercise.category == 'Cardio' || exercise.category == 'Timed' || 
+        exercise.category == 'DistanceTimeMeters') {
       return (set.durationSeconds ?? 0) > 0 ? _formatDuration(set.durationSeconds!) : '';
     }
     return set.reps > 0 ? '${set.reps}' : '';

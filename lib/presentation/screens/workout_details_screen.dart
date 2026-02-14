@@ -312,6 +312,43 @@ class _ExerciseDetailItem extends StatelessWidget {
                                 '${set.distance?.toStringAsFixed(1) ?? '0.0'} km',
                                 style: const TextStyle(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.w600),
                               ),
+                          ] else if (exercise.category == 'DistanceMeters') ...[
+                             Text(
+                                '${set.distance?.toStringAsFixed(1) ?? '0.0'} m',
+                                style: const TextStyle(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.w600),
+                              ),
+                          ] else if (exercise.category == 'WeightedDistanceMeters') ...[
+                            Row(
+                              children: [
+                                Text(
+                                  settingsProvider.formatWeight(set.weight),
+                                  style: const TextStyle(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.w600),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text('×', style: TextStyle(fontSize: 13, color: Color(0xFF737373))),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${set.distance?.toStringAsFixed(1) ?? '0.0'} m',
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                            ),
+                          ] else if (exercise.category == 'DistanceTimeMeters') ...[
+                            Row(
+                              children: [
+                                Text(
+                                  '${set.distance?.toStringAsFixed(1) ?? '0.0'} m',
+                                  style: const TextStyle(fontSize: 13, color: AppTheme.primary, fontWeight: FontWeight.w600),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text('×', style: TextStyle(fontSize: 13, color: Color(0xFF737373))),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _formatDuration(set.durationSeconds ?? 0),
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                            ),
                           ] else ...[
                             Row(
                               children: [

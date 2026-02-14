@@ -205,12 +205,12 @@ class _FinishWorkoutScreenState extends State<FinishWorkoutScreen> {
                   label: isEditing ? 'Update Workout' : 'Save Workout',
                   icon: isEditing ? LucideIcons.check : LucideIcons.save,
                   onPressed: () async {
-                    if (provider.totalVolume <= 0) {
+                    if (provider.totalSets <= 0) {
                       showDialog(
                         context: context,
                         builder: (context) => AlertDialog(
                           title: const Text('Nothing to Save?'),
-                          content: const Text('This workout doesn\'t have any recorded volume. Add some sets with weight and reps to save your session!'),
+                          content: const Text('This workout doesn\'t have any completed sets. Complete at least one set to save your session!'),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context),
