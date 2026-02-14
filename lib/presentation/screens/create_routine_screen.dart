@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme.dart';
 import '../../data/models/routine.dart';
 import '../../data/repositories/routine_repository.dart';
+import '../../data/providers/settings_provider.dart';
 import '../components/fitness_card.dart';
 
 class CreateRoutineScreen extends StatefulWidget {
@@ -88,6 +89,8 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
 
       try {
         final repo = context.read<RoutineRepository>();
+        final settings = context.read<SettingsProvider>();
+        final mode = settings.workoutMode == WorkoutMode.home ? 'home' : 'gym';
 
         if (_isEditing && widget.initialRoutine!.isCustom) {
           // Update existing custom routine
@@ -99,6 +102,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
             level: _selectedLevel,
             duration: int.tryParse(_durationController.text) ?? 45,
             isCustom: true,
+            mode: mode,
           );
           await repo.updateRoutine(updated);
         } else if (_isEditing && !widget.initialRoutine!.isCustom) {
@@ -143,6 +147,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
             level: _selectedLevel,
             duration: int.tryParse(_durationController.text) ?? 45,
             isCustom: true,
+            mode: mode,
           );
           await repo.addRoutine(routine);
         } else {
@@ -155,6 +160,7 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
             level: _selectedLevel,
             duration: int.tryParse(_durationController.text) ?? 45,
             isCustom: true,
+            mode: mode,
           );
           await repo.addRoutine(routine);
         }

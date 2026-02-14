@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:provider/provider.dart';
+import '../../data/providers/settings_provider.dart';
 import '../../data/constants/exercise_data.dart';
 
 class AddExerciseScreen extends StatefulWidget {
@@ -42,14 +44,19 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
 
   // Get unique tags from data + 'All'
   List<String> get _tags {
-    final tags = ExerciseData.exercises.map((e) => e['tag']!).toSet().toList();
+    final settings = Provider.of<SettingsProvider>(context);
+    final exercises = ExerciseData.getExercisesForMode(settings.workoutMode);
+    final tags = exercises.map((e) => e['tag']!).toSet().toList();
     tags.sort();
     return ['All', ...tags];
   }
 
   // Filter exercises based on selection and search
   List<Map<String, String>> get _filteredExercises {
-    return ExerciseData.exercises.where((e) {
+    final settings = Provider.of<SettingsProvider>(context);
+    final exercises = ExerciseData.getExercisesForMode(settings.workoutMode);
+
+    return exercises.where((e) {
       final matchesTag = _selectedTag == 'All' || e['tag'] == _selectedTag;
       final matchesSearch = e['name']!.toLowerCase().contains(_searchQuery);
       return matchesTag && matchesSearch;

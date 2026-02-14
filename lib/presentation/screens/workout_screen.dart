@@ -52,9 +52,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         if (!provider.isWorkoutActive || widget.initialRoutine != null) {
           if (widget.initialRoutine != null || !provider.isWorkoutActive) {
             final settings = context.read<SettingsProvider>();
+            final mode = settings.workoutMode == WorkoutMode.home ? 'home' : 'gym';
             provider.startWorkout(
               routine: widget.initialRoutine,
               defaultRestTime: settings.defaultRestTimer,
+              mode: mode,
             );
           }
         }

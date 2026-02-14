@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../components/fitness_card.dart';
 import '../components/buttons.dart';
+import '../components/mode_toggle.dart';
 import '../../data/repositories/routine_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/providers/workout_provider.dart';
@@ -53,7 +54,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: LucideIcons.plus,
                   onPressed: () {
                      final settings = context.read<SettingsProvider>();
-                     context.read<WorkoutProvider>().startWorkout(defaultRestTime: settings.defaultRestTimer); 
+                     final mode = settings.workoutMode == WorkoutMode.home ? 'home' : 'gym';
+                     context.read<WorkoutProvider>().startWorkout(
+                       defaultRestTime: settings.defaultRestTimer,
+                       mode: mode,
+                     ); 
                      context.go('/workout');
                   },
                 ),
@@ -192,12 +197,22 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center, // Align center vertically
       children: [
-        Text('Welcome back!', style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 4),
-        Text('Ready to crush your workout?', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        Expanded( // Wrap text in Expanded to prevent overflow
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Welcome back!', style: Theme.of(context).textTheme.headlineSmall),
+              const SizedBox(height: 4),
+              Text('Ready to crush your workout?', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+            ],
+          ),
+        ),
+        const SizedBox(width: 16),
+        const ModeToggle(),
       ],
     );
   }

@@ -90,6 +90,7 @@ class RoutineRepository extends ChangeNotifier {
           level: json['level'] ?? 'Intermediate',
           duration: json['duration'] ?? 45,
           isCustom: true,
+          mode: json['mode'] ?? 'gym',
         );
       }).toList();
       
@@ -111,6 +112,7 @@ class RoutineRepository extends ChangeNotifier {
         'level': routine.level,
         'duration': routine.duration,
         'is_custom': true,
+        'mode': routine.mode,
         'user_id': userId,
       }).select().single();
 
@@ -153,6 +155,7 @@ class RoutineRepository extends ChangeNotifier {
         'description': routine.description,
         'level': routine.level,
         'duration': routine.duration,
+        'mode': routine.mode,
       }).eq('id', routine.id);
 
       // 2. Simplify update: Delete current exercises and re-insert 

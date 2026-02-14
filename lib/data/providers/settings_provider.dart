@@ -2,16 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum WeightUnit { kg, lbs }
+enum WorkoutMode { home, gym }
 
 class SettingsProvider extends ChangeNotifier {
   static const String _weightUnitKey = 'weight_unit';
   static const String _restTimerKey = 'rest_timer';
+  static const String _workoutModeKey = 'workout_mode';
 
   WeightUnit _weightUnit = WeightUnit.kg;
   int _defaultRestTimer = 90; // Default 90 seconds
+  WorkoutMode _workoutMode = WorkoutMode.gym;
 
   WeightUnit get weightUnit => _weightUnit;
   int get defaultRestTimer => _defaultRestTimer;
+  WorkoutMode get workoutMode => _workoutMode;
+  bool get isGymMode => _workoutMode == WorkoutMode.gym;
 
   SettingsProvider() {
     _loadSettings();
@@ -29,6 +34,11 @@ class SettingsProvider extends ChangeNotifier {
     if (timer != null) {
       _defaultRestTimer = timer;
     }
+
+    final modeIndex = prefs.getInt(_workoutModeKey);
+    if (modeIndex != null) {
+      _workoutMode = WorkoutMode.values[modeIndex];
+    }
     
     notifyListeners();
   }
@@ -45,6 +55,17 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_restTimerKey, seconds);
+  }
+
+  Future<void> setWorkoutMode(WorkoutMode mode) async {
+    _workoutMode = mode;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_workoutModeKey, mode.index);
+  }
+  
+  void toggleWorkoutMode() {
+    setWorkoutMode(_workoutMode == WorkoutMode.gym ? WorkoutMode.home : WorkoutMode.gym);
   }
 
   // Conversion Helpers

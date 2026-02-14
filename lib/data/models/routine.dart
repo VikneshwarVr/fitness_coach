@@ -77,6 +77,7 @@ class Routine {
   final String level; // Beginner, Intermediate, Advanced
   final int duration; // Estimated duration in minutes
   final bool isCustom; // User-created vs default
+  final String mode; // 'gym' or 'home'
 
   // Backward compatibility getter
   List<String> get exerciseNames => exercises.map((e) => e.name).toList();
@@ -89,6 +90,7 @@ class Routine {
     required this.level,
     required this.duration,
     this.isCustom = false,
+    this.mode = 'gym',
   });
 
   factory Routine.create({
@@ -99,6 +101,7 @@ class Routine {
     String level = 'Intermediate',
     int duration = 45,
     bool isCustom = false,
+    String mode = 'gym',
   }) {
     // If detailed exercises are provided, use them. Otherwise create from names.
     List<RoutineExercise> finalExercises;
@@ -127,6 +130,7 @@ class Routine {
       level: level,
       duration: duration,
       isCustom: isCustom,
+      mode: mode,
     );
   }
 
@@ -138,6 +142,7 @@ class Routine {
         'level': level,
         'duration': duration,
         'isCustom': isCustom,
+        'mode': mode,
       };
 
   factory Routine.fromJson(Map<String, dynamic> json) {
@@ -166,6 +171,7 @@ class Routine {
       level: json['level'],
       duration: json['duration'],
       isCustom: json['isCustom'] ?? false,
+      mode: json['mode'] ?? 'gym',
     );
   }
 }

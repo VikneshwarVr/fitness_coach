@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../data/providers/settings_provider.dart';
 import '../../data/constants/exercise_data.dart';
 import '../components/fitness_card.dart';
 import 'exercise_detail_screen.dart';
@@ -12,11 +14,14 @@ class ExerciseListScreen extends StatefulWidget {
 
 class _ExerciseListScreenState extends State<ExerciseListScreen> {
   String _searchQuery = '';
-  final List<Map<String, String>> _allExercises = ExerciseData.exercises;
 
   List<Map<String, String>> get _filteredExercises {
-    if (_searchQuery.isEmpty) return _allExercises;
-    return _allExercises.where((e) {
+    final settings = Provider.of<SettingsProvider>(context);
+    final allExercises = ExerciseData.getExercisesForMode(settings.workoutMode);
+
+    if (_searchQuery.isEmpty) return allExercises;
+    
+    return allExercises.where((e) {
       final name = e['name']?.toLowerCase() ?? '';
       final tag = e['tag']?.toLowerCase() ?? '';
       final query = _searchQuery.toLowerCase();

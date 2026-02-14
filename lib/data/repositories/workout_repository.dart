@@ -83,6 +83,7 @@ class WorkoutRepository extends ChangeNotifier {
           duration: workoutJson['duration'],
           totalVolume: workoutJson['total_volume'],
           photoUrl: workoutJson['photo_url'],
+          mode: workoutJson['mode'] ?? 'gym',
           exercises: exercises,
         );
       }).toList();
@@ -104,6 +105,7 @@ class WorkoutRepository extends ChangeNotifier {
         'duration': workout.duration,
         'total_volume': workout.totalVolume,
         'photo_url': workout.photoUrl,
+        'mode': workout.mode,
         'user_id': _supabase.auth.currentUser?.id,
       }).select().single();
 
@@ -150,6 +152,7 @@ class WorkoutRepository extends ChangeNotifier {
         'duration': workout.duration,
         'total_volume': workout.totalVolume,
         'photo_url': workout.photoUrl,
+        'mode': workout.mode,
       }).eq('id', workout.id);
 
       // 2. Delete existing exercises (cascade should handle sets if configured, else delete sets first)

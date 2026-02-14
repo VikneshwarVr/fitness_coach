@@ -17,6 +17,7 @@ class WorkoutProvider extends ChangeNotifier {
   bool _isWorkoutActive = false;
   bool _isEditingRoutine = false; // New flag
   String _workoutName = 'Evening Workout';
+  String _workoutMode = 'gym'; // Track the mode for this workout
   String? _editingWorkoutId; // ID of the workout being edited (if any)
   DateTime? _editingWorkoutDate; // Original date of the workout being edited
   final List<ExerciseSession> _exercises = [];
@@ -67,6 +68,7 @@ class WorkoutProvider extends ChangeNotifier {
   String? get activeTimingExerciseId => _activeTimingExerciseId;
   bool get isAnySetTiming => _setTimer != null;
   DateTime? get editingWorkoutDate => _editingWorkoutDate;
+  String get workoutMode => _workoutMode;
   String? get workoutPhotoPath => _workoutPhotoPath;
   List<ExerciseSession> get exercises => List.unmodifiable(_exercises);
   Map<String, List<ExerciseSet>> get previousSets => Map.unmodifiable(_previousSets);
@@ -121,7 +123,7 @@ class WorkoutProvider extends ChangeNotifier {
   WorkoutProvider(this._workoutRepository);
 
   // Actions
-  Future<void> startWorkout({Routine? routine, int defaultRestTime = 0}) async {
+  Future<void> startWorkout({Routine? routine, int defaultRestTime = 0, String mode = 'gym'}) async {
     if (_isWorkoutActive) return;
 
     _resetState();
@@ -129,6 +131,7 @@ class WorkoutProvider extends ChangeNotifier {
     _isPlaying = true; // Use timer for actual workouts
     _isEditingRoutine = false;
     _workoutName = routine?.name ?? 'Log Workout';
+    _workoutMode = mode;
 
     if (routine != null) {
       for (final routineExercise in routine.exercises) {
@@ -263,6 +266,7 @@ class WorkoutProvider extends ChangeNotifier {
         duration: (_secondsElapsed / 60).ceil(), // Convert seconds to minutes
         totalVolume: _cachedTotalVolume,
         photoUrl: photoUrl,
+        mode: _workoutMode,
         exercises: _exercises,
       );
       await _workoutRepository.addWorkout(workout);
@@ -290,6 +294,7 @@ class WorkoutProvider extends ChangeNotifier {
       duration: (_secondsElapsed / 60).ceil(),
       totalVolume: _cachedTotalVolume,
       photoUrl: photoUrl,
+      mode: _workoutMode,
       exercises: _exercises,
     );
     
@@ -308,6 +313,7 @@ class WorkoutProvider extends ChangeNotifier {
     _isPlaying = false; // Don't start timer automatically
     _isEditingRoutine = false; // This is workout editing, not routine editing
     _workoutName = workout.name;
+    _workoutMode = workout.mode;
     _editingWorkoutId = workout.id;
     _editingWorkoutDate = workout.date;
     _workoutPhotoPath = workout.photoUrl;
@@ -387,6 +393,7 @@ class WorkoutProvider extends ChangeNotifier {
     _isPlaying = false;
     _isWorkoutActive = false;
     _isEditingRoutine = false;
+    _workoutMode = 'gym';
     _exercises.clear();
     _previousSets.clear();
     _sessionBests.clear();

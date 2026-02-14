@@ -7,6 +7,7 @@ class Workout {
   final int duration; // in minutes
   final int totalVolume; // in kg
   final String? photoUrl;
+  final String mode; // 'gym' or 'home'
   final List<ExerciseSession> exercises;
 
   Workout({
@@ -16,6 +17,7 @@ class Workout {
     required this.duration,
     required this.totalVolume,
     this.photoUrl,
+    this.mode = 'gym',
     required this.exercises,
   });
 
@@ -23,6 +25,7 @@ class Workout {
     required String name,
     required int duration,
     List<ExerciseSession>? exercises,
+    String mode = 'gym',
   }) {
     return Workout(
       id: const Uuid().v4(),
@@ -30,6 +33,8 @@ class Workout {
       date: DateTime.now(),
       duration: duration,
       totalVolume: exercises?.fold(0, (sum, e) => sum! + e.volume) ?? 0,
+      photoUrl: null,
+      mode: mode,
       exercises: exercises ?? [],
     );
   }
@@ -42,6 +47,7 @@ class Workout {
       'duration': duration,
       'totalVolume': totalVolume,
       'photo_url': photoUrl,
+      'mode': mode,
       'exercises': exercises.map((e) => e.toJson()).toList(),
     };
   }
@@ -54,6 +60,7 @@ class Workout {
       duration: json['duration'] ?? 0,
       totalVolume: json['totalVolume'] ?? json['total_volume'] ?? 0,
       photoUrl: json['photo_url'],
+      mode: json['mode'] ?? 'gym',
       exercises: (json['exercises'] as List)
           .map((e) => ExerciseSession.fromJson(e))
           .toList(),
