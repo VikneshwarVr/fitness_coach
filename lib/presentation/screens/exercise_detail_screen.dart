@@ -90,6 +90,114 @@ class ExerciseDetailScreen extends StatelessWidget {
                     final settings = context.read<SettingsProvider>();
                     final label = settings.unitLabel;
 
+                    final category = ExerciseData.getCategory(exerciseName);
+                    List<Widget> prCards = [];
+
+                    String formatDuration(double s) {
+                      if (s <= 0) return '-';
+                      int sec = s.toInt();
+                      int h = sec ~/ 3600;
+                      int m = (sec % 3600) ~/ 60;
+                      int leftSec = sec % 60;
+                      if (h > 0) return '${h}h ${m}m';
+                      if (m > 0) return '${m}m ${leftSec}s';
+                      return '${leftSec}s';
+                    }
+
+                    if (category == 'Cardio' || category == 'Distance') {
+                      double dist = prs['maxDistance'] ?? 0;
+                      prCards.add(_PRCard(
+                        label: 'Max Distance',
+                        value: dist.toStringAsFixed(2),
+                        unit: 'km',
+                        icon: LucideIcons.map,
+                      ));
+                      if (category == 'Cardio') {
+                         prCards.add(_PRCard(
+                          label: 'Max Duration',
+                          value: formatDuration(prs['maxDuration'] ?? 0),
+                          unit: '',
+                          icon: LucideIcons.timer,
+                        ));
+                      }
+                    } else if (category == 'DistanceMeters' || category == 'DistanceTimeMeters') {
+                      double dist = prs['maxDistance'] ?? 0;
+                      prCards.add(_PRCard(
+                        label: 'Max Distance',
+                        value: dist.toStringAsFixed(1),
+                        unit: 'm',
+                        icon: LucideIcons.map,
+                      ));
+                       if (category == 'DistanceTimeMeters') {
+                          prCards.add(_PRCard(
+                            label: 'Max Duration',
+                            value: formatDuration(prs['maxDuration'] ?? 0),
+                            unit: '',
+                            icon: LucideIcons.timer,
+                          ));
+                       }
+                    } else if (category == 'WeightedDistanceMeters') {
+                       double dist = prs['maxDistance'] ?? 0;
+                       prCards.add(_PRCard(
+                        label: 'Max Distance',
+                        value: dist.toStringAsFixed(1),
+                        unit: 'm',
+                        icon: LucideIcons.map,
+                      ));
+                      prCards.add(_PRCard(
+                          label: 'Heaviest Weight',
+                          value: settings.formatWeight(prs['heaviestWeight']!, showUnit: false),
+                          unit: label,
+                          icon: LucideIcons.dumbbell,
+                      ));
+                    } else if (category == 'Timed') {
+                      prCards.add(_PRCard(
+                        label: 'Max Duration',
+                        value: formatDuration(prs['maxDuration'] ?? 0),
+                        unit: '',
+                        icon: LucideIcons.timer,
+                      ));
+                    } else if (category == 'Bodyweight') {
+                      prCards.add(_PRCard(
+                        label: 'Max Reps',
+                        value: (prs['maxReps'] ?? 0).toStringAsFixed(0),
+                        unit: 'reps',
+                        icon: LucideIcons.repeat,
+                      ));
+                      if ((prs['heaviestWeight'] ?? 0) > 0) {
+                        prCards.add(_PRCard(
+                          label: 'Heaviest Weight',
+                          value: settings.formatWeight(prs['heaviestWeight']!, showUnit: false),
+                          unit: label,
+                          icon: LucideIcons.dumbbell,
+                        ));
+                      }
+                    } else {
+                      // Strength / Default
+                      prCards.add(_PRCard(
+                        label: 'Heaviest Weight',
+                        value: settings.formatWeight(prs['heaviestWeight']!, showUnit: false),
+                        unit: label,
+                        icon: LucideIcons.dumbbell,
+                      ));
+                      prCards.add(_PRCard(
+                        label: 'Best 1RM',
+                        value: settings.formatWeight(prs['best1RM']!, showUnit: false),
+                        unit: label,
+                        icon: LucideIcons.trophy,
+                      ));
+                      prCards.add(_PRCard(
+                        label: 'Best Set Volume',
+                        value: settings.formatWeight(prs['bestSetVolume']!, showUnit: false),
+                        unit: label,
+                        icon: LucideIcons.barChart,
+                      ));
+                    }
+
+                    if (prCards.isEmpty) {
+                      return const SizedBox(height: 50, child: Center(child: Text('No records yet')));
+                    }
+
                     return GridView.count(
                       crossAxisCount: 2,
                       shrinkWrap: true,
@@ -97,32 +205,7 @@ class ExerciseDetailScreen extends StatelessWidget {
                       mainAxisSpacing: 12,
                       crossAxisSpacing: 12,
                       childAspectRatio: 1.5,
-                      children: [
-                        _PRCard(
-                          label: 'Heaviest Weight',
-                          value: settings.formatWeight(prs['heaviestWeight']!, showUnit: false),
-                          unit: label,
-                          icon: LucideIcons.dumbbell,
-                        ),
-                        _PRCard(
-                          label: 'Best 1RM',
-                          value: settings.formatWeight(prs['best1RM']!, showUnit: false),
-                          unit: label,
-                          icon: LucideIcons.trophy,
-                        ),
-                        _PRCard(
-                          label: 'Best Set Volume',
-                          value: settings.formatWeight(prs['bestSetVolume']!, showUnit: false),
-                          unit: label,
-                          icon: LucideIcons.barChart,
-                        ),
-                        _PRCard(
-                          label: 'Best Session Volume',
-                          value: settings.formatWeight(prs['bestSessionVolume']!, showUnit: false),
-                          unit: label,
-                          icon: LucideIcons.layers,
-                        ),
-                      ],
+                      children: prCards,
                     );
                   },
                 );

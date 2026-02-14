@@ -291,6 +291,9 @@ class WorkoutRepository extends ChangeNotifier {
         'best1RM': (data['best_1rm'] as num?)?.toDouble() ?? 0.0,
         'bestSetVolume': (data['best_set_volume'] as num?)?.toDouble() ?? 0.0,
         'bestSessionVolume': (data['best_session_volume'] as num?)?.toDouble() ?? 0.0,
+        'maxReps': (data['max_reps'] as num?)?.toDouble() ?? 0.0,
+        'maxDistance': (data['max_distance'] as num?)?.toDouble() ?? 0.0,
+        'maxDuration': (data['max_duration'] as num?)?.toDouble() ?? 0.0,
       };
     } catch (e) {
       return {
@@ -298,6 +301,9 @@ class WorkoutRepository extends ChangeNotifier {
         'best1RM': 0.0,
         'bestSetVolume': 0.0,
         'bestSessionVolume': 0.0,
+        'maxReps': 0.0,
+        'maxDistance': 0.0,
+        'maxDuration': 0.0,
       };
     }
   }

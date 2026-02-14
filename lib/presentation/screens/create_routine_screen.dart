@@ -164,8 +164,15 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
         }
       } catch (e) {
         if (mounted) {
+          String message = 'Error saving routine: $e';
+          if (e.toString().contains('unique_routine_name_per_user') || 
+              e.toString().contains('duplicate key') ||
+              e.toString().contains('23505')) {
+            message = 'A routine with this name already exists.';
+          }
+          
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error saving routine: $e')),
+            SnackBar(content: Text(message)),
           );
         }
       } finally {
