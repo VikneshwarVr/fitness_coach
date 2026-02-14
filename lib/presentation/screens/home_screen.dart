@@ -274,12 +274,28 @@ class _StatCard extends StatelessWidget {
             children: [
               Icon(icon, size: 16, color: iconColor ?? Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(width: 6),
-              Text(label, style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              Expanded(
+                child: Text(
+                  label, 
+                  style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          Text(subLabel, style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          ),
+          Text(
+            subLabel, 
+            style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant), 
+            overflow: TextOverflow.ellipsis, 
+            maxLines: 1,
+          ),
         ],
       ),
     );

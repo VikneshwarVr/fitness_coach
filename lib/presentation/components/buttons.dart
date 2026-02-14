@@ -59,7 +59,13 @@ class SecondaryButton extends StatelessWidget {
             Icon(icon, size: 16),
             const SizedBox(width: 8),
           ],
-          Text(label),
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
         ],
       ),
     );
