@@ -3,7 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/routine.dart';
 
 class RoutineRepository extends ChangeNotifier {
-  final _supabase = Supabase.instance.client;
+  final SupabaseClient _supabase;
+
+  RoutineRepository([SupabaseClient? client]) : _supabase = client ?? Supabase.instance.client;
 
   final List<Routine> _defaultRoutines = [
     // ... (same as before - kept hardcoded for defaults)
@@ -53,6 +55,7 @@ class RoutineRepository extends ChangeNotifier {
   Future<void> loadRoutines() async {
     try {
       final userId = _supabase.auth.currentUser?.id;
+      print('DEBUG: userId = $userId');
       if (userId == null) return;
 
       final data = await _supabase

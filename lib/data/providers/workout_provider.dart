@@ -134,27 +134,18 @@ class WorkoutProvider extends ChangeNotifier {
     _workoutMode = mode;
 
     if (routine != null) {
+      // 1. Pre-initialize exercises with temporary session IDs and default data
       for (final routineExercise in routine.exercises) {
         final exerciseName = routineExercise.name;
-        final category = routineExercise.category;
         
-        // Initialize rest time with default if not already set
         if (defaultRestTime > 0) {
           _exerciseRestTimes[exerciseName] = defaultRestTime;
         }
-        
-        // Load previous sets and PRs from backend
-        _previousSets[exerciseName] = await _workoutRepository.getPreviousSets(exerciseName);
-        _historicalPRs[exerciseName] = await _workoutRepository.getExercisePRs(exerciseName);
 
-        // Map RoutineExercise -> ExerciseSession
-        // If the routine has sets defined (editing mode saved them), use them.
-        // Otherwise use previous history or default.
-        
         List<ExerciseSet> sessSets = [];
         if (routineExercise.sets.isNotEmpty) {
            sessSets = routineExercise.sets.map((s) => ExerciseSet(
-             id: _uuid.v4(), // New session ID
+             id: _uuid.v4(),
              weight: s.weight,
              reps: s.reps,
              distance: s.distance,
@@ -162,15 +153,10 @@ class WorkoutProvider extends ChangeNotifier {
              completed: false,
            )).toList();
         } else {
-           // Fallback logic (history or default)
-           final prevSets = _previousSets[exerciseName] ?? [];
-           final initialWeight = prevSets.isNotEmpty ? prevSets[0].weight : 0;
-           final initialReps = prevSets.isNotEmpty ? prevSets[0].reps : 0;
-           
            sessSets.add(ExerciseSet(
              id: _uuid.v4(),
-             weight: initialWeight,
-             reps: initialReps,
+             weight: 0,
+             reps: 0,
              completed: false,
            ));
         }
@@ -180,11 +166,42 @@ class WorkoutProvider extends ChangeNotifier {
             id: _uuid.v4(),
             exerciseId: routineExercise.id,
             name: exerciseName,
-            category: category,
+            category: routineExercise.category,
             sets: sessSets,
           ),
         );
       }
+      
+      notifyListeners(); // Immediate UI update for the structure
+
+      // 2. Fetch all historical data in parallel
+      await Future.wait(routine.exercises.map((re) async {
+        final name = re.name;
+        final results = await Future.wait([
+          _workoutRepository.getPreviousSets(name),
+          _workoutRepository.getExercisePRs(name),
+        ]);
+        
+        _previousSets[name] = results[0] as List<ExerciseSet>;
+        _historicalPRs[name] = results[1] as Map<String, double>;
+
+        // Update pre-filled sets if history was empty during initial setup
+        final exIndex = _exercises.indexWhere((e) => e.name == name);
+        if (exIndex != -1 && re.sets.isEmpty) {
+          final prevSets = _previousSets[name]!;
+          if (prevSets.isNotEmpty) {
+            _exercises[exIndex].sets.clear();
+            _exercises[exIndex].sets.addAll(prevSets.map((s) => ExerciseSet(
+              id: _uuid.v4(),
+              weight: s.weight,
+              reps: s.reps,
+              distance: s.distance,
+              durationSeconds: s.durationSeconds,
+              completed: false,
+            )));
+          }
+        }
+      }));
     }
     
     _startTimer();
@@ -424,79 +441,96 @@ class WorkoutProvider extends ChangeNotifier {
 
   // Exercise Management
   Future<void> addExercises(List<String> names, {int defaultRestTime = 0}) async {
+    // 1. Optimistic Add: Immediately show exercises with default/predicted data
+    final List<Future> fetchTasks = [];
+    
     for (final name in names) {
-      await _addOneExercise(name, defaultRestTime: defaultRestTime);
+      _addExerciseOptimistically(name, defaultRestTime: defaultRestTime);
+      fetchTasks.add(_fetchExerciseHistory(name));
     }
-    notifyListeners();
+    
+    notifyListeners(); // Exercises appear immediately
+
+    // 2. Background Fetch: Load history in parallel and update
+    await Future.wait(fetchTasks);
+    notifyListeners(); // Refresh with history
   }
 
   Future<void> addExercise(String name, {int defaultRestTime = 0}) async {
-    await _addOneExercise(name, defaultRestTime: defaultRestTime);
+    _addExerciseOptimistically(name, defaultRestTime: defaultRestTime);
+    notifyListeners();
+    
+    await _fetchExerciseHistory(name);
     notifyListeners();
   }
 
-  Future<void> _addOneExercise(String name, {int defaultRestTime = 0}) async {
-    if (!_isEditingRoutine) {
-        _previousSets[name] = await _workoutRepository.getPreviousSets(name);
-        _historicalPRs[name] = await _workoutRepository.getExercisePRs(name);
-        
-        if (defaultRestTime > 0) {
-           _exerciseRestTimes[name] = defaultRestTime;
-        }
-    }
-    
-    final prevSets = _previousSets[name] ?? [];
-    
-    // Look up category from ExerciseData
+  void _addExerciseOptimistically(String name, {int defaultRestTime = 0}) {
+    // Determine category based on type or tag
     final exerciseData = ExerciseData.exercises.firstWhere(
       (e) => e['name'] == name,
       orElse: () => {'tag': 'Strength', 'type': 'strength'},
     );
     
-    // Determine category based on type or tag
     String category = 'Strength';
     final type = exerciseData['type'] ?? (exerciseData['tag'] == 'Cardio' ? 'cardio' : 'strength');
     
-    if (type == 'cardio') {
-      category = 'Cardio';
-    } else if (type == 'timed') {
-      category = 'Timed';
-    } else if (type == 'reps') {
-      category = 'Bodyweight';
-    } else if (type == 'distance') {
-      category = 'Distance';
-    } else if (type == 'distance_meters') {
-      category = 'DistanceMeters';
-    } else if (type == 'weighted_distance_meters') {
-      category = 'WeightedDistanceMeters';
-    } else if (type == 'distance_time_meters') {
-      category = 'DistanceTimeMeters';
+    if (type == 'cardio') category = 'Cardio';
+    else if (type == 'timed') category = 'Timed';
+    else if (type == 'reps') category = 'Bodyweight';
+    else if (type == 'distance') category = 'Distance';
+    else if (type == 'distance_meters') category = 'DistanceMeters';
+    else if (type == 'weighted_distance_meters') category = 'WeightedDistanceMeters';
+    else if (type == 'distance_time_meters') category = 'DistanceTimeMeters';
+
+    if (defaultRestTime > 0) {
+      _exerciseRestTimes[name] = defaultRestTime;
     }
 
-    final exercise = ExerciseSession(
-      id: const Uuid().v4(),
-      exerciseId: const Uuid().v4(),
+    // Add with default set first
+    final exerciseId = _uuid.v4();
+    _exercises.add(ExerciseSession(
+      id: exerciseId,
+      exerciseId: _uuid.v4(),
       name: name,
       category: category,
-      sets: prevSets.isNotEmpty 
-        ? prevSets.map((s) => ExerciseSet(
-            id: const Uuid().v4(),
-            weight: s.weight,
-            reps: s.reps,
-            distance: s.distance,
-            durationSeconds: s.durationSeconds,
-            completed: false,
-          )).toList()
-        : [ExerciseSet(
-            id: const Uuid().v4(), 
-            weight: 0, 
-            reps: 0, 
-            distance: (category == 'Cardio' || category == 'Distance' || category == 'DistanceMeters' || category == 'WeightedDistanceMeters' || category == 'DistanceTimeMeters') ? 0.0 : null,
-            durationSeconds: (category == 'Cardio' || category == 'Timed' || category == 'DistanceTimeMeters') ? 0 : null,
-            completed: false
-          )],
-    );
-    _exercises.add(exercise);
+      sets: [ExerciseSet(
+        id: _uuid.v4(), 
+        weight: 0, 
+        reps: 0, 
+        distance: (category.contains('Distance') || category == 'Cardio') ? 0.0 : null,
+        durationSeconds: (category == 'Cardio' || category == 'Timed' || category == 'DistanceTimeMeters') ? 0 : null,
+        completed: false
+      )],
+    ));
+  }
+
+  Future<void> _fetchExerciseHistory(String name) async {
+    final results = await Future.wait([
+      _workoutRepository.getPreviousSets(name),
+      _workoutRepository.getExercisePRs(name),
+    ]);
+    
+    _previousSets[name] = results[0] as List<ExerciseSet>;
+    _historicalPRs[name] = results[1] as Map<String, double>;
+
+    // If session sets are still just the default [0, 0], update with history
+    final exIndex = _exercises.indexWhere((e) => e.name == name);
+    if (exIndex != -1) {
+      final sessionEx = _exercises[exIndex];
+      final prevSets = _previousSets[name]!;
+      
+      if (sessionEx.sets.length == 1 && sessionEx.sets[0].weight == 0 && sessionEx.sets[0].reps == 0 && prevSets.isNotEmpty) {
+        sessionEx.sets.clear();
+        sessionEx.sets.addAll(prevSets.map((s) => ExerciseSet(
+          id: _uuid.v4(),
+          weight: s.weight,
+          reps: s.reps,
+          distance: s.distance,
+          durationSeconds: s.durationSeconds,
+          completed: false,
+        )));
+      }
+    }
   }
 
   void addSet(int exerciseIndex) {

@@ -81,81 +81,83 @@ class WorkoutDetailsScreen extends StatelessWidget {
             );
           }
 
-          return SingleChildScrollView(
+          return ListView.builder(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Workout Header Info
-                Text(
-                  workout.name,
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  DateFormat('EEEE, MMM d, yyyy • hh:mm a').format(workout.date),
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
-                ),
-                const SizedBox(height: 20),
-
-                // Stats Summary Cards (Horizontal)
-                Row(
+            itemCount: workout.exercises.length + 2,
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                // Workout Header Info + Stats + Photo
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      child: _SummaryStatCard(
-                        icon: LucideIcons.calendar,
-                        label: 'Duration',
-                        value: '${workout.duration}',
-                        unit: 'min',
-                      ),
+                    Text(
+                      workout.name,
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Consumer<SettingsProvider>(
-                        builder: (context, settings, child) {
-                          final label = settings.unitLabel;
-                          final displayVolume = settings.convertToDisplay(workout.totalVolume);
-                          final value = displayVolume >= 1000 
-                            ? (displayVolume / 1000).toStringAsFixed(1)
-                            : displayVolume.toStringAsFixed(0);
-                          final unit = displayVolume >= 1000 ? 'k $label' : label;
+                    const SizedBox(height: 4),
+                    Text(
+                      DateFormat('EEEE, MMM d, yyyy • hh:mm a').format(workout.date),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _SummaryStatCard(
+                            icon: LucideIcons.calendar,
+                            label: 'Duration',
+                            value: '${workout.duration}',
+                            unit: 'min',
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Consumer<SettingsProvider>(
+                            builder: (context, settings, child) {
+                              final label = settings.unitLabel;
+                              final displayVolume = settings.convertToDisplay(workout.totalVolume);
+                              final value = displayVolume >= 1000 
+                                ? (displayVolume / 1000).toStringAsFixed(1)
+                                : displayVolume.toStringAsFixed(0);
+                              final unit = displayVolume >= 1000 ? 'k $label' : label;
 
-                          return _SummaryStatCard(
-                            icon: LucideIcons.trendingUp,
-                            label: 'Total Volume',
-                            value: value,
-                            unit: unit,
-                            valueColor: AppTheme.primary,
-                          );
-                        },
-                      ),
+                              return _SummaryStatCard(
+                                icon: LucideIcons.trendingUp,
+                                label: 'Total Volume',
+                                value: value,
+                                unit: unit,
+                                valueColor: AppTheme.primary,
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 24),
+                    if (workout.photoUrl != null) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          workout.photoUrl!,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => const SizedBox(),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
                   ],
-                ),
-                const SizedBox(height: 24),
-
-                if (workout.photoUrl != null) ...[
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      workout.photoUrl!,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => const SizedBox(),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-
-                const Text('Exercises', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
-
-                // Exercises List
-                ...workout.exercises.map((exercise) => _ExerciseDetailItem(exercise: exercise)),
-                
-                const SizedBox(height: 32),
-              ],
-            ),
+                );
+              } else if (index == 1) {
+                return const Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: Text('Exercises', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                );
+              } else {
+                final exercise = workout.exercises[index - 2];
+                return _ExerciseDetailItem(exercise: exercise);
+              }
+            },
           );
         },
       ),

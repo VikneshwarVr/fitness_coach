@@ -41,60 +41,82 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () => context.read<RoutineRepository>().loadRoutines(),
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text('Choose a workout routine to start training',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-                const SizedBox(height: 24),
-                Consumer<RoutineRepository>(
-                  builder: (context, repo, child) {
-                    final defaults = repo.defaultRoutines;
-                    final customs = repo.customRoutines;
+        child: Consumer<RoutineRepository>(
+          builder: (context, repo, child) {
+            final defaults = repo.defaultRoutines;
+            final customs = repo.customRoutines;
 
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (defaults.isNotEmpty) ...[
-                          const Text('Default Routines', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 8),
-                          ...defaults.map((routine) => Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: _RoutineCard(routine: routine),
-                              )),
-                          const SizedBox(height: 16),
-                        ],
-                        if (customs.isNotEmpty) ...[
-                          const Text('My Routines', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 8),
-                          ...customs.map((routine) => Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: _RoutineCard(routine: routine),
-                              )),
-                        ],
-                        if (defaults.isEmpty && customs.isEmpty)
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 24),
-                              child: Text(
-                                'No routines yet',
-                                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                              ),
-                            ),
+            if (defaults.isEmpty && customs.isEmpty) {
+              return Stack(
+                children: [
+                  ListView(), // For RefreshIndicator
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'No routines yet',
+                        style: TextStyle(color: Color(0xFF737373)),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }
+
+            // Flatten items: Intro, Headers, Routines
+            final List<dynamic> items = [];
+            items.add('intro');
+            if (defaults.isNotEmpty) {
+              items.add('header_defaults');
+              items.addAll(defaults);
+            }
+            if (customs.isNotEmpty) {
+              items.add('header_customs');
+              items.addAll(customs);
+            }
+
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final item = items[index];
+                if (item == 'intro') {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: Text(
+                      'Choose a workout routine to start training',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
-                      ],
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
+                    ),
+                  );
+                } else if (item == 'header_defaults') {
+                  return const Padding(
+                    padding: EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      'Default Routines',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
+                  );
+                } else if (item == 'header_customs') {
+                  return const Padding(
+                    padding: EdgeInsets.only(top: 16, bottom: 8),
+                    child: Text(
+                      'My Routines',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
+                  );
+                } else if (item is Routine) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _RoutineCard(routine: item),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            );
+          },
+        ),
         ),
       ),
     );

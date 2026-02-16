@@ -6,7 +6,9 @@ import '../constants/exercise_data.dart';
 import '../../core/utils/stats_utils.dart';
 
 class WorkoutRepository extends ChangeNotifier {
-  final _supabase = Supabase.instance.client;
+  final SupabaseClient _supabase;
+
+  WorkoutRepository([SupabaseClient? client]) : _supabase = client ?? Supabase.instance.client;
   List<Workout> _workouts = [];
 
   List<Workout> get workouts => _workouts;
@@ -38,23 +40,59 @@ class WorkoutRepository extends ChangeNotifier {
     }
   }
 
-  // Cached backend stats
+  // Pagination state
+  int _pageSize = 20;
+  bool _hasMore = true;
+  bool _isLoadingMore = false;
+  
+  bool get hasMore => _hasMore;
+  bool get isLoadingMore => _isLoadingMore;
+
+  // Lightweight metadata for ALL workouts (dates, volumes, etc.)
+  List<Map<String, dynamic>> _globalWorkoutsForStats = [];
+  
+  // Cached calculated stats
   int _workoutsThisWeek = 0;
   int _totalVolumeStats = 0;
-  int _streak = 0;
+  int _streak = 0; // Day streak
+  int _weekStreak = 0;
+  int _restDays = 0;
+  Map<String, List<Workout>> _workoutsByDate = {};
 
-  Future<void> loadWorkouts() async {
+  Future<void> loadWorkouts({bool refresh = false}) async {
+    if (_isLoadingMore) return;
+    
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
+
+      if (refresh) {
+        _workouts = [];
+        _hasMore = true;
+        _isLoadingMore = false;
+        notifyListeners(); // Notify UI that list is now empty to avoid RangeError
+        // Also refresh global stats metadata
+        await _loadGlobalStats();
+      }
+
+      if (!_hasMore) return;
+      
+      _isLoadingMore = true;
+      if (_workouts.isNotEmpty) notifyListeners();
+
+      final from = _workouts.length;
+      // For the first load, we fetch more (50) to ensure Stats screens (30 days) are populated accurately.
+      final currentBatchSize = (_workouts.isEmpty) ? 50 : _pageSize;
+      final to = from + currentBatchSize - 1;
 
       final data = await _supabase
           .from('workouts')
           .select('*, workout_exercises(*, workout_sets(*))')
           .eq('user_id', userId)
-          .order('date', ascending: false);
+          .order('date', ascending: false)
+          .range(from, to);
       
-      _workouts = (data as List).map((workoutJson) {
+      final newWorkouts = (data as List).map((workoutJson) {
         final exercises = (workoutJson['workout_exercises'] as List).map((excJson) {
           final sets = (excJson['workout_sets'] as List).map((setJson) {
             return ExerciseSet(
@@ -88,10 +126,44 @@ class WorkoutRepository extends ChangeNotifier {
         );
       }).toList();
 
-      // Refresh overview stats locally
-      _calculateOverviewStats();
+      if (newWorkouts.length < currentBatchSize) {
+        _hasMore = false;
+      }
 
+      _workouts.addAll(newWorkouts);
+      
+      // Ensure global metadata is loaded (it provides the foundation for all stats/calendar)
+      if (_globalWorkoutsForStats.isEmpty) {
+        await _loadGlobalStats();
+      }
+      
+      _calculateOverviewStats();
+      _isLoadingMore = false;
       notifyListeners();
+    } catch (e) {
+      _isLoadingMore = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadNextPage() async {
+    if (!_hasMore || _isLoadingMore) return;
+    await loadWorkouts();
+  }
+
+  Future<void> _loadGlobalStats() async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
+
+      // Fetch ONLY what's needed for streaks, volume charts, and calendar indicators
+      final data = await _supabase
+          .from('workouts')
+          .select('id, date, total_volume, name, duration')
+          .eq('user_id', userId)
+          .order('date', ascending: false);
+      
+      _globalWorkoutsForStats = (data as List).cast<Map<String, dynamic>>();
     } catch (e) {
     }
   }
@@ -137,7 +209,7 @@ class WorkoutRepository extends ChangeNotifier {
         }
       }
 
-      await loadWorkouts();
+      await loadWorkouts(refresh: true);
     } catch (e) {
       rethrow;
     }
@@ -184,7 +256,7 @@ class WorkoutRepository extends ChangeNotifier {
         }
       }
 
-      await loadWorkouts();
+      await loadWorkouts(refresh: true);
     } catch (e) {
       rethrow;
     }
@@ -193,9 +265,7 @@ class WorkoutRepository extends ChangeNotifier {
   Future<void> deleteWorkout(String id) async {
     try {
       await _supabase.from('workouts').delete().eq('id', id);
-      _workouts.removeWhere((w) => w.id == id);
-      _calculateOverviewStats();
-      notifyListeners();
+      await loadWorkouts(refresh: true);
     } catch (e) {
       rethrow;
     }
@@ -203,62 +273,195 @@ class WorkoutRepository extends ChangeNotifier {
 
   // Stats helpers
   int get workoutsThisWeek => _workoutsThisWeek;
-  int get workoutsLast30Days => _workouts.where((w) => w.date.isAfter(DateTime.now().subtract(const Duration(days: 30)))).length;
-  int get totalVolume => _totalVolumeStats > 0 ? _totalVolumeStats : _workouts.fold(0, (sum, w) => sum + w.totalVolume);
+  int get workoutsLast30Days => _globalWorkoutsForStats.where((w) {
+    final date = DateTime.parse(w['date']);
+    return date.isAfter(DateTime.now().subtract(const Duration(days: 30)));
+  }).length;
+  
+  int get totalVolume => _totalVolumeStats;
   int get streak => _streak;
+  int get weekStreak => _weekStreak;
+  int get restDays => _restDays;
+  Map<String, List<Workout>> get workoutsByDate => _workoutsByDate;
+  List<Workout> get allWorkoutsMetadata => _workoutsByDate.values.expand((x) => x).toList();
+
+  // Caches for expensive stats
+  final Map<String, List<double>> _radarStatsCache = {};
+  final Map<String, List<Map<String, dynamic>>> _aggregatedStatsCache = {};
+
+  List<double> getRadarStats(bool isWeekly) {
+    final key = isWeekly ? 'weekly' : 'monthly';
+    if (!_radarStatsCache.containsKey(key)) {
+      _radarStatsCache[key] = StatsUtils.getRadarStats(_workouts, isWeekly: isWeekly);
+    }
+    return _radarStatsCache[key]!;
+  }
+
+  List<Map<String, dynamic>> getAggregatedStats(bool isWeekly, String metric) {
+    final key = '${isWeekly ? 'weekly' : 'monthly'}_$metric';
+    if (!_aggregatedStatsCache.containsKey(key)) {
+      // Optimization: use global stats for volume chart (complete data)
+      if (metric == 'Volume') {
+        _aggregatedStatsCache[key] = _getAggregatedVolumeFromGlobal(isWeekly);
+      } else {
+        _aggregatedStatsCache[key] = StatsUtils.getAggregatedStats(_workouts, isWeekly: isWeekly, metric: metric);
+      }
+    }
+    return _aggregatedStatsCache[key]!;
+  }
+
+  List<Map<String, dynamic>> _getAggregatedVolumeFromGlobal(bool isWeekly) {
+    final count = isWeekly ? 7 : 4;
+    final stats = List.generate(count, (index) => {
+      'label': isWeekly ? _getDayLabel(index) : 'Week ${index + 1}',
+      'value': 0.0
+    });
+
+    final now = DateTime.now();
+    final limit = isWeekly ? now.subtract(const Duration(days: 7)) : now.subtract(const Duration(days: 30));
+
+    for (var w in _globalWorkoutsForStats) {
+      final date = DateTime.parse(w['date']);
+      if (date.isBefore(limit)) continue;
+
+      int index;
+      if (isWeekly) {
+        index = date.weekday - 1;
+      } else {
+        final daysAgo = now.difference(date).inDays;
+        index = (3 - (daysAgo / 7).floor()).clamp(0, 3);
+      }
+
+      final val = (w['total_volume'] as num).toDouble() / 1000.0;
+      stats[index]['value'] = (stats[index]['value'] as double) + val;
+    }
+    return stats;
+  }
+
+  String _getDayLabel(int weekdayIndex) {
+    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return labels[weekdayIndex];
+  }
 
   void _calculateOverviewStats() {
-    if (_workouts.isEmpty) {
+    _radarStatsCache.clear();
+    _aggregatedStatsCache.clear();
+
+    if (_globalWorkoutsForStats.isEmpty) {
       _workoutsThisWeek = 0;
       _totalVolumeStats = 0;
       _streak = 0;
+      _weekStreak = 0;
+      _restDays = 0;
+      _workoutsByDate = {};
       return;
     }
 
     final now = DateTime.now();
-    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-    final startOfMonday = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
-
-    _workoutsThisWeek = _workouts.where((w) => w.date.isAfter(startOfMonday) || w.date.isAtSameMomentAs(startOfMonday)).length;
-    _totalVolumeStats = _workouts.fold(0, (sum, w) => sum + w.totalVolume);
-    _streak = _computeStreak(_workouts.map((w) => w.date).toList());
-  }
-
-  int _computeStreak(List<DateTime> dates) {
-    if (dates.isEmpty) return 0;
+    final todayNormalized = DateTime(now.year, now.month, now.day);
     
-    final normalizedDates = dates.map((d) => DateTime(d.year, d.month, d.day)).toSet().toList();
-    normalizedDates.sort((a, b) => b.compareTo(a)); // Descending
-
-    int streak = 0;
-    DateTime current = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-
-    // If no workout today, check if there was one yesterday to keep streak alive
-    if (!normalizedDates.contains(current)) {
-      current = current.subtract(const Duration(days: 1));
+    // Map existing loaded workouts for quick lookup
+    final Map<String, List<Workout>> loadedWorkoutsMap = {};
+    for (var w in _workouts) {
+      final key = _getDateKey(w.date);
+      loadedWorkoutsMap.putIfAbsent(key, () => []).add(w);
     }
 
-    while (normalizedDates.contains(current)) {
+    // Process global stats
+    _workoutsByDate = {};
+    _totalVolumeStats = 0;
+    
+    final sortedDates = <DateTime>[];
+
+    for (var w in _globalWorkoutsForStats) {
+      final date = DateTime.parse(w['date']);
+      final vol = (w['total_volume'] as num?)?.toInt() ?? 0;
+      final key = _getDateKey(date);
+      
+      _totalVolumeStats += vol;
+      sortedDates.add(date);
+
+      // Merge real workouts with minimal placeholders
+      if (loadedWorkoutsMap.containsKey(key)) {
+        _workoutsByDate[key] = loadedWorkoutsMap[key]!;
+      } else {
+        _workoutsByDate.putIfAbsent(key, () => []).add(
+          Workout(
+            id: w['id'], 
+            name: w['name'] ?? '', 
+            date: date, 
+            duration: w['duration'] ?? 0, 
+            totalVolume: vol, 
+            exercises: []
+          )
+        );
+      }
+    }
+
+    sortedDates.sort((a, b) => b.compareTo(a));
+
+    // 2. Workouts This Week
+    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+    final startOfMonday = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
+    _workoutsThisWeek = sortedDates.where((d) => d.isAfter(startOfMonday) || d.isAtSameMomentAs(startOfMonday)).length;
+
+    // 3. Day Streak
+    _streak = _computeDayStreakFromDates(sortedDates, todayNormalized);
+
+    // 4. Week Streak
+    _weekStreak = _computeWeekStreakFromDates(sortedDates, todayNormalized);
+
+    // 5. Rest Days
+    final lastWorkoutDate = sortedDates[0];
+    final lastWorkoutNormalized = DateTime(lastWorkoutDate.year, lastWorkoutDate.month, lastWorkoutDate.day);
+    _restDays = todayNormalized.difference(lastWorkoutNormalized).inDays;
+  }
+
+  int _computeDayStreakFromDates(List<DateTime> sortedDates, DateTime todayNormalized) {
+    final workoutDates = sortedDates.map((d) => DateTime(d.year, d.month, d.day)).toSet();
+    int streak = 0;
+    DateTime current = todayNormalized;
+    if (!workoutDates.contains(current)) {
+      current = current.subtract(const Duration(days: 1));
+    }
+    while (workoutDates.contains(current)) {
       streak++;
       current = current.subtract(const Duration(days: 1));
     }
-
     return streak;
+  }
+
+  int _computeWeekStreakFromDates(List<DateTime> sortedDates, DateTime todayNormalized) {
+    final weeksWithWorkouts = <String, bool>{};
+    for (var d in sortedDates) {
+      weeksWithWorkouts[_getWeekKey(d)] = true;
+    }
+    int streak = 0;
+    DateTime currentWeekDate = todayNormalized;
+    while (true) {
+      final weekKey = _getWeekKey(currentWeekDate);
+      if (weeksWithWorkouts.containsKey(weekKey)) {
+        streak++;
+        currentWeekDate = currentWeekDate.subtract(const Duration(days: 7));
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }
+
+  String _getWeekKey(DateTime date) {
+    final startOfWeek = date.subtract(Duration(days: date.weekday % 7));
+    return '${startOfWeek.year}-${startOfWeek.month.toString().padLeft(2, '0')}-${startOfWeek.day.toString().padLeft(2, '0')}';
+  }
+
+  String _getDateKey(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   Map<String, double> getMuscleGroupStats(bool isWeekly) {
     return StatsUtils.getMuscleGroupDistribution(_workouts, isWeekly: isWeekly);
   }
-
-  List<double> getRadarStats(bool isWeekly) {
-    return StatsUtils.getRadarStats(_workouts, isWeekly: isWeekly);
-  }
-
-  List<Map<String, dynamic>> getAggregatedStats(bool isWeekly, String metric) {
-    return StatsUtils.getAggregatedStats(_workouts, isWeekly: isWeekly, metric: metric);
-  }
-
-
 
   /// Fetch PRs for a specific exercise directly from Supabase
   Future<Map<String, double>> getExercisePRs(String exerciseName) async {

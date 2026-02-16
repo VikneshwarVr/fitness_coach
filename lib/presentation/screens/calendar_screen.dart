@@ -22,82 +22,16 @@ class CalendarScreen extends StatefulWidget {
 class _CalendarScreenState extends State<CalendarScreen> {
   ViewMode _viewMode = ViewMode.monthly;
   DateTime _currentDate = DateTime.now();
-  int _weekStreak = 0;
-  int _restDays = 0;
 
   @override
   void initState() {
     super.initState();
-    // Repository.loadWorkouts() is usually called at app start or home screen, 
-    // but we ensure it's loaded.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _calculateStats();
-    });
-  }
-
-  void _calculateStats() {
-    final workouts = context.read<WorkoutRepository>().workouts;
-    if (workouts.isEmpty) {
-      if (mounted) {
-        setState(() {
-          _weekStreak = 0;
-          _restDays = 0;
-        });
-      }
-      return;
-    }
-
-    // Sort workouts by date descending
-    final sortedWorkouts = [...workouts]..sort((a, b) => b.date.compareTo(a.date));
-
-    // Calculate rest days (days since last workout)
-    final lastWorkoutDate = sortedWorkouts[0].date;
-    final today = DateTime.now();
-    final todayNormalized = DateTime(today.year, today.month, today.day);
-    final lastWorkoutNormalized = DateTime(lastWorkoutDate.year, lastWorkoutDate.month, lastWorkoutDate.day);
-    
-    final daysSinceLastWorkout = todayNormalized.difference(lastWorkoutNormalized).inDays;
-    
-    // Calculate week streak (consecutive weeks with at least one workout)
-    final weeks = <String, bool>{};
-    for (var workout in sortedWorkouts) {
-      weeks[_getWeekKey(workout.date)] = true;
-    }
-
-    int streak = 0;
-    DateTime currentWeekDate = todayNormalized;
-    
-    while (true) {
-      final weekKey = _getWeekKey(currentWeekDate);
-      if (weeks.containsKey(weekKey)) {
-        streak++;
-        currentWeekDate = currentWeekDate.subtract(const Duration(days: 7));
-      } else {
-        break;
-      }
-    }
-
-    if (mounted) {
-      setState(() {
-        _restDays = daysSinceLastWorkout;
-        _weekStreak = streak;
-      });
-    }
-  }
-
-  String _getWeekKey(DateTime date) {
-    // Start of week (Sunday)
-    final startOfWeek = date.subtract(Duration(days: date.weekday % 7));
-    return DateFormat('yyyy-MM-dd').format(startOfWeek);
+    // No need for local calculation anymore, data is in repository
   }
 
   List<Workout> _getWorkoutsForDate(DateTime date) {
-    final workouts = context.read<WorkoutRepository>().workouts;
-    return workouts.where((w) {
-      return w.date.year == date.year &&
-             w.date.month == date.month &&
-             w.date.day == date.day;
-    }).toList();
+    final key = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    return context.read<WorkoutRepository>().workoutsByDate[key] ?? [];
   }
 
   void _navigateDate(int direction) {
@@ -142,64 +76,68 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Widget _buildStats() {
-    return Row(
-      children: [
-        Expanded(
-          child: FitnessCard(
-            padding: EdgeInsets.zero,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.orange.withValues(alpha: 0.15),
-                    Colors.red.withValues(alpha: 0.15),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                   Row(
+    return Consumer<WorkoutRepository>(
+      builder: (context, repo, child) {
+        return Row(
+          children: [
+            Expanded(
+              child: FitnessCard(
+                padding: EdgeInsets.zero,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.orange.withValues(alpha: 0.15),
+                        Colors.red.withValues(alpha: 0.15),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(LucideIcons.flame, color: Colors.orange, size: 16),
-                      const SizedBox(width: 8),
-                      Text('Week Streak', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
+                      Row(
+                        children: [
+                          const Icon(LucideIcons.flame, color: Colors.orange, size: 16),
+                          const SizedBox(width: 8),
+                          Text('Week Streak', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text('${repo.weekStreak}', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+                      Text('consecutive weeks', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 10)),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Text('$_weekStreak', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-                  Text('consecutive weeks', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 10)),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: FitnessCard(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+            const SizedBox(width: 12),
+            Expanded(
+              child: FitnessCard(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(LucideIcons.moon, color: Colors.blue, size: 16),
-                    const SizedBox(width: 8),
-                    Text('Rest Days', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
+                    Row(
+                      children: [
+                        const Icon(LucideIcons.moon, color: Colors.blue, size: 16),
+                        const SizedBox(width: 8),
+                        Text('Rest Days', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text('${repo.restDays}', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+                    Text('since last workout', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 10)),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text('$_restDays', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-                Text('since last workout', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 10)),
-              ],
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 
@@ -303,7 +241,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       case ViewMode.yearly:
         return YearlyView(
           currentDate: _currentDate,
-          workouts: context.read<WorkoutRepository>().workouts,
+          workouts: context.read<WorkoutRepository>().allWorkoutsMetadata,
           onMonthTap: (date) {
             setState(() {
               _currentDate = date;

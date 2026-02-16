@@ -3,9 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthRepository extends ChangeNotifier {
-  final _supabase = Supabase.instance.client;
+  final SupabaseClient _supabase;
 
-  AuthRepository() {
+  AuthRepository([SupabaseClient? client]) : _supabase = client ?? Supabase.instance.client {
     // Listen to auth state changes
     _supabase.auth.onAuthStateChange.listen((data) {
       notifyListeners();
