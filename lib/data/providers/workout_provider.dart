@@ -196,7 +196,7 @@ class WorkoutProvider extends ChangeNotifier {
               weight: s.weight,
               reps: s.reps,
               distance: s.distance,
-              durationSeconds: s.durationSeconds,
+              durationSeconds: 0, // Reset timer for new session
               completed: false,
             )));
           }
@@ -526,7 +526,7 @@ class WorkoutProvider extends ChangeNotifier {
           weight: s.weight,
           reps: s.reps,
           distance: s.distance,
-          durationSeconds: s.durationSeconds,
+          durationSeconds: 0, // Reset timer for new session
           completed: false,
         )));
       }
@@ -549,13 +549,13 @@ class WorkoutProvider extends ChangeNotifier {
         weight = prevSets[nextSetIndex].weight;
         reps = prevSets[nextSetIndex].reps;
         distance = prevSets[nextSetIndex].distance ?? 0.0;
-        durationSeconds = prevSets[nextSetIndex].durationSeconds ?? 0;
+        durationSeconds = 0; // Reset timer for new set
       } else if (exercise.sets.isNotEmpty) {
         // Fallback to the last set of the current session
         weight = exercise.sets.last.weight;
         reps = exercise.sets.last.reps;
         distance = exercise.sets.last.distance ?? 0.0;
-        durationSeconds = exercise.sets.last.durationSeconds ?? 0;
+        durationSeconds = 0; // Reset timer for new set
       }
 
       exercise.sets.add(

@@ -77,8 +77,18 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
   Future<void> _saveRoutine() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedExercises.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select at least one exercise')),
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Empty Routine'),
+            content: const Text('Wait, your routine is empty! A workout routine needs at least one exercise to be saved. Please add some exercises to get started.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Got it'),
+              ),
+            ],
+          ),
         );
         return;
       }
@@ -262,12 +272,6 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                       border: OutlineInputBorder(borderSide: BorderSide.none),
                     ),
                     maxLines: 3,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a description';
-                      }
-                      return null;
-                    },
                   ),
                 ],
               ),
