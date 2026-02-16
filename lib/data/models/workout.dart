@@ -1,13 +1,25 @@
 import 'package:uuid/uuid.dart';
+import 'package:hive/hive.dart';
 
+part 'workout.g.dart';
+
+@HiveType(typeId: 0)
 class Workout {
+  @HiveField(0)
   final String id;
+  @HiveField(1)
   final String name;
+  @HiveField(2)
   final DateTime date;
+  @HiveField(3)
   final int duration; // in minutes
+  @HiveField(4)
   final int totalVolume; // in kg
+  @HiveField(5)
   final String? photoUrl;
+  @HiveField(6)
   final String mode; // 'gym' or 'home'
+  @HiveField(7)
   final List<ExerciseSession> exercises;
 
   Workout({
@@ -68,11 +80,17 @@ class Workout {
   }
 }
 
+@HiveType(typeId: 1)
 class ExerciseSession {
+  @HiveField(0)
   final String id;
+  @HiveField(1)
   final String exerciseId;
+  @HiveField(2)
   final String name;
+  @HiveField(3)
   final String category; // 'Strength' or 'Cardio'
+  @HiveField(4)
   final List<ExerciseSet> sets;
 
   ExerciseSession({
@@ -106,12 +124,19 @@ class ExerciseSession {
   }
 }
 
+@HiveType(typeId: 2)
 class ExerciseSet {
+  @HiveField(0)
   final String id;
+  @HiveField(1)
   final int weight;
+  @HiveField(2)
   final int reps;
+  @HiveField(3)
   final double? distance; // in km
+  @HiveField(4)
   final int? durationSeconds;
+  @HiveField(5)
   final bool completed;
 
   ExerciseSet({

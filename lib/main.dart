@@ -14,10 +14,14 @@ import 'data/providers/workout_provider.dart';
 import 'data/providers/theme_provider.dart';
 import 'data/providers/settings_provider.dart';
 
+import 'package:flutter_app/core/services/cache_service.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   await dotenv.load(fileName: ".env");
+  
+  await CacheService.init(); // Initialize Local Cache
   
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL'] ?? '',

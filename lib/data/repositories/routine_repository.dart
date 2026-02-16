@@ -1,11 +1,18 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/routine.dart';
+import '../../core/services/cache_service.dart';
 
 class RoutineRepository extends ChangeNotifier {
   final SupabaseClient _supabase;
 
-  RoutineRepository([SupabaseClient? client]) : _supabase = client ?? Supabase.instance.client;
+  RoutineRepository([SupabaseClient? client]) : _supabase = client ?? Supabase.instance.client {
+    _loadFromCache();
+  }
+
+  void _loadFromCache() {
+    _customRoutines = CacheService.getCachedRoutines();
+  }
 
   final List<Routine> _defaultRoutines = [
     // ... (same as before - kept hardcoded for defaults)
@@ -66,6 +73,7 @@ class RoutineRepository extends ChangeNotifier {
           .order('created_at', ascending: false);
       
       _customRoutines = (data as List).map((json) {
+        // ... (parsing logic remains same)
         List<RoutineExercise> exercises = [];
         if (json['routine_exercises'] != null) {
           exercises = (json['routine_exercises'] as List).map((e) {
@@ -96,6 +104,9 @@ class RoutineRepository extends ChangeNotifier {
           mode: json['mode'] ?? 'gym',
         );
       }).toList();
+      
+      // Update Cache
+      await CacheService.cacheRoutines(_customRoutines);
       
       notifyListeners();
     } catch (e) {
@@ -144,6 +155,10 @@ class RoutineRepository extends ChangeNotifier {
       // Supabase cascade delete should handle child records if configured in DB
       await _supabase.from('routines').delete().eq('id', id);
       _customRoutines.removeWhere((r) => r.id == id);
+      
+      // Update Cache
+      await CacheService.cacheRoutines(_customRoutines);
+      
       notifyListeners();
     } catch (e) {
       rethrow;

@@ -4,14 +4,25 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/workout.dart';
 import '../constants/exercise_data.dart';
 import '../../core/utils/stats_utils.dart';
+import '../../core/services/cache_service.dart';
 
 class WorkoutRepository extends ChangeNotifier {
   final SupabaseClient _supabase;
 
-  WorkoutRepository([SupabaseClient? client]) : _supabase = client ?? Supabase.instance.client;
-  List<Workout> _workouts = [];
+  WorkoutRepository([SupabaseClient? client]) : _supabase = client ?? Supabase.instance.client {
+    _loadFromCache();
+  }
 
+  List<Workout> _workouts = [];
   List<Workout> get workouts => _workouts;
+
+  void _loadFromCache() {
+    _workouts = CacheService.getCachedWorkouts();
+    _globalWorkoutsForStats = CacheService.getCachedStats();
+    if (_workouts.isNotEmpty || _globalWorkoutsForStats.isNotEmpty) {
+      _calculateOverviewStats();
+    }
+  }
 
   Future<String?> uploadWorkoutPhoto(String localPath) async {
     try {
@@ -67,10 +78,8 @@ class WorkoutRepository extends ChangeNotifier {
       if (userId == null) return;
 
       if (refresh) {
-        _workouts = [];
         _hasMore = true;
         _isLoadingMore = false;
-        notifyListeners(); // Notify UI that list is now empty to avoid RangeError
         // Also refresh global stats metadata
         await _loadGlobalStats();
       }
@@ -78,11 +87,15 @@ class WorkoutRepository extends ChangeNotifier {
       if (!_hasMore) return;
       
       _isLoadingMore = true;
-      if (_workouts.isNotEmpty) notifyListeners();
+      if (_workouts.isNotEmpty && refresh) {
+         // If refreshing and we have cached data, don't clear yet, just show loading
+      } else if (_workouts.isNotEmpty) {
+        notifyListeners();
+      }
 
-      final from = _workouts.length;
+      final from = refresh ? 0 : _workouts.length;
       // For the first load, we fetch more (50) to ensure Stats screens (30 days) are populated accurately.
-      final currentBatchSize = (_workouts.isEmpty) ? 50 : _pageSize;
+      final currentBatchSize = (refresh || _workouts.isEmpty) ? 50 : _pageSize;
       final to = from + currentBatchSize - 1;
 
       final data = await _supabase
@@ -113,7 +126,7 @@ class WorkoutRepository extends ChangeNotifier {
             sets: sets,
           );
         }).toList();
-
+ 
         return Workout(
           id: workoutJson['id'].toString(),
           name: workoutJson['name'],
@@ -130,10 +143,17 @@ class WorkoutRepository extends ChangeNotifier {
         _hasMore = false;
       }
 
-      _workouts.addAll(newWorkouts);
+      if (refresh) {
+        _workouts = newWorkouts;
+      } else {
+        _workouts.addAll(newWorkouts);
+      }
+      
+      // Update Cache
+      await CacheService.cacheWorkouts(_workouts);
       
       // Ensure global metadata is loaded (it provides the foundation for all stats/calendar)
-      if (_globalWorkoutsForStats.isEmpty) {
+      if (_globalWorkoutsForStats.isEmpty || refresh) {
         await _loadGlobalStats();
       }
       
@@ -164,6 +184,9 @@ class WorkoutRepository extends ChangeNotifier {
           .order('date', ascending: false);
       
       _globalWorkoutsForStats = (data as List).cast<Map<String, dynamic>>();
+      
+      // Update Cache
+      await CacheService.cacheStats(_globalWorkoutsForStats);
     } catch (e) {
     }
   }

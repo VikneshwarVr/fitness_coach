@@ -23,7 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     // Load data when home screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<WorkoutRepository>().loadWorkouts();
+      context.read<WorkoutRepository>().loadWorkouts(refresh: true);
       context.read<RoutineRepository>().loadRoutines();
     });
   }

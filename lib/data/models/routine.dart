@@ -1,12 +1,19 @@
-
 import 'package:uuid/uuid.dart';
+import 'package:hive/hive.dart';
 
+part 'routine.g.dart';
+
+@HiveType(typeId: 3)
 class RoutineSet {
+  @HiveField(0)
   final String id;
+  @HiveField(1)
   final int weight;
+  @HiveField(2)
   final int reps;
-
+  @HiveField(3)
   final double? distance;
+  @HiveField(4)
   final int? durationSeconds;
 
   RoutineSet({
@@ -36,10 +43,15 @@ class RoutineSet {
   }
 }
 
+@HiveType(typeId: 4)
 class RoutineExercise {
+  @HiveField(0)
   final String id;
+  @HiveField(1)
   final String name;
+  @HiveField(2)
   final String category;
+  @HiveField(3)
   final List<RoutineSet> sets;
 
   RoutineExercise({
@@ -69,14 +81,23 @@ class RoutineExercise {
   }
 }
 
+@HiveType(typeId: 5)
 class Routine {
+  @HiveField(0)
   final String id;
+  @HiveField(1)
   final String name;
+  @HiveField(2)
   final String description;
+  @HiveField(3)
   final List<RoutineExercise> exercises;
+  @HiveField(4)
   final String level; // Beginner, Intermediate, Advanced
+  @HiveField(5)
   final int duration; // Estimated duration in minutes
+  @HiveField(6)
   final bool isCustom; // User-created vs default
+  @HiveField(7)
   final String mode; // 'gym' or 'home'
 
   // Backward compatibility getter
