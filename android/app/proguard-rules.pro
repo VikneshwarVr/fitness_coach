@@ -10,3 +10,6 @@
 -keep class io.supabase.** { *; }
 -keep class com.google.gson.** { *; }
 -keep class com.yalantis.ucrop.** { *; }
+
+# Google Play Core
+-dontwarn com.google.android.play.core.**
