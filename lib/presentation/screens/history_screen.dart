@@ -6,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/providers/settings_provider.dart';
 import '../components/fitness_card.dart';
+import '../../core/utils/responsive_utils.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -46,7 +47,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
           icon: const Icon(LucideIcons.arrowLeft),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Workout History', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          'Workout History', 
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: Responsive.sp(context, 20))
+        ),
       ),
       body: SafeArea(
         child: RefreshIndicator(
@@ -73,7 +77,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
               return ListView.builder(
                 controller: _scrollController,
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(Responsive.p(context, 16)),
                 itemCount: repo.workouts.length + (repo.hasMore ? 1 : 0),
                 itemBuilder: (context, index) {
                   if (index == repo.workouts.length) {
@@ -85,10 +89,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
                   final workout = repo.workouts[index];
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
+                    padding: EdgeInsets.only(bottom: Responsive.h(context, 12)),
                     child: FitnessCard(
                       onTap: () => context.push('/workout-details/${workout.id}'),
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(Responsive.p(context, 16)),
                       child: Row(
                         children: [
                           Expanded(
@@ -97,17 +101,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               children: [
                                 Text(
                                   workout.name,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 18,
+                                    fontSize: Responsive.sp(context, 16),
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                SizedBox(height: Responsive.h(context, 4)),
                                 Text(
-                                  DateFormat('E, MMM d').format(workout.date),
+                                  DateFormat('MMM d, yyyy • HH:mm').format(workout.date),
                                   style: TextStyle(
+                                    fontSize: Responsive.sp(context, 12),
                                     color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                    fontSize: 14,
                                   ),
                                 ),
                                 const SizedBox(height: 12),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/utils/responsive_utils.dart';
 
 
 class PrimaryButton extends StatelessWidget {
@@ -18,18 +19,24 @@ class PrimaryButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        minimumSize: const Size(0, 40),
+        padding: EdgeInsets.symmetric(
+          horizontal: Responsive.p(context, 20), 
+          vertical: Responsive.p(context, 12)
+        ),
+        minimumSize: Size(0, Responsive.h(context, 40)),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 18),
-            const SizedBox(width: 8),
+            Icon(icon, size: Responsive.sp(context, 18)),
+            SizedBox(width: Responsive.w(context, 8)),
           ],
-          Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+          Text(
+            label, 
+            style: TextStyle(fontSize: Responsive.sp(context, 14), fontWeight: FontWeight.w600)
+          ),
         ],
       ),
     );
@@ -56,14 +63,15 @@ class SecondaryButton extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 16),
-            const SizedBox(width: 8),
+            Icon(icon, size: Responsive.sp(context, 16)),
+            SizedBox(width: Responsive.w(context, 8)),
           ],
           Flexible(
             child: Text(
               label,
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
+              style: TextStyle(fontSize: Responsive.sp(context, 14)),
             ),
           ),
         ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/utils/responsive_utils.dart';
 
 class FitnessCard extends StatelessWidget {
   final Widget child;
@@ -26,7 +27,7 @@ class FitnessCard extends StatelessWidget {
           border: border ?? Border.all(color: Theme.of(context).colorScheme.outline),
           borderRadius: BorderRadius.circular(10),
         ),
-        padding: padding ?? const EdgeInsets.all(16),
+        padding: padding ?? EdgeInsets.all(Responsive.p(context, 16)),
         child: child,
       ),
     );

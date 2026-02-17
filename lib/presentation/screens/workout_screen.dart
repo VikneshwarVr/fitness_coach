@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../core/utils/responsive_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../data/models/routine.dart';
@@ -102,7 +103,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             ),
             title: Text(
               widget.isEditing ? 'Edit Routine' : (widget.isEditingLog ? 'Edit Workout' : provider.workoutName), 
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
+              style: TextStyle(fontSize: Responsive.sp(context, 18), fontWeight: FontWeight.bold)
             ),
             actions: [
               if (!widget.isEditing && !widget.isEditingLog)
@@ -198,7 +199,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                             padding: const EdgeInsets.only(left: 16, right: 16, bottom: 100),
                             onReorder: provider.reorderExercise,
                             footer: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 24),
+                              padding: EdgeInsets.symmetric(vertical: Responsive.h(context, 24)),
                               child: PrimaryButton(
                                 label: 'Add Exercise',
                                 icon: LucideIcons.plus,
@@ -229,7 +230,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                               final exercise = entry.value;
                               return Padding(
                                 key: ValueKey(exercise.id),
-                                padding: const EdgeInsets.only(bottom: 16),
+                                padding: EdgeInsets.only(bottom: Responsive.h(context, 16)),
                                 child: ExerciseListItem(
                                   exercise: exercise,
                                   exerciseIndex: index,
@@ -318,33 +319,58 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     } else {
       showModalBottomSheet(
         context: context,
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
         builder: (context) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: Text('Rest Timer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: options.length,
-                  itemBuilder: (context, index) {
-                    final seconds = options[index];
-                    final isSelected = seconds == currentSeconds;
-                    return ListTile(
-                      title: Text(seconds == 0 ? 'Off' : _formatRestTime(seconds)),
-                      trailing: isSelected ? Icon(LucideIcons.check, color: Theme.of(context).colorScheme.primary) : null,
-                      onTap: () {
-                        provider.setRestTime(exerciseId, seconds);
-                        Navigator.pop(context);
-                      },
-                    );
-                  },
+          return Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: EdgeInsets.all(Responsive.p(context, 20)),
+                  child: Text(
+                    'Rest Timer', 
+                    style: TextStyle(
+                      fontSize: Responsive.sp(context, 18), 
+                      fontWeight: FontWeight.bold
+                    )
+                  ),
                 ),
-              ),
-            ],
+                SizedBox(
+                  height: Responsive.h(context, 250),
+                  child: ListView.builder(
+                    itemCount: options.length,
+                    itemBuilder: (context, index) {
+                      final seconds = options[index];
+                      final isSelected = seconds == currentSeconds;
+                      return ListTile(
+                        selected: isSelected,
+                        title: Text(
+                          seconds == 0 ? 'Off' : _formatRestTime(seconds),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            fontSize: Responsive.sp(context, 16),
+                          ),
+                        ),
+                        onTap: () {
+                          provider.setRestTime(exerciseId, seconds);
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
+                  ),
+                ),
+                SizedBox(height: Responsive.h(context, 16)),
+              ],
+            ),
           );
         },
       );

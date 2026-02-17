@@ -15,6 +15,7 @@ class SettingsProvider extends ChangeNotifier {
 
   WeightUnit get weightUnit => _weightUnit;
   int get defaultRestTimer => _defaultRestTimer;
+  bool get isRestTimerEnabled => _defaultRestTimer > 0;
   WorkoutMode get workoutMode => _workoutMode;
   bool get isGymMode => _workoutMode == WorkoutMode.gym;
 
@@ -87,4 +88,6 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   String get unitLabel => _weightUnit == WeightUnit.kg ? 'kg' : 'lb';
+
+  String get formatRestTimer => _defaultRestTimer > 0 ? '$_defaultRestTimer seconds' : 'Off';
 }

@@ -9,6 +9,7 @@ import '../../data/repositories/routine_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/providers/workout_provider.dart';
 import '../../data/providers/settings_provider.dart';
+import '../../core/utils/responsive_utils.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -39,16 +40,16 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(Responsive.p(context, 16)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const _AICoachBanner(),
-                const SizedBox(height: 24),
+                SizedBox(height: Responsive.h(context, 24)),
                 const _Header(),
-                const SizedBox(height: 24),
+                SizedBox(height: Responsive.h(context, 24)),
                 const _QuickStats(),
-                const SizedBox(height: 24),
+                SizedBox(height: Responsive.h(context, 24)),
                 PrimaryButton(
                   label: 'Start Empty Workout',
                   icon: LucideIcons.plus,
@@ -62,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
                      context.go('/workout');
                   },
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: Responsive.h(context, 12)),
                 // Quick Actions
                 Row(
                   children: [
@@ -73,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         onPressed: () => context.go('/routines'),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: Responsive.w(context, 12)),
                     Expanded(
                       child: SecondaryButton(
                         label: 'Exercises',
@@ -83,9 +84,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: Responsive.h(context, 24)),
                 const _RecentWorkoutsSection(),
-                const SizedBox(height: 24),
+                SizedBox(height: Responsive.h(context, 24)),
                 const _QuickTips(),
               ],
             ),
@@ -133,42 +134,58 @@ class _AICoachBannerState extends State<_AICoachBanner> {
           children: [
              // Background blur effect would require BackdropFilter or custom painter, skipping for MVP perfection
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(Responsive.p(context, 16)),
               child: Row(
                 children: [
                   Container(
-                    height: 40,
-                    width: 40,
+                    height: Responsive.h(context, 40),
+                    width: Responsive.w(context, 40),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.primary,
                       shape: BoxShape.circle,
                       border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.outline)),
                     ),
-                    child: const Icon(LucideIcons.sparkles, color: Colors.white, size: 20),
+                    child: Icon(LucideIcons.sparkles, color: Colors.white, size: Responsive.sp(context, 20)),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: Responsive.w(context, 12)),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            Text('AI Coach', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                            const SizedBox(width: 8),
+                            Text(
+                              'AI Coach', 
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                fontSize: Responsive.sp(context, 16),
+                              )
+                            ),
+                            SizedBox(width: Responsive.w(context, 8)),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: EdgeInsets.symmetric(horizontal: Responsive.p(context, 8), vertical: Responsive.p(context, 2)),
                               decoration: BoxDecoration(
                                 color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: Text('Coming Soon', style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.bold)),
+                              child: Text(
+                                'Coming Soon', 
+                                style: TextStyle(
+                                  fontSize: Responsive.sp(context, 10), 
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant, 
+                                  fontWeight: FontWeight.bold
+                                )
+                              ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: Responsive.h(context, 4)),
                         Text(
                           'Get personalized workout recommendations and form tips powered by AI',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontSize: Responsive.sp(context, 12),
+                          ),
                         ),
                       ],
                     ),
@@ -180,7 +197,7 @@ class _AICoachBannerState extends State<_AICoachBanner> {
               top: 0,
               right: 0,
               child: IconButton(
-                icon: const Icon(LucideIcons.x, size: 16),
+                icon: Icon(LucideIcons.x, size: Responsive.sp(context, 16)),
                 onPressed: () => setState(() => _visible = false),
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -205,13 +222,24 @@ class _Header extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Welcome back!', style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 4),
-              Text('Ready to crush your workout?', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              Text(
+                'Welcome back!', 
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontSize: Responsive.sp(context, 20),
+                )
+              ),
+              SizedBox(height: Responsive.h(context, 4)),
+              Text(
+                'Ready to crush your workout?', 
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: Responsive.sp(context, 14),
+                )
+              ),
             ],
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: Responsive.w(context, 16)),
         const ModeToggle(),
       ],
     );
@@ -233,7 +261,7 @@ class _QuickStats extends StatelessWidget {
               value: '${repo.workoutsThisWeek}',
               subLabel: 'workouts',
             )),
-            const SizedBox(width: 12),
+            SizedBox(width: Responsive.w(context, 12)),
             Expanded(
               child: Consumer<SettingsProvider>(
                 builder: (context, settings, child) {
@@ -248,7 +276,7 @@ class _QuickStats extends StatelessWidget {
                 },
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: Responsive.w(context, 12)),
              Expanded(child: _StatCard(
               icon: LucideIcons.flame,
               label: 'Streak',
@@ -281,33 +309,40 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FitnessCard(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(Responsive.p(context, 12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: iconColor ?? Theme.of(context).colorScheme.onSurfaceVariant),
-              const SizedBox(width: 6),
+              Icon(
+                icon, 
+                size: Responsive.sp(context, 14), 
+                color: iconColor ?? Theme.of(context).colorScheme.onSurfaceVariant
+              ),
+              SizedBox(width: Responsive.w(context, 6)),
               Expanded(
                 child: Text(
                   label, 
-                  style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: TextStyle(fontSize: Responsive.sp(context, 9), color: Theme.of(context).colorScheme.onSurfaceVariant),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: Responsive.h(context, 8)),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
-            child: Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            child: Text(
+              value, 
+              style: TextStyle(fontSize: Responsive.sp(context, 18), fontWeight: FontWeight.bold)
+            ),
           ),
           Text(
             subLabel, 
-            style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant), 
+            style: TextStyle(fontSize: Responsive.sp(context, 9), color: Theme.of(context).colorScheme.onSurfaceVariant), 
             overflow: TextOverflow.ellipsis, 
             maxLines: 1,
           ),
@@ -327,14 +362,22 @@ class _RecentWorkoutsSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Recent Workouts', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'Recent Workouts', 
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontSize: Responsive.sp(context, 18),
+              )
+            ),
             TextButton(
               onPressed: () => context.push('/history'),
-              child: Text('View All', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 14)),
+              child: Text(
+                'View All', 
+                style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: Responsive.sp(context, 14))
+              ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: Responsive.h(context, 12)),
         Consumer<WorkoutRepository>(
           builder: (context, repo, child) {
             final workouts = repo.workouts.take(3).toList();
@@ -355,7 +398,7 @@ class _RecentWorkoutsSection extends StatelessWidget {
 
             return Column(
               children: workouts.map((workout) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+                padding: EdgeInsets.only(bottom: Responsive.h(context, 12)),
                 child: FitnessCard(
                   onTap: () => context.push('/workout-details/${workout.id}'),
                   child: Row(
@@ -365,33 +408,36 @@ class _RecentWorkoutsSection extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                           child: Image.network(
                             workout.photoUrl!,
-                            width: 48,
-                            height: 48,
+                            width: Responsive.w(context, 48),
+                            height: Responsive.h(context, 48),
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) => Container(
-                              width: 48,
-                              height: 48,
+                              width: Responsive.w(context, 48),
+                              height: Responsive.h(context, 48),
                               color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                              child: Icon(LucideIcons.image, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                              child: Icon(LucideIcons.image, size: Responsive.sp(context, 20), color: Theme.of(context).colorScheme.onSurfaceVariant),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: Responsive.w(context, 12)),
                       ],
                       Expanded(
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(workout.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 4),
+                            Text(
+                              workout.name, 
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: Responsive.sp(context, 14))
+                            ),
+                            SizedBox(height: Responsive.h(context, 4)),
                             Text(
                               '${workout.exercises.length} exercises • ${workout.duration} min',
-                              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                              style: TextStyle(fontSize: Responsive.sp(context, 12), color: Theme.of(context).colorScheme.onSurfaceVariant),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: Responsive.w(context, 8)),
                        Consumer<SettingsProvider>(
                         builder: (context, settings, child) {
                           final label = settings.unitLabel;
@@ -403,10 +449,16 @@ class _RecentWorkoutsSection extends StatelessWidget {
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              const Text('Volume', style: TextStyle(fontSize: 12, color: Color(0xFF737373))),
+                              Text(
+                                'Volume', 
+                                style: TextStyle(
+                                  fontSize: Responsive.sp(context, 11), 
+                                  color: const Color(0xFF737373)
+                                )
+                              ),
                               Text(
                                 valueString,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: Responsive.sp(context, 13)),
                               ),
                             ],
                           );
@@ -442,15 +494,18 @@ class _QuickTips extends StatelessWidget {
         border: Border.all(color: const Color(0xFFEA580C).withValues(alpha: 0.2)),
         borderRadius: BorderRadius.circular(10),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(Responsive.p(context, 16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('💡 Tip of the Day', style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
+          Text(
+            '💡 Tip of the Day', 
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: Responsive.sp(context, 14))
+          ),
+          SizedBox(height: Responsive.h(context, 8)),
           Text(
             'Progressive overload is key! Try to increase weight or reps each week for consistent gains.',
-            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(fontSize: Responsive.sp(context, 12), color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),

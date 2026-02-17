@@ -8,6 +8,7 @@ import '../../../data/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme.dart';
 import '../fitness_card.dart';
+import '../../../core/utils/responsive_utils.dart';
 
 class ExerciseListItem extends StatelessWidget {
   final ExerciseSession exercise;
@@ -44,18 +45,18 @@ class ExerciseListItem extends StatelessWidget {
               Expanded(
                 child: Row(
                   children: [
-                    Icon(LucideIcons.gripVertical, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    const SizedBox(width: 8),
+                    Icon(LucideIcons.gripVertical, size: Responsive.sp(context, 20), color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    SizedBox(width: Responsive.w(context, 8)),
                     Expanded(
                       child: Text(
                         exercise.name, 
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: Responsive.sp(context, 18), fontWeight: FontWeight.bold),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (hasPR) ...[
-                      const SizedBox(width: 8),
-                      const Icon(LucideIcons.medal, size: 20, color: Color(0xFFFFD700)),
+                      SizedBox(width: Responsive.w(context, 8)),
+                      Icon(LucideIcons.medal, size: Responsive.sp(context, 20), color: const Color(0xFFFFD700)),
                     ],
                   ],
                 ),
@@ -64,59 +65,59 @@ class ExerciseListItem extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: Icon(LucideIcons.moreVertical, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    icon: Icon(LucideIcons.moreVertical, size: Responsive.sp(context, 20), color: Theme.of(context).colorScheme.onSurfaceVariant),
                     onPressed: () {},
                     constraints: const BoxConstraints(),
-                    padding: const EdgeInsets.all(8),
+                    padding: EdgeInsets.all(Responsive.p(context, 8)),
                   ),
                   IconButton(
                     icon: Icon(
                       LucideIcons.timer, 
-                      size: 20, 
+                      size: Responsive.sp(context, 20), 
                       color: restTime > 0 ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant
                     ),
                     onPressed: onRestTimeTap,
                     constraints: const BoxConstraints(),
-                    padding: const EdgeInsets.all(8),
+                    padding: EdgeInsets.all(Responsive.p(context, 8)),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: Responsive.h(context, 16)),
           // Header Row
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+            padding: EdgeInsets.symmetric(horizontal: Responsive.p(context, 4)),
             child: Row(
               children: [
-                SizedBox(width: 40, child: Text('Set', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
-                Expanded(child: Text('Previous', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
+                SizedBox(width: Responsive.w(context, 40), child: Text('Set', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: Responsive.sp(context, 12)), textAlign: TextAlign.center)),
+                Expanded(child: Text('Previous', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: Responsive.sp(context, 12)), textAlign: TextAlign.center)),
                 if (exercise.category == 'Cardio') ...[
-                  Expanded(child: Text('KM', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
-                  Expanded(child: Text('Time', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
+                  Expanded(child: Text('KM', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: Responsive.sp(context, 12)), textAlign: TextAlign.center)),
+                  Expanded(child: Text('Time', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: Responsive.sp(context, 12)), textAlign: TextAlign.center)),
                 ] else if (exercise.category == 'Timed') ...[
-                  Expanded(flex: 2, child: Text('Time', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
+                  Expanded(flex: 2, child: Text('Time', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: Responsive.sp(context, 12)), textAlign: TextAlign.center)),
                 ] else if (exercise.category == 'Bodyweight') ...[
-                  Expanded(flex: 2, child: Text('Reps', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
+                  Expanded(flex: 2, child: Text('Reps', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: Responsive.sp(context, 12)), textAlign: TextAlign.center)),
                 ] else if (exercise.category == 'Distance') ...[
-                  Expanded(flex: 2, child: Text('KM', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
+                  Expanded(flex: 2, child: Text('KM', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: Responsive.sp(context, 12)), textAlign: TextAlign.center)),
                 ] else if (exercise.category == 'DistanceMeters') ...[
-                  Expanded(flex: 2, child: Text('Meters', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
+                  Expanded(flex: 2, child: Text('Meters', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: Responsive.sp(context, 12)), textAlign: TextAlign.center)),
                 ] else if (exercise.category == 'WeightedDistanceMeters') ...[
-                  Expanded(child: Text(unit, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
-                  Expanded(child: Text('Meters', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
+                  Expanded(child: Text(unit, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: Responsive.sp(context, 12)), textAlign: TextAlign.center)),
+                  Expanded(child: Text('Meters', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: Responsive.sp(context, 12)), textAlign: TextAlign.center)),
                 ] else if (exercise.category == 'DistanceTimeMeters') ...[
-                   Expanded(child: Text('Meters', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
-                   Expanded(child: Text('Time', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
+                   Expanded(child: Text('Meters', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: Responsive.sp(context, 12)), textAlign: TextAlign.center)),
+                   Expanded(child: Text('Time', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: Responsive.sp(context, 12)), textAlign: TextAlign.center)),
                 ] else ...[
-                  Expanded(child: Text(unit, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
-                  Expanded(child: Text('Reps', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12), textAlign: TextAlign.center)),
+                  Expanded(child: Text(unit, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: Responsive.sp(context, 12)), textAlign: TextAlign.center)),
+                  Expanded(child: Text('Reps', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: Responsive.sp(context, 12)), textAlign: TextAlign.center)),
                 ],
-                const SizedBox(width: 40),
+                SizedBox(width: Responsive.w(context, 40)),
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: Responsive.h(context, 8)),
           // Set Rows
           ...exercise.sets.asMap().entries.map((entry) {
             final setIndex = entry.key;
@@ -142,17 +143,17 @@ class ExerciseListItem extends StatelessWidget {
                   children: [
                     // Set Number
                     SizedBox(
-                      width: 40,
+                      width: Responsive.w(context, 40),
                       child: Center(
                         child: Container(
-                          width: 24,
-                          height: 24,
+                          width: Responsive.w(context, 24),
+                          height: Responsive.w(context, 24),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
                             color: Theme.of(context).colorScheme.secondary,
                             shape: BoxShape.circle,
                           ),
-                          child: Text('${setIndex + 1}', style: const TextStyle(fontSize: 12)),
+                          child: Text('${setIndex + 1}', style: TextStyle(fontSize: Responsive.sp(context, 12))),
                         ),
                       ),
                     ),
@@ -161,7 +162,7 @@ class ExerciseListItem extends StatelessWidget {
                       child: Text(
                         _formatPrevious(prev, settingsProvider),
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        style: TextStyle(fontSize: Responsive.sp(context, 12), color: Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                     ),
                     // KG / KM / Hide for Timed/Bodyweight
@@ -227,27 +228,33 @@ class ExerciseListItem extends StatelessWidget {
                       Expanded(
                         flex: 2,
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          padding: EdgeInsets.symmetric(horizontal: Responsive.p(context, 4)),
                           child: (exercise.category == 'Timed' || exercise.category == 'Cardio' || exercise.category == 'DistanceTimeMeters')
                             ? Row(
                                 children: [
                                   Expanded(
                                     child: GestureDetector(
-                                      onTap: () => _showDurationPicker(context, set),
+                                      onTap: () {
+                                        _showDurationPicker(context, set);
+                                      },
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                        alignment: Alignment.center,
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: Responsive.p(context, 8), 
+                                          vertical: Responsive.p(context, 8)
+                                        ),
                                         decoration: BoxDecoration(
                                           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                                           borderRadius: BorderRadius.circular(4),
                                           border: provider.activeTimingSetId == set.id 
-                                            ? Border.all(color: AppTheme.primary, width: 1.5) 
+                                            ? Border.all(color: AppTheme.primary, width: Responsive.w(context, 1.5)) 
                                             : null,
                                         ),
                                         child: Text(
                                           _getTimeOrRepsInitialValue(set).isEmpty ? '0:00' : _getTimeOrRepsInitialValue(set),
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
-                                            fontSize: 14,
+                                            fontSize: Responsive.sp(context, 14),
                                             fontWeight: provider.activeTimingSetId == set.id ? FontWeight.bold : FontWeight.normal,
                                             color: provider.activeTimingSetId == set.id ? AppTheme.primary : null,
                                           ),
@@ -256,15 +263,15 @@ class ExerciseListItem extends StatelessWidget {
                                     ),
                                   ),
                                   if (exercise.category == 'Timed') ...[
-                                    const SizedBox(width: 8),
+                                    SizedBox(width: Responsive.w(context, 8)),
                                     SizedBox(
-                                      width: 32,
-                                      height: 32,
+                                      width: Responsive.w(context, 32),
+                                      height: Responsive.h(context, 32),
                                       child: IconButton(
                                         padding: EdgeInsets.zero,
                                         icon: Icon(
                                           provider.activeTimingSetId == set.id ? LucideIcons.stopCircle : LucideIcons.playCircle,
-                                          size: 24,
+                                          size: Responsive.sp(context, 24),
                                           color: provider.activeTimingSetId == set.id ? Colors.red : AppTheme.primary,
                                         ),
                                         onPressed: () => provider.toggleSetTimer(exercise.id, set.id),
@@ -280,13 +287,13 @@ class ExerciseListItem extends StatelessWidget {
                                   filled: true,
                                   fillColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
                                   border: const OutlineInputBorder(borderSide: BorderSide.none),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                  contentPadding: EdgeInsets.symmetric(horizontal: Responsive.p(context, 8), vertical: Responsive.p(context, 8)),
                                   isDense: true,
                                 ),
                                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                 inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))],
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(fontSize: 14),
+                                style: TextStyle(fontSize: Responsive.sp(context, 14)),
                                 onChanged: (val) {
                                   if (exercise.category == 'WeightedDistanceMeters') {
                                     final dist = double.tryParse(val) ?? 0.0;
@@ -301,17 +308,18 @@ class ExerciseListItem extends StatelessWidget {
                       ),
                     // Completion Toggle
                     SizedBox(
-                      width: 40,
+                      width: Responsive.w(context, 40),
                       child: IconButton(
-                        padding: EdgeInsets.zero,
                         icon: Icon(
                           set.completed ? LucideIcons.checkSquare : LucideIcons.square,
                           color: set.completed ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
-                          size: 20,
+                          size: Responsive.sp(context, 20),
                         ),
                         onPressed: () {
                           provider.toggleSetCompletion(exercise.id, set.id);
                         },
+                        constraints: const BoxConstraints(),
+                        padding: EdgeInsets.all(Responsive.p(context, 8)),
                       ),
                     ),
                   ],

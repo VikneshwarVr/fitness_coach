@@ -6,6 +6,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../components/fitness_card.dart';
 import '../components/buttons.dart';
 import '../../data/providers/theme_provider.dart';
+import '../../core/utils/responsive_utils.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -24,68 +25,74 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(Responsive.p(context, 16)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Center(
                 child: CircleAvatar(
-                  radius: 40,
+                  radius: Responsive.p(context, 40),
                   backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
                   backgroundImage: context.watch<AuthRepository>().profileImageUrl != null
                       ? NetworkImage(context.watch<AuthRepository>().profileImageUrl!)
                       : null,
                   child: context.watch<AuthRepository>().profileImageUrl == null
-                      ? Icon(LucideIcons.user, size: 40, color: Theme.of(context).colorScheme.onSurfaceVariant)
+                      ? Icon(LucideIcons.user, size: Responsive.p(context, 40), color: Theme.of(context).colorScheme.onSurfaceVariant)
                       : null,
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: Responsive.h(context, 16)),
               Center(
                 child: Text(
                   context.watch<AuthRepository>().displayName,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: Responsive.sp(context, 20), fontWeight: FontWeight.bold),
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: Responsive.h(context, 4)),
               Center(
-                child: Text('Level 1 Athlete', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 14)),
+                child: Text(
+                  'Level 1 Athlete', 
+                  style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: Responsive.sp(context, 14))
+                ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: Responsive.h(context, 24)),
 
-              const Text('General', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
+              Text(
+                'General', 
+                style: TextStyle(fontSize: Responsive.sp(context, 18), fontWeight: FontWeight.bold)
+              ),
+              SizedBox(height: Responsive.h(context, 12)),
               
               _SettingsItem(
                 icon: LucideIcons.userCircle,
                 label: 'User Profile',
                 onTap: () => context.push('/profile/user'),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: Responsive.h(context, 8)),
               _SettingsItem(
                 icon: LucideIcons.barChart2,
                 label: 'Statistics',
                 onTap: () => context.push('/profile/statistics'),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: Responsive.h(context, 8)),
               _SettingsItem(
                 icon: LucideIcons.calendar,
                 label: 'Calendar',
                 onTap: () => context.push('/profile/calendar'),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: Responsive.h(context, 8)),
               _SettingsItem(
                 icon: LucideIcons.history,
                 label: 'Workout Log',
                 onTap: () => context.push('/history'),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: Responsive.h(context, 8)),
               _SettingsItem(
                 icon: LucideIcons.settings,
                 label: 'General',
                 onTap: () => context.push('/profile/settings'),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: Responsive.h(context, 8)),
               /* _SettingsItem(
                 icon: LucideIcons.bell,
                 label: 'Notifications',
@@ -111,9 +118,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   await context.read<AuthRepository>().signOut();
                 },
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: Responsive.h(context, 24)),
               Center(
-                child: Text('Version 1.0.0', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
+                child: Text(
+                  'Version 1.0.0', 
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: Responsive.sp(context, 12))
+                ),
               ),
             ],
           ),
@@ -141,16 +151,25 @@ class _SettingsItem extends StatelessWidget {
     return Opacity(
       opacity: onTap == null ? 0.5 : 1.0,
       child: FitnessCard(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4), // Slimmer
+        padding: EdgeInsets.symmetric(
+          horizontal: Responsive.p(context, 16), 
+          vertical: Responsive.p(context, 4)
+        ), 
         onTap: onTap,
          child: SizedBox(
-          height: 48,
+          height: Responsive.h(context, 48),
           child: Row(
             children: [
-              Icon(icon, size: 20, color: Theme.of(context).colorScheme.onSurface),
-              const SizedBox(width: 12),
-              Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w500))),
-              if (trailing != null) trailing! else Icon(LucideIcons.chevronRight, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              Icon(icon, size: Responsive.sp(context, 20), color: Theme.of(context).colorScheme.onSurface),
+              SizedBox(width: Responsive.w(context, 12)),
+              Expanded(
+                child: Text(
+                  label, 
+                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: Responsive.sp(context, 14))
+                )
+              ),
+              if (trailing != null) trailing! 
+              else Icon(LucideIcons.chevronRight, size: Responsive.sp(context, 20), color: Theme.of(context).colorScheme.onSurfaceVariant),
             ],
           ),
         ),

@@ -7,6 +7,7 @@ import '../../data/providers/settings_provider.dart';
 import '../../data/constants/exercise_data.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../components/fitness_card.dart';
+import '../../core/utils/responsive_utils.dart';
 
 class ExerciseDetailScreen extends StatelessWidget {
   final String exerciseName;
@@ -35,13 +36,16 @@ class ExerciseDetailScreen extends StatelessWidget {
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(Responsive.p(context, 16)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Muscle Distribution Section
-            const Text('Muscles Worked', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
+            Text(
+              'Muscles Worked', 
+              style: TextStyle(fontSize: Responsive.sp(context, 18), fontWeight: FontWeight.bold)
+            ),
+            SizedBox(height: Responsive.h(context, 12)),
             FitnessCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,7 +56,7 @@ class ExerciseDetailScreen extends StatelessWidget {
                     color: Theme.of(context).colorScheme.primary,
                   ),
                   if (secondaryMuscles.isNotEmpty) ...[
-                    const Divider(height: 24),
+                    Divider(height: Responsive.h(context, 24)),
                     _MuscleInfo(
                       label: 'Secondary',
                       muscles: secondaryMuscles,
@@ -63,11 +67,14 @@ class ExerciseDetailScreen extends StatelessWidget {
               ),
             ),
             
-            const SizedBox(height: 24),
+            SizedBox(height: Responsive.h(context, 24)),
             
             // Personal Records Section
-            const Text('Personal Records', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
+            Text(
+              'Personal Records', 
+              style: TextStyle(fontSize: Responsive.sp(context, 18), fontWeight: FontWeight.bold)
+            ),
+            SizedBox(height: Responsive.h(context, 12)),
             Consumer<WorkoutRepository>(
               builder: (context, repo, _) {
                 return FutureBuilder<Map<String, double>>(
@@ -201,12 +208,12 @@ class ExerciseDetailScreen extends StatelessWidget {
                     }
 
                     return GridView.count(
-                      crossAxisCount: 2,
+                      crossAxisCount: Responsive.isMobile(context) ? 2 : 3,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 1.5,
+                      mainAxisSpacing: Responsive.p(context, 12),
+                      crossAxisSpacing: Responsive.p(context, 12),
+                      childAspectRatio: Responsive.isMobile(context) ? 1.5 : 1.8,
                       children: prCards,
                     );
                   },
@@ -214,14 +221,17 @@ class ExerciseDetailScreen extends StatelessWidget {
               },
             ),
             
-            const SizedBox(height: 24),
+            SizedBox(height: Responsive.h(context, 24)),
 
             // Progress History Chart
-            const Text('Progress History', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
+            Text(
+              'Progress History', 
+              style: TextStyle(fontSize: Responsive.sp(context, 18), fontWeight: FontWeight.bold)
+            ),
+            SizedBox(height: Responsive.h(context, 12)),
             _ProgressChart(exerciseName: exerciseName),
             
-            const SizedBox(height: 32),
+            SizedBox(height: Responsive.h(context, 32)),
           ],
         ),
       ),
@@ -247,14 +257,17 @@ class _MuscleInfo extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500),
+          style: TextStyle(fontSize: Responsive.sp(context, 12), color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: Responsive.h(context, 8)),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: Responsive.p(context, 8),
+          runSpacing: Responsive.p(context, 8),
           children: muscles.map((m) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: EdgeInsets.symmetric(
+              horizontal: Responsive.p(context, 12), 
+              vertical: Responsive.p(context, 6)
+            ),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
@@ -262,7 +275,7 @@ class _MuscleInfo extends StatelessWidget {
             ),
             child: Text(
               m,
-              style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13),
+              style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: Responsive.sp(context, 13)),
             ),
           )).toList(),
         ),
@@ -287,31 +300,41 @@ class _PRCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FitnessCard(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(Responsive.p(context, 12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Row(
             children: [
-              Icon(icon, size: 14, color: Theme.of(context).colorScheme.primary),
-              const SizedBox(width: 6),
-              Text(label, style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              Icon(icon, size: Responsive.sp(context, 14), color: Theme.of(context).colorScheme.primary),
+              SizedBox(width: Responsive.w(context, 6)),
+              Text(
+                label, 
+                style: TextStyle(fontSize: Responsive.sp(context, 10), color: Theme.of(context).colorScheme.onSurfaceVariant)
+              ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: Responsive.h(context, 8)),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(
-                value,
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
+              Expanded(
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: Responsive.sp(context, 18), // Slightly smaller for long values
+                    fontWeight: FontWeight.bold, 
+                    color: Theme.of(context).colorScheme.onSurface
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const SizedBox(width: 4),
+              SizedBox(width: Responsive.w(context, 4)),
               Text(
                 unit,
-                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: TextStyle(fontSize: Responsive.sp(context, 11), color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -329,9 +352,14 @@ class _ProgressChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FitnessCard(
-      padding: const EdgeInsets.fromLTRB(16, 24, 24, 16),
+      padding: EdgeInsets.fromLTRB(
+        Responsive.p(context, 16), 
+        Responsive.p(context, 24), 
+        Responsive.p(context, 24), 
+        Responsive.p(context, 16)
+      ),
       child: SizedBox(
-        height: 200,
+        height: Responsive.h(context, 220),
         child: Consumer<WorkoutRepository>(
           builder: (context, repo, _) {
             return FutureBuilder<List<ProgressPoint>>(
@@ -414,15 +442,15 @@ class _ProgressChart extends StatelessWidget {
                         axisNameWidget: Text(
                           unit,
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: Responsive.sp(context, 10),
                             fontWeight: FontWeight.bold,
                             color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
-                        axisNameSize: 16,
+                        axisNameSize: Responsive.p(context, 16),
                         sideTitles: SideTitles(
                           showTitles: true,
-                          reservedSize: 32,
+                          reservedSize: Responsive.p(context, 32),
                           getTitlesWidget: (value, meta) {
                             return Text(
                               value.toStringAsFixed(0),

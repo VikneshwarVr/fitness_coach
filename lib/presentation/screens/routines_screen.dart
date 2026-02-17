@@ -7,6 +7,7 @@ import '../../data/models/routine.dart';
 import '../../data/repositories/routine_repository.dart';
 import '../components/fitness_card.dart';
 import '../components/buttons.dart';
+import '../../core/utils/responsive_utils.dart';
 
 class RoutinesScreen extends StatefulWidget {
   const RoutinesScreen({super.key});
@@ -28,7 +29,10 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Routines', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          'My Routines', 
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: Responsive.sp(context, 20))
+        ),
         actions: [
           IconButton(
             icon: Icon(LucideIcons.plus, color: Theme.of(context).colorScheme.primary),
@@ -76,26 +80,27 @@ class _RoutinesScreenState extends State<RoutinesScreen> {
             }
 
             return ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(Responsive.p(context, 16)),
               itemCount: items.length,
               itemBuilder: (context, index) {
                 final item = items[index];
                 if (item == 'intro') {
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 24),
+                    padding: EdgeInsets.only(bottom: Responsive.h(context, 24)),
                     child: Text(
                       'Choose a workout routine to start training',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontSize: Responsive.sp(context, 14),
                           ),
                     ),
                   );
                 } else if (item == 'header_defaults') {
-                  return const Padding(
-                    padding: EdgeInsets.only(bottom: 8),
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: Responsive.h(context, 8)),
                     child: Text(
                       'Default Routines',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: Responsive.sp(context, 14), fontWeight: FontWeight.bold),
                     ),
                   );
                 } else if (item == 'header_customs') {
@@ -131,6 +136,7 @@ class _RoutineCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FitnessCard(
+      padding: EdgeInsets.all(Responsive.p(context, 16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -141,14 +147,16 @@ class _RoutineCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(routine.name,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16)),
-                    const SizedBox(height: 4),
                     Text(
-                      '${routine.exerciseNames.length} exercises • ${routine.duration} min',
+                      routine.name,
                       style: TextStyle(
-                          fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          fontSize: Responsive.sp(context, 16), fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: Responsive.h(context, 2)),
+                    Text(
+                      '${routine.exercises.length} Exercises',
+                      style: TextStyle(
+                          fontSize: Responsive.sp(context, 12), color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -156,7 +164,10 @@ class _RoutineCard extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: Responsive.p(context, 8), 
+                      vertical: Responsive.p(context, 4)
+                    ),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(4),
@@ -164,12 +175,12 @@ class _RoutineCard extends StatelessWidget {
                     child: Text(
                       routine.level,
                       style: TextStyle(
-                          fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          fontSize: Responsive.sp(context, 10), color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: Responsive.w(context, 8)),
                   IconButton(
-                    icon: Icon(LucideIcons.pencil, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    icon: Icon(LucideIcons.pencil, size: Responsive.sp(context, 18), color: Theme.of(context).colorScheme.onSurfaceVariant),
                     onPressed: () {
                       context.push('/routines/create', extra: routine);
                     },
@@ -177,9 +188,9 @@ class _RoutineCard extends StatelessWidget {
                     constraints: const BoxConstraints(),
                   ),
                   if (routine.isCustom) ...[
-                    const SizedBox(width: 4),
+                    SizedBox(width: Responsive.w(context, 4)),
                     IconButton(
-                      icon: const Icon(LucideIcons.trash2, size: 18, color: Colors.red),
+                      icon: Icon(LucideIcons.trash2, size: Responsive.sp(context, 18), color: Colors.red),
                       onPressed: () {
                         showDialog(
                           context: context,
@@ -211,12 +222,12 @@ class _RoutineCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: Responsive.h(context, 8)),
           Text(
             routine.description,
-            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(fontSize: Responsive.sp(context, 12), color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: Responsive.h(context, 16)),
           PrimaryButton(
             label: 'Start Routine',
             icon: LucideIcons.play,
