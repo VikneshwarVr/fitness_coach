@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import '../../data/providers/settings_provider.dart';
 import '../../data/constants/exercise_data.dart';
 import '../../data/repositories/workout_repository.dart';
@@ -212,6 +214,13 @@ class ExerciseDetailScreen extends StatelessWidget {
               },
             ),
             
+            const SizedBox(height: 24),
+
+            // Progress History Chart
+            const Text('Progress History', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            _ProgressChart(exerciseName: exerciseName),
+            
             const SizedBox(height: 32),
           ],
         ),
@@ -307,6 +316,174 @@ class _PRCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ProgressChart extends StatelessWidget {
+  final String exerciseName;
+
+  const _ProgressChart({required this.exerciseName});
+
+  @override
+  Widget build(BuildContext context) {
+    return FitnessCard(
+      padding: const EdgeInsets.fromLTRB(16, 24, 24, 16),
+      child: SizedBox(
+        height: 200,
+        child: Consumer<WorkoutRepository>(
+          builder: (context, repo, _) {
+            return FutureBuilder<List<ProgressPoint>>(
+              future: repo.getExerciseProgressHistory(exerciseName),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final points = snapshot.data ?? [];
+                if (points.isEmpty) {
+                  return const Center(child: Text('No history yet'));
+                }
+
+                // Prepare fl_chart data
+                final category = ExerciseData.getCategory(exerciseName);
+                final settings = context.read<SettingsProvider>();
+                
+                String unit = 'kg';
+                if (category == 'Cardio' || category == 'Distance') unit = 'km';
+                else if (category == 'DistanceMeters' || category == 'WeightedDistanceMeters' || category == 'DistanceTimeMeters') unit = 'm';
+                else if (category == 'Timed') unit = 's';
+                else if (category == 'Bodyweight') unit = 'reps';
+                else unit = settings.unitLabel;
+
+                final chartPoints = points.asMap().entries.map((e) {
+                  return FlSpot(e.key.toDouble(), e.value.value);
+                }).toList();
+
+                double minY = points.map((p) => p.value).reduce((a, b) => a < b ? a : b);
+                double maxY = points.map((p) => p.value).reduce((a, b) => a > b ? a : b);
+                
+                // Add some padding to Y axis
+                double yRange = maxY - minY;
+                if (yRange == 0) yRange = maxY * 0.2;
+                if (yRange == 0) yRange = 10;
+                
+                double drawMinY = (minY - yRange * 0.1).clamp(0.0, double.infinity);
+                double drawMaxY = maxY + yRange * 0.1;
+
+                return LineChart(
+                  LineChartData(
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      getDrawingHorizontalLine: (value) => FlLine(
+                        color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.1),
+                        strokeWidth: 1,
+                      ),
+                    ),
+                    titlesData: FlTitlesData(
+                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 22,
+                          interval: (points.length / 5).clamp(1.0, double.infinity),
+                          getTitlesWidget: (value, meta) {
+                            int idx = value.toInt();
+                            if (idx < 0 || idx >= points.length) return const SizedBox.shrink();
+                            
+                            // Only show first, middle, last if many points
+                            if (points.length > 5 && idx % (points.length ~/ 3) != 0 && idx != points.length - 1) {
+                               return const SizedBox.shrink();
+                            }
+
+                            final date = points[idx].date;
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                DateFormat('MMM d').format(date),
+                                style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      leftTitles: AxisTitles(
+                        axisNameWidget: Text(
+                          unit,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                        axisNameSize: 16,
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 32,
+                          getTitlesWidget: (value, meta) {
+                            return Text(
+                              value.toStringAsFixed(0),
+                              style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    minY: drawMinY,
+                    maxY: drawMaxY,
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: chartPoints,
+                        isCurved: true,
+                        color: Theme.of(context).colorScheme.primary,
+                        barWidth: 3,
+                        isStrokeCapRound: true,
+                        dotData: FlDotData(
+                          show: true,
+                          getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+                            radius: 4,
+                            color: Theme.of(context).colorScheme.primary,
+                            strokeWidth: 2,
+                            strokeColor: Theme.of(context).colorScheme.surface,
+                          ),
+                        ),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                              Theme.of(context).colorScheme.primary.withValues(alpha: 0.0),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                    lineTouchData: LineTouchData(
+                      touchTooltipData: LineTouchTooltipData(
+                        getTooltipColor: (spot) => Theme.of(context).colorScheme.surfaceContainerHighest,
+                        getTooltipItems: (touchedSpots) {
+                          return touchedSpots.map((spot) {
+                            final date = points[spot.spotIndex].date;
+                            return LineTooltipItem(
+                              '${DateFormat('MMM d').format(date)}\n${spot.y.toStringAsFixed(1)} $unit',
+                              const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                            );
+                          }).toList();
+                        },
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }

@@ -569,4 +569,68 @@ class WorkoutRepository extends ChangeNotifier {
       return [];
     }
   }
+
+  Future<List<ProgressPoint>> getExerciseProgressHistory(String exerciseName) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return [];
+
+    try {
+      final category = ExerciseData.getCategory(exerciseName);
+      
+      final data = await _supabase
+          .from('workout_exercises')
+          .select('id, workouts!inner(date, user_id), workout_sets(weight, reps, distance, duration_seconds, completed)')
+          .eq('workouts.user_id', userId)
+          .eq('exercise_name', exerciseName)
+          .order('workouts(date)', ascending: true);
+
+      final List<ProgressPoint> points = [];
+
+      for (var exerciseJson in (data as List)) {
+        final date = DateTime.parse(exerciseJson['workouts']['date']);
+        final setsJson = exerciseJson['workout_sets'] as List<dynamic>? ?? [];
+        
+        double bestValue = 0.0;
+        bool hasData = false;
+
+        for (var set in setsJson) {
+          if (!(set['completed'] ?? false)) continue;
+          
+          double currentValue = 0.0;
+          if (category == 'Cardio' || category == 'Distance' || category == 'DistanceMeters' || category == 'WeightedDistanceMeters' || category == 'DistanceTimeMeters') {
+            currentValue = (set['distance'] as num?)?.toDouble() ?? 0.0;
+          } else if (category == 'Timed' || category == 'DistanceTimeMeters') {
+             // If category is DistanceTimeMeters, we already checked distance above. 
+             // But for Timed, we use duration.
+             currentValue = (set['duration_seconds'] as num?)?.toDouble() ?? 0.0;
+          } else if (category == 'Bodyweight') {
+            currentValue = (set['reps'] as num?)?.toDouble() ?? 0.0;
+          } else {
+            // Strength / Default -> Max Weight
+            currentValue = (set['weight'] as num?)?.toDouble() ?? 0.0;
+          }
+
+          if (currentValue > bestValue) {
+            bestValue = currentValue;
+            hasData = true;
+          }
+        }
+
+        if (hasData) {
+          points.add(ProgressPoint(date, bestValue));
+        }
+      }
+
+      return points;
+    } catch (e) {
+      return [];
+    }
+  }
+}
+
+class ProgressPoint {
+  final DateTime date;
+  final double value;
+
+  ProgressPoint(this.date, this.value);
 }

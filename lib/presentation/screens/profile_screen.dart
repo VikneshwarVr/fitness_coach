@@ -86,12 +86,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onTap: () => context.push('/profile/settings'),
               ),
               const SizedBox(height: 8),
-              _SettingsItem(
+              /* _SettingsItem(
                 icon: LucideIcons.bell,
                 label: 'Notifications',
                 onTap: () {}, // Empty for now to enable
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 8), */
               _SettingsItem(
                 icon: isDark ? LucideIcons.moon : LucideIcons.sun,
                 label: 'Dark Mode',
