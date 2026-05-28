@@ -5,6 +5,7 @@ import '../models/workout.dart';
 import '../models/routine.dart';
 import '../repositories/workout_repository.dart';
 import '../constants/exercise_data.dart';
+import '../../core/utils/one_rep_max_utils.dart';
 
 class WorkoutProvider extends ChangeNotifier {
   final WorkoutRepository _workoutRepository;
@@ -717,7 +718,7 @@ class WorkoutProvider extends ChangeNotifier {
     final weight = set.weight.toDouble();
     if (weight <= 0) return; // Don't trigger PR for empty weight
 
-    final oneRM = weight * (1 + set.reps / 30.0);
+    final oneRM = estimateOneRepMax(weight: weight, reps: set.reps.toDouble());
     final volume = (weight * set.reps).toDouble();
 
     // 4. Compare and notify

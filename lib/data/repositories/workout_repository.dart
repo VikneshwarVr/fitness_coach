@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/workout.dart';
 import '../constants/exercise_data.dart';
 import '../../core/utils/stats_utils.dart';
+import '../../core/utils/one_rep_max_utils.dart';
 import '../../core/services/cache_service.dart';
 
 class WorkoutRepository extends ChangeNotifier {
@@ -486,7 +487,7 @@ class WorkoutRepository extends ChangeNotifier {
     return StatsUtils.getMuscleGroupDistribution(_workouts, isWeekly: isWeekly);
   }
 
-  /// Fetch PRs for a specific exercise directly from Supabase
+  /// Fetch PRs for a specific exercise from completed workout sets.
   Future<Map<String, double>> getExercisePRs(String exerciseName) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) {
@@ -499,30 +500,68 @@ class WorkoutRepository extends ChangeNotifier {
     }
 
     try {
-      final data = await _supabase
-          .from('exercise_prs')
-          .select()
-          .eq('user_id', userId)
-          .eq('exercise_name', exerciseName)
-          .maybeSingle();
+      final category = ExerciseData.getCategory(exerciseName);
+      final exercises = await _supabase
+          .from('workout_exercises')
+          .select('id, workouts!inner(date, user_id), workout_sets(weight, reps, distance, duration_seconds, completed)')
+          .eq('workouts.user_id', userId)
+          .eq('exercise_name', exerciseName);
 
-      if (data == null) {
-        return {
-          'heaviestWeight': 0.0,
-          'best1RM': 0.0,
-          'bestSetVolume': 0.0,
-          'bestSessionVolume': 0.0,
-        };
+      double heaviestWeight = 0.0;
+      double best1RM = 0.0;
+      double bestSetVolume = 0.0;
+      double maxReps = 0.0;
+      double maxDistance = 0.0;
+      double maxDuration = 0.0;
+
+      double bestSessionVolume = 0.0;
+
+      for (final exerciseJson in (exercises as List)) {
+        double sessionVolume = 0.0;
+        final sets = exerciseJson['workout_sets'] as List<dynamic>? ?? [];
+
+        for (final set in sets) {
+          if (!(set['completed'] ?? false)) continue;
+
+          final weight = (set['weight'] as num?)?.toDouble() ?? 0.0;
+          final reps = (set['reps'] as num?)?.toDouble() ?? 0.0;
+          final distance = (set['distance'] as num?)?.toDouble() ?? 0.0;
+          final duration = (set['duration_seconds'] as num?)?.toDouble() ?? 0.0;
+
+          if (weight > heaviestWeight) heaviestWeight = weight;
+          if (reps > maxReps) maxReps = reps;
+          if (distance > maxDistance) maxDistance = distance;
+          if (duration > maxDuration) maxDuration = duration;
+
+          final volume = weight * reps;
+          if (volume > bestSetVolume) bestSetVolume = volume;
+          sessionVolume += volume;
+
+          if (category != 'Cardio' &&
+              category != 'Distance' &&
+              category != 'DistanceMeters' &&
+              category != 'DistanceTimeMeters' &&
+              category != 'Timed' &&
+              reps > 0 &&
+              weight > 0) {
+            final estimated1RM = estimateOneRepMax(weight: weight, reps: reps);
+            if (estimated1RM > best1RM) best1RM = estimated1RM;
+          }
+        }
+
+        if (sessionVolume > bestSessionVolume) {
+          bestSessionVolume = sessionVolume;
+        }
       }
 
       return {
-        'heaviestWeight': (data['heaviest_weight'] as num?)?.toDouble() ?? 0.0,
-        'best1RM': (data['best_1rm'] as num?)?.toDouble() ?? 0.0,
-        'bestSetVolume': (data['best_set_volume'] as num?)?.toDouble() ?? 0.0,
-        'bestSessionVolume': (data['best_session_volume'] as num?)?.toDouble() ?? 0.0,
-        'maxReps': (data['max_reps'] as num?)?.toDouble() ?? 0.0,
-        'maxDistance': (data['max_distance'] as num?)?.toDouble() ?? 0.0,
-        'maxDuration': (data['max_duration'] as num?)?.toDouble() ?? 0.0,
+        'heaviestWeight': heaviestWeight,
+        'best1RM': best1RM,
+        'bestSetVolume': bestSetVolume,
+        'bestSessionVolume': bestSessionVolume,
+        'maxReps': maxReps,
+        'maxDistance': maxDistance,
+        'maxDuration': maxDuration,
       };
     } catch (e) {
       return {
