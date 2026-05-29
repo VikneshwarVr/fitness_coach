@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../core/constants.dart';
 import '../../core/services/cache_service.dart';
 
 class AuthRepository extends ChangeNotifier {
@@ -18,6 +20,9 @@ class AuthRepository extends ChangeNotifier {
         CacheService.clearAll();
       } else if (data.event == AuthChangeEvent.signedIn || data.event == AuthChangeEvent.userUpdated) {
         _syncProfile();
+        if (data.event == AuthChangeEvent.signedIn) {
+          fetchProfile();
+        }
       }
       notifyListeners();
     });
@@ -130,10 +135,14 @@ class AuthRepository extends ChangeNotifier {
 
   Future<void> signInWithGoogle() async {
     try {
-      await _supabase.auth.signInWithOAuth(
+      final launched = await _supabase.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: kIsWeb ? null : 'io.supabase.fitness://login-callback/',
+        redirectTo: kIsWeb ? null : AppConstants.oauthRedirectUrl,
+        authScreenLaunchMode: LaunchMode.externalApplication,
       );
+      if (!launched) {
+        throw const AuthException('Could not open Google sign-in. Please try again.');
+      }
     } catch (e) {
       rethrow;
     }

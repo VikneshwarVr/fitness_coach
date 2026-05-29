@@ -76,6 +76,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               SizedBox(height: Responsive.h(context, 8)),
               _SettingsItem(
+                icon: LucideIcons.calculator,
+                label: '1RM Calculator',
+                onTap: () => context.push('/profile/1rm-calculator'),
+              ),
+              SizedBox(height: Responsive.h(context, 8)),
+              _SettingsItem(
                 icon: LucideIcons.calendar,
                 label: 'Calendar',
                 onTap: () => context.push('/profile/calendar'),

@@ -18,9 +18,11 @@ class UserProfileScreen extends StatefulWidget {
 }
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
+  static const _sexOptions = ['Male', 'Female', 'Other'];
+
   final _nameController = TextEditingController();
   final _bioController = TextEditingController();
-  String _selectedSex = 'Not specified';
+  String _selectedSex = 'Other';
   DateTime? _selectedBirthday;
   String? _avatarPath;
   bool _isLoading = false;
@@ -31,7 +33,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     final auth = context.read<AuthRepository>();
     _nameController.text = auth.displayName;
     _bioController.text = auth.bio;
-    _selectedSex = auth.sex;
+    _selectedSex = _sexOptions.contains(auth.sex) ? auth.sex : 'Other';
     if (auth.birthday.isNotEmpty) {
       try {
         _selectedBirthday = DateTime.parse(auth.birthday);
@@ -187,7 +189,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             const Text('Sex', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 8),
             Row(
-              children: ['Male', 'Female', 'Other', 'Not specified'].map((sex) {
+              children: _sexOptions.map((sex) {
                 final isSelected = _selectedSex == sex;
                 return Expanded(
                   child: GestureDetector(

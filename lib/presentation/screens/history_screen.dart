@@ -93,28 +93,32 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     child: FitnessCard(
                       onTap: () => context.push('/workout-details/${workout.id}'),
                       padding: EdgeInsets.all(Responsive.p(context, 16)),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  workout.name,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: Responsive.sp(context, 16),
-                                  ),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        workout.name,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: Responsive.sp(context, 16),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: Responsive.w(context, 8)),
+                                    Text(
+                                      DateFormat('MMM d, yyyy • HH:mm').format(workout.date),
+                                      style: TextStyle(
+                                        fontSize: Responsive.sp(context, 11),
+                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                SizedBox(height: Responsive.h(context, 4)),
-                                Text(
-                                  DateFormat('MMM d, yyyy • HH:mm').format(workout.date),
-                                  style: TextStyle(
-                                    fontSize: Responsive.sp(context, 12),
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
+                                SizedBox(height: Responsive.h(context, 10)),
                                 Row(
                                   children: [
                                     Text(
@@ -159,14 +163,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                     ),
                                   ],
                                 ),
-                              ],
-                            ),
-                          ),
-                          Icon(
-                            LucideIcons.chevronRight,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            size: 20,
-                          ),
                         ],
                       ),
                     ),

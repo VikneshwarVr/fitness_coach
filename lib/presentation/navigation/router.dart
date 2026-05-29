@@ -16,6 +16,7 @@ import '../screens/user_profile_screen.dart';
 import '../screens/statistics_screen.dart';
 import '../screens/calendar_screen.dart';
 import '../screens/general_settings_screen.dart';
+import '../screens/one_rm_calculator_screen.dart';
 import '../../data/models/routine.dart';
 import '../../data/repositories/auth_repository.dart';
 
@@ -160,6 +161,10 @@ GoRouter createRouter(AuthRepository authRepo) {
       GoRoute(
         path: '/profile/settings',
         builder: (context, state) => const GeneralSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/profile/1rm-calculator',
+        builder: (context, state) => const OneRMCalculatorScreen(),
       ),
     ],
   );

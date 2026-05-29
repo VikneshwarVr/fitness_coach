@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme.dart';
 import '../fitness_card.dart';
 import '../../../core/utils/responsive_utils.dart';
+import '../../screens/exercise_detail_screen.dart';
 
 class ExerciseListItem extends StatelessWidget {
   final ExerciseSession exercise;
@@ -48,10 +49,28 @@ class ExerciseListItem extends StatelessWidget {
                     Icon(LucideIcons.gripVertical, size: Responsive.sp(context, 20), color: Theme.of(context).colorScheme.onSurfaceVariant),
                     SizedBox(width: Responsive.w(context, 8)),
                     Expanded(
-                      child: Text(
-                        exercise.name, 
-                        style: TextStyle(fontSize: Responsive.sp(context, 18), fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ExerciseDetailScreen(
+                                exerciseName: exercise.name,
+                              ),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(4),
+                        child: Text(
+                          exercise.name,
+                          style: TextStyle(
+                            fontSize: Responsive.sp(context, 18),
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary,
+                            decorationColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
                     if (hasPR) ...[
