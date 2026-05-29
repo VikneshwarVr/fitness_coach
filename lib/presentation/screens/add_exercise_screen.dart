@@ -162,9 +162,6 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
               }).toList(),
             ),
           ),
-          
-          const Divider(height: 1),
-
           // Exercise List
           Expanded(
             child: _filteredExercises.isEmpty
