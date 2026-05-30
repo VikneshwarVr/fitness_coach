@@ -18,8 +18,8 @@ import '../screens/calendar_screen.dart';
 import '../screens/general_settings_screen.dart';
 import '../screens/one_rm_calculator_screen.dart';
 import '../screens/privacy_policy_screen.dart';
-import '../../data/models/routine.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../core/utils/router_utils.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> _shellNavigatorHomeKey = GlobalKey<NavigatorState>(debugLabel: 'shellHome');
@@ -73,8 +73,9 @@ GoRouter createRouter(AuthRepository authRepo) {
                   GoRoute(
                     path: 'create',
                     builder: (context, state) {
-                      final routine = state.extra as Routine?;
-                      return CreateRoutineScreen(initialRoutine: routine);
+                      return CreateRoutineScreen(
+                        initialRoutine: routineFromExtra(state.extra),
+                      );
                     },
                   ),
                 ],
@@ -96,8 +97,7 @@ GoRouter createRouter(AuthRepository authRepo) {
       GoRoute(
         path: '/workout',
         builder: (context, state) {
-           final routine = state.extra as Routine?;
-           return WorkoutScreen(initialRoutine: routine);
+           return WorkoutScreen(initialRoutine: routineFromExtra(state.extra));
         },
         routes: [
           GoRoute(
@@ -113,8 +113,11 @@ GoRouter createRouter(AuthRepository authRepo) {
           GoRoute(
             path: 'edit',
             builder: (context, state) {
-               final routine = state.extra as Routine;
-               return WorkoutScreen(initialRoutine: routine, isEditing: true);
+               final routine = routineFromExtra(state.extra);
+               return WorkoutScreen(
+                 initialRoutine: routine,
+                 isEditing: true,
+               );
             },
           ),
           GoRoute(
