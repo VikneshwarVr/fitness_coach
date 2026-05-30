@@ -62,7 +62,6 @@ class RoutineRepository extends ChangeNotifier {
   Future<void> loadRoutines() async {
     try {
       final userId = _supabase.auth.currentUser?.id;
-      print('DEBUG: userId = $userId');
       if (userId == null) return;
 
       final data = await _supabase

@@ -11,4 +11,7 @@ class AppConstants {
   
   // Default values
   static const int defaultGoal = 4; // workouts per week
+
+  /// Contact email shown in the Privacy Policy. Update before Play Store release.
+  static const String privacyContactEmail = 'YOUR_EMAIL_HERE';
 }

@@ -17,6 +17,7 @@ import '../screens/statistics_screen.dart';
 import '../screens/calendar_screen.dart';
 import '../screens/general_settings_screen.dart';
 import '../screens/one_rm_calculator_screen.dart';
+import '../screens/privacy_policy_screen.dart';
 import '../../data/models/routine.dart';
 import '../../data/repositories/auth_repository.dart';
 
@@ -32,12 +33,13 @@ GoRouter createRouter(AuthRepository authRepo) {
     refreshListenable: authRepo,
     redirect: (context, state) {
       final isAuthenticated = authRepo.isAuthenticated;
-      final isLoggingIn = state.matchedLocation == '/login';
+      final location = state.matchedLocation;
+      final isPublicRoute = location == '/login' || location == '/profile/privacy';
 
-      if (!isAuthenticated && !isLoggingIn) {
+      if (!isAuthenticated && !isPublicRoute) {
         return '/login';
       }
-      if (isAuthenticated && isLoggingIn) {
+      if (isAuthenticated && location == '/login') {
         return '/';
       }
       return null;
@@ -165,6 +167,10 @@ GoRouter createRouter(AuthRepository authRepo) {
       GoRoute(
         path: '/profile/1rm-calculator',
         builder: (context, state) => const OneRMCalculatorScreen(),
+      ),
+      GoRoute(
+        path: '/profile/privacy',
+        builder: (context, state) => const PrivacyPolicyScreen(),
       ),
     ],
   );

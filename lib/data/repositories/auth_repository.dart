@@ -38,6 +38,10 @@ class AuthRepository extends ChangeNotifier {
   String get birthday => _cachedProfile?['birthday'] ?? currentUser?.userMetadata?['birthday'] ?? '';
   String? get profileImageUrl => _cachedProfile?['avatar_url'] ?? currentUser?.userMetadata?['avatar_url'];
 
+  bool get isEmailUser =>
+      currentUser?.appMetadata['provider'] == 'email' ||
+      currentUser?.identities?.any((i) => i.provider == 'email') == true;
+
   void _syncProfile() {
     if (currentUser != null) {
       final Map<String, dynamic> metadata = Map.from(currentUser?.userMetadata ?? {});
@@ -171,6 +175,42 @@ class AuthRepository extends ChangeNotifier {
       await CacheService.clearAll();
     } catch (e) {
       rethrow;
+    }
+  }
+
+  Future<void> deleteAccount({String? password}) async {
+    final userId = currentUser?.id;
+    if (userId == null) {
+      throw const AuthException('Not signed in');
+    }
+
+    if (password != null) {
+      final email = currentUser!.email;
+      if (email == null) {
+        throw const AuthException('Unable to verify account. Please sign in again.');
+      }
+      await signInWithEmail(email: email, password: password);
+    }
+
+    await _deleteStorageFolder('avatars', userId);
+    await _deleteStorageFolder('post_workout_images', userId);
+
+    await _supabase.rpc('delete_user');
+    await CacheService.clearAll();
+    await _supabase.auth.signOut();
+  }
+
+  Future<void> _deleteStorageFolder(String bucket, String userId) async {
+    try {
+      final files = await _supabase.storage.from(bucket).list(path: userId);
+      if (files.isEmpty) return;
+
+      final paths = files.map((f) => '$userId/${f.name}').toList();
+      await _supabase.storage.from(bucket).remove(paths);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Storage cleanup failed for $bucket/$userId: $e');
+      }
     }
   }
 }
